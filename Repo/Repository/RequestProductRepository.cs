@@ -26,7 +26,6 @@ namespace Repo.Repository
                         .Include(r => r.RequestProductDetails)
                         .ThenInclude(d => d.Product)
                         .Include(re => re.AgencyAccount) // 👈 Thêm dòng này
-                        .Include(re => re.ApprovedByEmployee)
                         .ToListAsync();
         }
 
@@ -38,20 +37,11 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(r => r.AgencyId == agencyId && r.RequestStatus == "Pending");
         }
 
-        // 🔹 Kiểm tra nếu Agency có đơn hàng Approved trong 24 giờ qua
-        public async Task<bool> HasApprovedRequestInLast24Hours(long agencyId)
-        {
-            return await _context.RequestProducts
-            .AnyAsync(r => r.AgencyId == agencyId &&
-                        r.RequestStatus == "Approved" &&
-                        (r.UpdatedAt ?? r.CreatedAt) >= DateTime.UtcNow.AddHours(-24));
-        }
 
         public async Task<RequestProduct> GetRequestByIdAsync(Guid id)
         {
             return await _context.RequestProducts
             .Include(rp => rp.AgencyAccount) // ✅ Bao gồm thông tin đại lý
-            .Include(rp => rp.ApprovedByEmployee) // ✅ Bao gồm nhân viên duyệt (nếu có)
             .Include(rp => rp.RequestProductDetails) // ✅ Bao gồm danh sách sản phẩm trong request
                 .ThenInclude(rpd => rpd.Product) // ✅ Bao gồm thông tin sản phẩm
             .FirstOrDefaultAsync(rp => rp.RequestProductId == id);
@@ -81,7 +71,6 @@ namespace Repo.Repository
             .Include(rp => rp.RequestProductDetails) // ✅ Bao gồm các sản phẩm trong Request
             .ThenInclude(d => d.Product)
             .Include(re => re.AgencyAccount) // 👈 Thêm dòng này
-            .Include(re => re.ApprovedByEmployee)
             .FirstOrDefaultAsync(rp => rp.RequestProductId == requestId);
         }
 
@@ -91,7 +80,6 @@ namespace Repo.Repository
                     .Include(rp => rp.RequestProductDetails)
                     .ThenInclude(d => d.Product)
                     .Include(rp => rp.AgencyAccount)
-                    .Include(rp => rp.ApprovedByEmployee)
                     .Where(rp => rp.AgencyId == agencyId)
                     .ToListAsync();
         }

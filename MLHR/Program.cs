@@ -167,13 +167,12 @@ builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepo
 builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
 builder.Services.AddMemoryCache(); // hoặc services.AddMemoryCache() nếu dùng Startup
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
-
-
 builder.Services.AddScoped<IAgencyAccountRepository, AgencyAccountRepository>();
-
-
 builder.Services.AddScoped<IAgencyAccountLevelRepository, AgencyAccountLevelRepository>();
 
+builder.Services.AddScoped<IWarehouseProductRepository, WarehouseProductRepository>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<ITemporaryWarehouseExportRepository, TemporaryWarehouseExportRepository>();
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddHttpContextAccessor();

@@ -14,16 +14,12 @@ namespace BusinessObject.Models
         public Guid RequestProductId { get; set; } // Khóa chính
         public string RequestCode { get; set; }
         public long AgencyId { get; set; }
-        public long? ApprovedBy { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string RequestStatus { get; set; } // PENDING, APPROVED, REJECTED
 
         [ForeignKey("AgencyId")]
         public AgencyAccount AgencyAccount { get; set; }
-
-        [ForeignKey("ApprovedBy")]
-        public Employee? ApprovedByEmployee { get; set; }
 
         // Mối quan hệ 1-1 với Order
         public Order Order { get; set; }

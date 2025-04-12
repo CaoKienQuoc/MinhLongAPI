@@ -1,16 +1,13 @@
-﻿version: '3.4'
-
-services:
+﻿services:
   mlhr:
     container_name: mlhr-api-new
     build:
       context: .
       dockerfile: MLHR/Dockerfile
     ports:
-      - "8086:8086"  # Cổng HTTP (nếu cần)
+      - "8086:8086"  # HTTP API
     environment:
       - ASPNETCORE_URLS=http://+:8086/
-      - "8086:8086"   # Cổng HTTP (nếu cần)
     networks:
       - demo
 

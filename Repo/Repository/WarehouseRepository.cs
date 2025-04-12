@@ -210,6 +210,11 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
-
+        public async Task<List<Warehouse>> GetAllOrderedAsync()
+        {
+            return await _context.Warehouses
+                .OrderBy(w => w.WarehouseId) // 👈 Hoặc bạn có thể dùng field khác nếu có cột "Priority"
+                .ToListAsync();
+        }
     }
 }

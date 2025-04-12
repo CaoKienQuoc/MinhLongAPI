@@ -11,7 +11,6 @@ namespace Repo.IRepository
     {
         Task<IEnumerable<RequestProduct>> GetAllRequestsAsync();
         Task<RequestProduct> GetPendingRequestByAgencyAsync(long agencyId);
-        Task<bool> HasApprovedRequestInLast24Hours(long agencyId);
         Task<RequestProduct> GetRequestByIdAsync(Guid id);
         Task AddRequestAsync(RequestProduct requestProduct);
         Task UpdateRequestAsync(RequestProduct requestProduct);

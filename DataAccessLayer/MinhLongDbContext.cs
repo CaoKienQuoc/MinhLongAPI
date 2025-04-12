@@ -81,9 +81,9 @@ namespace DataAccessLayer
         public DbSet<WarehouseRequestExport> WarehouseRequestExports { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<OTPEmail> OTPEmails { get; set; }
-
         public DbSet<WarehouseTransferRequest> WarehouseTransferRequests { get; set; }
         public DbSet<WarehouseTransferProduct> WarehouseTransferProducts { get; set; }
+        public DbSet<TemporaryStockExport> TemporaryStockExports { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -127,7 +127,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<OrderDetail>().ToTable("OrderDetail");
             modelBuilder.Entity<WarehouseTransferRequest>().ToTable("WarehouseTransferRequest");
             modelBuilder.Entity<WarehouseTransferProduct>().ToTable("WarehouseTransferProduct");
-
+            modelBuilder.Entity<TemporaryStockExport>().ToTable("TemporaryStockExport");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -188,6 +188,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<PaymentTransaction>().Property(pt => pt.TransactionId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<WarehouseTransferRequest>().Property(wr => wr.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<WarehouseTransferProduct>().Property(wr => wr.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<TemporaryStockExport>().Property(wr => wr.TemporaryStockExportId).ValueGeneratedOnAdd();
 
 
             // 🔥 **Cấu hình quan hệ nhiều - nhiều**
@@ -355,11 +356,11 @@ namespace DataAccessLayer
                 .HasForeignKey(r => r.AgencyId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<RequestProduct>()
+            /*modelBuilder.Entity<RequestProduct>()
                 .HasOne(r => r.ApprovedByEmployee)
                 .WithMany()
                 .HasForeignKey(r => r.ApprovedBy)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade);*/
 
 
             /*modelBuilder.Entity<RequestProductDetail>()
@@ -708,6 +709,24 @@ namespace DataAccessLayer
                 .WithMany()
                 .HasForeignKey(w => w.DestinationWarehouseId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TemporaryStockExport>()
+       .HasKey(t => t.TemporaryStockExportId);
+
+            modelBuilder.Entity<TemporaryStockExport>()
+                .HasOne(t => t.Product)
+                .WithMany()
+                .HasForeignKey(t => t.ProductId);
+
+            modelBuilder.Entity<TemporaryStockExport>()
+                .HasOne(t => t.Warehouse)
+                .WithMany()
+                .HasForeignKey(t => t.WarehouseId);
+
+            modelBuilder.Entity<TemporaryStockExport>()
+                .HasOne(t => t.Order)
+                .WithMany()
+                .HasForeignKey(t => t.OrderId);
 
         }
     }

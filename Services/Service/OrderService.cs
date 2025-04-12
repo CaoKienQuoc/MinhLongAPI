@@ -54,8 +54,6 @@ namespace Services.Service
                 // ✅ Thêm AgencyId
                 AgencyId = o.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
 
-                // ✅ Tên nhân viên bán hàng (sales)
-                SalesName = o.RequestProduct?.ApprovedByEmployee?.FullName ?? "Chưa duyệt",
 
                 // ✅ Thông tin request
                 RequestCode = o.RequestProduct?.RequestCode ?? "N/A",
@@ -103,7 +101,6 @@ namespace Services.Service
                 Status = order.Status,
                 // ✅ Thêm AgencyId
                 AgencyId = order.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
-                SalesName = order.RequestProduct?.ApprovedByEmployee?.FullName ?? "Chưa duyệt",
                 AgencyName = order.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
                 RequestCode = order.RequestProduct?.RequestCode ?? "N/A",
 
@@ -164,11 +161,11 @@ namespace Services.Service
 
 
                 // ✅ Lấy EmployeeId từ UserId thông qua UserRepository
-                var employeeId = requestProduct.ApprovedBy;
+                /*var employeeId = requestProduct.ApprovedBy;
                 if (employeeId == null)
                     throw new Exception("Employee not found for the logged-in user.");
 
-                long approvedBy = employeeId.Value; // ✅ Lưu vào RequestExport.ApprovedBy
+                long approvedBy = employeeId.Value; // ✅ Lưu vào RequestExport.ApprovedBy*/
 
                 // ✅ Tạo RequestExport từ Order
                 var requestExport = new RequestExport
@@ -176,7 +173,7 @@ namespace Services.Service
                     RequestedByAgencyId = requestBy,  // ✅ Lấy AgencyId từ RequestProduct
                     RequestDate = requestProduct.CreatedAt,
                     Status = "Processing",
-                    ApprovedBy = approvedBy,  // ✅ Lấy EmployeeId từ User đăng nhập
+                    //ApprovedBy = approvedBy,  // ✅ Lấy EmployeeId từ User đăng nhập
                     ApprovedDate = DateTime.Now,
                     Note = "Order approved and exported",
                     OrderId = order.OrderId,
@@ -242,7 +239,6 @@ namespace Services.Service
             if(order.Status == "WaitPaid")
             {
                 order.Status = "Canceled";
-                requestProduct.RequestStatus = "Canceled";
                 await _orderRepository.UpdateOrderAsync(order);
                await _orderRepository.SaveAsync();
             }
@@ -268,7 +264,6 @@ namespace Services.Service
                 Status = o.Status,
                 // ✅ Thêm AgencyId
                 AgencyId = o.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
-                SalesName = o.RequestProduct?.ApprovedByEmployee?.FullName ?? "Chưa duyệt",
                 AgencyName = o.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
                 RequestCode = o.RequestProduct?.RequestCode ?? "N/A",
 

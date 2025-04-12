@@ -26,7 +26,8 @@ namespace Services.Service
     {
         private readonly IRequestProductRepository _requestProductRepository;
         private readonly IOrderRepository _orderRepository;
-        //private readonly IOrderDetailRepository _orderDetailRepository;
+        private readonly IInventoryService _inventoryService;
+
         private readonly IBatchRepository _batchRepository;
         private readonly IProductRepository _productRepository;
         private readonly IUserRepository _userRepository;
@@ -38,7 +39,8 @@ namespace Services.Service
             IBatchRepository batchRepository,
             IProductRepository productRepository,
             IUserRepository userRepository,
-            IHubContext<NotificationHub> hub)
+            IHubContext<NotificationHub> hub,
+            IInventoryService inventoryService)
         {
             _requestProductRepository = requestProductRepository;
             _orderRepository = orderRepository;
@@ -46,12 +48,9 @@ namespace Services.Service
             _productRepository = productRepository;
             _userRepository = userRepository;
             _hub = hub;
+            _inventoryService = inventoryService;
         }
 
-        /*public async Task<IEnumerable<RequestProduct>> GetAllRequestsAsync()
-        {
-            return await _requestProductRepository.GetAllRequestsAsync();
-        }*/
 
         public async Task<List<RequestProductDto>> GetAllRequestsAsync()
         {
@@ -63,8 +62,7 @@ namespace Services.Service
                 RequestCode = rp.RequestCode,
                 AgencyName = rp.AgencyAccount?.AgencyName ?? "Unknown",
                 AgencyId = rp.AgencyId,
-                ApprovedName = rp.ApprovedByEmployee?.FullName ?? "Chưa duyệt",
-                ApprovedBy = rp.ApprovedBy,
+                //ApprovedBy = rp.ApprovedBy,
                 RequestStatus = rp.RequestStatus,
                 CreatedAt = rp.CreatedAt,
                 RequestProductDetails = rp.RequestProductDetails.Select(d => new RequestProductDetailDto
@@ -78,17 +76,6 @@ namespace Services.Service
                 }).ToList()
             }).ToList();
         }
-
-
-        /*public async Task<RequestProduct> GetRequestByIdAsync(Guid id)
-        {
-            var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(id);
-            if (requestProduct == null)
-            {
-                throw new KeyNotFoundException($"RequestProduct with ID {id} not found.");
-            }
-            return requestProduct;
-        }*/
 
         public async Task<RequestProductDto> GetRequestByIdAsync(Guid id)
         {
@@ -105,8 +92,7 @@ namespace Services.Service
                 RequestCode = request.RequestCode,
                 AgencyName = request.AgencyAccount?.AgencyName ?? "Unknown",
                 AgencyId = request.AgencyId,
-                ApprovedName = request.ApprovedByEmployee?.FullName ?? "Chưa duyệt",
-                ApprovedBy = request.ApprovedBy,
+                //ApprovedBy = request.ApprovedBy,
                 RequestStatus = request.RequestStatus,
                 CreatedAt = request.CreatedAt,
                 RequestProductDetails = request.RequestProductDetails.Select(d => new RequestProductDetailDto
@@ -130,8 +116,7 @@ namespace Services.Service
                 RequestCode = rp.RequestCode,
                 AgencyName = rp.AgencyAccount?.AgencyName ?? "Unknown",
                 AgencyId = rp.AgencyId,
-                ApprovedName = rp.ApprovedByEmployee?.FullName ?? "Chưa duyệt",
-                ApprovedBy = rp.ApprovedBy,
+                //ApprovedBy = rp.ApprovedBy,
                 RequestStatus = rp.RequestStatus,
                 CreatedAt = rp.CreatedAt,
                 RequestProductDetails = rp.RequestProductDetails.Select(d => new RequestProductDetailDto
@@ -145,18 +130,6 @@ namespace Services.Service
                 }).ToList()
             }).ToList();
         }
-
-
-        /*public async Task<List<RequestProduct>> GetRequestProductsByAgencyIdAsync(long agencyId)
-        {
-            return await _requestProductRepository.GetRequestProductAgencyIdAsync(agencyId);
-        }*/
-
-        /*public async Task<List<RequestProduct>> GetRequestProductsByIdAsync(Guid requestId)
-        {
-            return await _requestProductRepository.GetRequestProductByIdAsync(requestId);
-        }*/
-
 
 
         public async Task CreateRequestAsync(RequestProduct requestProduct, List<RequestProductDetail> requestDetails, Guid userId)
@@ -174,12 +147,6 @@ namespace Services.Service
                 throw new UnauthorizedAccessException("Không tìm thấy AgencyId từ User đang đăng nhập.");
             }
 
-            /*// ✅ Kiểm tra nếu Agency đã có đơn hàng Approved trong 24 giờ qua
-            bool hasRecentApprovedRequest = await _requestProductRepository.HasApprovedRequestInLast24Hours(agencyId.Value);
-            if (hasRecentApprovedRequest)
-            {
-                throw new BadRequestException("Bạn đã có một đơn hàng được duyệt trong vòng 24 giờ qua. Vui lòng đợi trước khi tạo đơn hàng mới.");
-            }*/
 
             var existingRequest = await _requestProductRepository.GetPendingRequestByAgencyAsync(agencyId.Value);
 
@@ -257,13 +224,10 @@ namespace Services.Service
             requestProduct.RequestCode = requestCode;
             await _requestProductRepository.SaveChangesAsync();
 
+            await ApproveRequestAsync(requestProduct.RequestProductId);
+
+            /*// Tạo object notification theo yêu cầu
             var agencyName = await _userRepository.GetAgencyNameByUserIdAsync(userId);
-            /*Debug.WriteLine(_hub == null ? "hub is NULL" : "hub is OK");
-
-            await _hub.Clients.Group("4")
-                .SendAsync("ReceiveNotification", $"📦 Đơn hàng mới từ {agencyName}");*/
-
-            // Tạo object notification theo yêu cầu
             var notification = new
             {
                 title = "Sales", // Tiêu đề thông báo
@@ -273,12 +237,12 @@ namespace Services.Service
 
             // Gửi thông báo qua SignalR
             await _hub.Clients.Group("4")
-                .SendAsync("ReceiveNotification", notification);
+                .SendAsync("ReceiveNotification", notification);*/
 
 
         }
 
-        public async Task ApproveRequestAsync(Guid requestId, long approvedBy)
+        public async Task ApproveRequestAsync(Guid requestId)
         {
             try
             {
@@ -293,7 +257,7 @@ namespace Services.Service
                 }
 
                 // Cập nhật trạng thái RequestProduct
-                requestProduct.ApprovedBy = approvedBy;
+                //requestProduct.ApprovedBy = approvedBy;
                 requestProduct.RequestStatus = "Approved";
                 requestProduct.UpdatedAt = DateTime.Now;
 
@@ -312,7 +276,7 @@ namespace Services.Service
                     {
                         OrderCode = requestOrderCode,
                         OrderDate = DateTime.Now,
-                        SalesAgentId = approvedBy,
+                        //SalesAgentId = approvedBy,
                         Status = "WaitPaid",
                         RequestId = requestId,
                         Discount = 0,
@@ -322,6 +286,11 @@ namespace Services.Service
                     await _orderRepository.AddOrderAsync(order);
                     await _orderRepository.SaveChangesAsync();
                     isNewOrder = true;
+
+                    foreach (var detail in requestProduct.RequestProductDetails)
+                    {
+                        await _inventoryService.DeductStockByWarehouseProductAsync(order.OrderId, detail.ProductId, detail.Quantity);
+                    }
                 }
                 else
                 {
@@ -382,11 +351,8 @@ namespace Services.Service
                 await _orderRepository.UpdateOrderAsync(order);
                 await _orderRepository.SaveChangesAsync();
 
-                /*// Gửi cho AGENCY
-                await _hub.Clients.Group("2")
-                    .SendAsync("ReceiveNotification", $"✅ Đơn hàng {requestProduct.RequestCode} đã được duyệt!");*/
 
-                var notification = new
+                /*var notification = new
                 {
                     title = "Agency", // Tiêu đề thông báo
                     message = $"✅ Đơn hàng {requestProduct.RequestCode} đã được duyệt!", // Nội dung thông báo
@@ -395,7 +361,7 @@ namespace Services.Service
 
                 // Gửi thông báo qua SignalR cho AGENCY
                 await _hub.Clients.Group("2")
-                    .SendAsync("ReceiveNotification", notification);
+                    .SendAsync("ReceiveNotification", notification);*/
 
             }
             catch (DbUpdateException ex)
@@ -423,7 +389,7 @@ namespace Services.Service
                 throw new Exception("Cannot cancel an approved request!");
 
             requestProduct.RequestStatus = "Canceled";
-            requestProduct.ApprovedBy = approvedBy;
+            //requestProduct.ApprovedBy = approvedBy;
             requestProduct.UpdatedAt = DateTime.Now;
 
             await _requestProductRepository.UpdateRequestAsync(requestProduct);

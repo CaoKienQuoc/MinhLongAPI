@@ -101,7 +101,6 @@ namespace MLHR.Controllers
                 var requestProduct = new RequestProduct
                 {
                     AgencyId = agencyId.Value, // ✅ Chuyển `long?` thành `long`
-                    RequestStatus = "Pending",
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -131,54 +130,54 @@ namespace MLHR.Controllers
         }
         
 
-        [Authorize] // Xác thực người dùng trước
-        [HttpPut("{id}/approve")]
-        [Authorize(Roles = "4")]
-        public async Task<IActionResult> ApproveRequest(Guid id)
-        {
-            try
-            {
-                // **Lấy UserId từ Token**
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
-                {
-                    return Unauthorized(new { error = "User is not authenticated." });
-                }
+        //[Authorize] // Xác thực người dùng trước
+        //[HttpPut("{id}/approve")]
+        //[Authorize(Roles = "4")]
+        //public async Task<IActionResult> ApproveRequest(Guid id)
+        //{
+        //    try
+        //    {
+        //        // **Lấy UserId từ Token**
+        //        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        //        if (userIdClaim == null)
+        //        {
+        //            return Unauthorized(new { error = "User is not authenticated." });
+        //        }
 
-                var userId = Guid.Parse(userIdClaim.Value);
+        //        var userId = Guid.Parse(userIdClaim.Value);
 
-                // **Lấy Role của User từ Token**
-                var roleClaim = User.FindFirst(ClaimTypes.Role);
-                if (roleClaim == null)
-                {
-                    return Forbid("User role not found.");
-                }
+        //        // **Lấy Role của User từ Token**
+        //        var roleClaim = User.FindFirst(ClaimTypes.Role);
+        //        if (roleClaim == null)
+        //        {
+        //            return Forbid("User role not found.");
+        //        }
 
-                var userRole = roleClaim.Value;
+        //        var userRole = roleClaim.Value;
 
-                // **Kiểm tra nếu Role khác "4" thì từ chối quyền**
-                if (userRole != "4")
-                {
-                    return StatusCode(403, "Only SALES MANAGEMENT (Role 4) can approve requests."); // 🚀 Cách đúng để trả về 403
-                }
+        //        // **Kiểm tra nếu Role khác "4" thì từ chối quyền**
+        //        if (userRole != "4")
+        //        {
+        //            return StatusCode(403, "Only SALES MANAGEMENT (Role 4) can approve requests."); // 🚀 Cách đúng để trả về 403
+        //        }
 
-                // **Gọi Service để lấy EmployeeId từ UserId**
-                var employeeId = await _userService.GetEmployeeIdByUserId(userId);
-                if (!employeeId.HasValue)
-                {
-                    return BadRequest("User does not belong to any employee.");
-                }
+        //        // **Gọi Service để lấy EmployeeId từ UserId**
+        //        var employeeId = await _userService.GetEmployeeIdByUserId(userId);
+        //        if (!employeeId.HasValue)
+        //        {
+        //            return BadRequest("User does not belong to any employee.");
+        //        }
 
-                // ✅ Tiến hành duyệt Request
-                await _requestProductService.ApproveRequestAsync(id, employeeId.Value);
+        //        // ✅ Tiến hành duyệt Request
+        //        await _requestProductService.ApproveRequestAsync(id);
 
-                return Ok(new { message = "Request approved and Order created successfully!" });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
-        }
+        //        return Ok(new { message = "Request approved and Order created successfully!" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { error = ex.Message });
+        //    }
+        //}
 
         [HttpPut("{requestId}/cancel")]
         public async Task<IActionResult> CancelRequest(Guid requestId)

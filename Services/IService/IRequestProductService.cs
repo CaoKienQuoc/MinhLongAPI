@@ -16,7 +16,7 @@ namespace Services.IService
         //Task<RequestProduct> GetRequestByIdAsync(Guid id);
         Task<RequestProductDto> GetRequestByIdAsync(Guid id);
         Task CreateRequestAsync(RequestProduct requestProduct, List<RequestProductDetail> requestDetails, Guid userId);
-        Task ApproveRequestAsync(Guid requestId, long approvedBy);
+        Task ApproveRequestAsync(Guid requestId);
 
         //Task<List<RequestProduct>> GetRequestProductsByAgencyIdAsync(long agencyId);
         Task<List<RequestProductDto>> GetRequestProductsByAgencyIdAsync(long agencyId);

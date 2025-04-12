@@ -15,7 +15,7 @@ namespace BusinessObject.Models
         public Guid OrderId { get; set; }
         public string OrderCode { get; set; }
         public DateTime OrderDate { get; set; }
-        public long SalesAgentId { get; set; }
+        /*public long SalesAgentId { get; set; }*/
         public decimal Discount { get; set; }
         public decimal FinalPrice { get; set; }
         public string Status { get; set; } // PENDING, PROCESSING, CANCELED

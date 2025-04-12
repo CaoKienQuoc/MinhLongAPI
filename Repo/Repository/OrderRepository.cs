@@ -34,7 +34,6 @@ namespace Repo.Repository
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
                 .Include(o => o.RequestProduct)
-                    .ThenInclude(rp => rp.ApprovedByEmployee) // ✅ để lấy SalesName
                 .ToListAsync();
         }
 
@@ -75,7 +74,6 @@ namespace Repo.Repository
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
                 .Include(o => o.RequestProduct)
-                    .ThenInclude(rp => rp.ApprovedByEmployee)
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
 
@@ -116,8 +114,6 @@ namespace Repo.Repository
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
                 .Include(o => o.RequestProduct)
-                    .ThenInclude(rp => rp.ApprovedByEmployee)
-                .Where(o => o.RequestProduct.AgencyId == agencyId)
                 .ToListAsync();
         }
 

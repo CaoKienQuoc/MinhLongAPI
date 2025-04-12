@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250407121206_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250412163636_NewDb")]
+    partial class NewDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -626,9 +626,6 @@ namespace DataAccessLayer.Migrations
                     b.Property<Guid>("RequestId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<long>("SalesAgentId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1081,9 +1078,6 @@ namespace DataAccessLayer.Migrations
                     b.Property<long>("AgencyId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("ApprovedBy")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1101,8 +1095,6 @@ namespace DataAccessLayer.Migrations
                     b.HasKey("RequestProductId");
 
                     b.HasIndex("AgencyId");
-
-                    b.HasIndex("ApprovedBy");
 
                     b.ToTable("RequestProduct", (string)null);
                 });
@@ -1217,6 +1209,43 @@ namespace DataAccessLayer.Migrations
                     b.HasKey("TaxId");
 
                     b.ToTable("TaxConfig", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.TemporaryStockExport", b =>
+                {
+                    b.Property<long>("TemporaryStockExportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("TemporaryStockExportId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsReverted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("WarehouseId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("TemporaryStockExportId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("TemporaryStockExport", (string)null);
                 });
 
             modelBuilder.Entity("BusinessObject.Models.User", b =>
@@ -2062,14 +2091,7 @@ namespace DataAccessLayer.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("BusinessObject.Models.Employee", "ApprovedByEmployee")
-                        .WithMany()
-                        .HasForeignKey("ApprovedBy")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.Navigation("AgencyAccount");
-
-                    b.Navigation("ApprovedByEmployee");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.RequestProductDetail", b =>
@@ -2108,6 +2130,33 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.TemporaryStockExport", b =>
+                {
+                    b.HasOne("BusinessObject.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.UserRole", b =>

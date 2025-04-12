@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class NewDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -501,7 +501,6 @@ namespace DataAccessLayer.Migrations
                     RequestProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RequestCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AgencyId = table.Column<long>(type: "bigint", nullable: false),
-                    ApprovedBy = table.Column<long>(type: "bigint", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     RequestStatus = table.Column<string>(type: "nvarchar(max)", nullable: false)
@@ -514,12 +513,6 @@ namespace DataAccessLayer.Migrations
                         column: x => x.AgencyId,
                         principalTable: "AgencyAccount",
                         principalColumn: "AgencyId");
-                    table.ForeignKey(
-                        name: "FK_RequestProduct_Employee_ApprovedBy",
-                        column: x => x.ApprovedBy,
-                        principalTable: "Employee",
-                        principalColumn: "EmployeeId",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -583,7 +576,6 @@ namespace DataAccessLayer.Migrations
                     OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
                     OrderCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    SalesAgentId = table.Column<long>(type: "bigint", nullable: false),
                     Discount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     FinalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -756,6 +748,42 @@ namespace DataAccessLayer.Migrations
                         column: x => x.OrderId,
                         principalTable: "Order",
                         principalColumn: "OrderId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TemporaryStockExport",
+                columns: table => new
+                {
+                    TemporaryStockExportId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false),
+                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
+                    Quantity = table.Column<long>(type: "bigint", nullable: false),
+                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsReverted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TemporaryStockExport", x => x.TemporaryStockExportId);
+                    table.ForeignKey(
+                        name: "FK_TemporaryStockExport_Order_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Order",
+                        principalColumn: "OrderId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TemporaryStockExport_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TemporaryStockExport_Warehouse_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouse",
+                        principalColumn: "WarehouseId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1454,11 +1482,6 @@ namespace DataAccessLayer.Migrations
                 column: "AgencyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RequestProduct_ApprovedBy",
-                table: "RequestProduct",
-                column: "ApprovedBy");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_RequestProductDetail_ProductId",
                 table: "RequestProductDetail",
                 column: "ProductId");
@@ -1478,6 +1501,21 @@ namespace DataAccessLayer.Migrations
                 name: "IX_RolePermission_RoleId",
                 table: "RolePermission",
                 column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TemporaryStockExport_OrderId",
+                table: "TemporaryStockExport",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TemporaryStockExport_ProductId",
+                table: "TemporaryStockExport",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TemporaryStockExport_WarehouseId",
+                table: "TemporaryStockExport",
+                column: "WarehouseId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRole_RoleId",
@@ -1639,6 +1677,9 @@ namespace DataAccessLayer.Migrations
                 name: "RolePermission");
 
             migrationBuilder.DropTable(
+                name: "TemporaryStockExport");
+
+            migrationBuilder.DropTable(
                 name: "UserRole");
 
             migrationBuilder.DropTable(
@@ -1699,6 +1740,9 @@ namespace DataAccessLayer.Migrations
                 name: "TaxConfig");
 
             migrationBuilder.DropTable(
+                name: "Employee");
+
+            migrationBuilder.DropTable(
                 name: "Order");
 
             migrationBuilder.DropTable(
@@ -1709,9 +1753,6 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "AgencyAccount");
-
-            migrationBuilder.DropTable(
-                name: "Employee");
 
             migrationBuilder.DropTable(
                 name: "Address");
