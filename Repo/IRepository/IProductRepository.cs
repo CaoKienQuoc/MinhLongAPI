@@ -22,5 +22,7 @@ namespace Repo.IRepository
         Task<List<Product>> GetProductsByCategoryIdAsync(long categoryId);
 
         Task<Product?> GetProductByIdAsync(long productId);
+
+        Task SaveChangesAsync();
     }
 }

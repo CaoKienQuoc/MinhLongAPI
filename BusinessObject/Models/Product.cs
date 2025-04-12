@@ -49,7 +49,7 @@ namespace BusinessObject.Models
         // Mối quan hệ: Một Product có nhiều Image
         public List<Image> Images { get; set; } = new List<Image>();
 
-        public int AvailableStock { get; set; }
+        public long AvailableStock { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? Price { get; set; }

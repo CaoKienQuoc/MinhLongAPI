@@ -24,12 +24,6 @@ namespace Repo.Repository
             return await _context.Products.CountAsync();
         }
 
-        /*public async Task<List<Product>> GetProductsAsync()
-        {
-            return await _context.Products
-                .Include(p => p.Images) // ✅ Bao gồm hình ảnh
-                .ToListAsync();
-        }*/
 
         public async Task<List<Product>> GetProductsAsync()
         {
@@ -55,14 +49,6 @@ namespace Repo.Repository
         }
 
 
-        /*public async Task<Product> GetByIdAsync(long id)
-        {
-            return await _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.TaxConfig)
-                .Include(p => p.Images) // ✅ Bao gồm hình ảnh
-                .FirstOrDefaultAsync(p => p.ProductId == id);
-        }*/
 
 
         public async Task<Product> AddAsync(Product product)
@@ -84,15 +70,6 @@ namespace Repo.Repository
             _context.Images.RemoveRange(existingImages);
             await _context.SaveChangesAsync();
 
-            /*// ✅ Thêm hình ảnh mới
-            foreach (var imageUrl in imageUrls)
-            {
-                _context.Images.Add(new Image
-                {
-                    ProductId = product.ProductId,
-                    ImageUrl = imageUrl
-                });
-            }*/
             await _context.SaveChangesAsync();
 
             return product;
@@ -125,6 +102,11 @@ namespace Repo.Repository
                 .Include(p => p.TaxConfig)
                 .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.ProductId == productId);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
 
     }

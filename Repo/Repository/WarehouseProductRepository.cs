@@ -37,6 +37,13 @@ namespace Repo.Repository
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<long> GetTotalAvailableStockByProductIdAsync(long productId)
+        {
+            return await _context.WarehouseProduct
+                .Where(wp => wp.ProductId == productId && wp.Status == "ACTIVE")
+                .SumAsync(wp => (long?)wp.Quantity) ?? 0;
+        }
     }
 
 }

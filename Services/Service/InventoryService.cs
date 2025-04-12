@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.Models;
 using Repo.IRepository;
+using Repo.Repository;
 using Services.IService;
 
 namespace Services.Service
@@ -13,13 +14,16 @@ namespace Services.Service
     {
         private readonly IWarehouseProductRepository _warehouseProductRepo;
         private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
+        private readonly IProductRepository _productRepository;
 
         public InventoryService(
             IWarehouseProductRepository warehouseProductRepo,
-            ITemporaryWarehouseExportRepository tempExportRepo)
+            ITemporaryWarehouseExportRepository tempExportRepo,
+            IProductRepository productRepository)
         {
             _warehouseProductRepo = warehouseProductRepo;
             _tempExportRepo = tempExportRepo;
+            _productRepository = productRepository;
         }
 
         public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
@@ -60,6 +64,18 @@ namespace Services.Service
 
             await _warehouseProductRepo.SaveChangesAsync();
             await _tempExportRepo.SaveChangesAsync();
+
+            // ✅ Tính lại tổng tồn kho thực tế từ bảng WarehouseProduct
+            var totalAvailable = await _warehouseProductRepo.GetTotalAvailableStockByProductIdAsync(productId);
+
+            // ✅ Cập nhật lại Product.AvailableStock
+            var product = await _productRepository.GetByIdAsync(productId);
+            if (product != null)
+            {
+                product.AvailableStock = (int)totalAvailable; // hoặc đổi AvailableStock sang long để tránh ép kiểu
+                await _productRepository.UpdateAsync(product);
+                await _productRepository.SaveChangesAsync();
+            }
         }
     }
 

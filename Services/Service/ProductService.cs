@@ -15,34 +15,32 @@ namespace Services.Service
     {
         private readonly IProductRepository _repository;
         private readonly IImageService _imageService;
+        private readonly IWarehouseProductRepository _warehouseProductRepository;
 
-        public ProductService(IProductRepository repository, IImageService imageService)
+        public ProductService(IProductRepository repository, IImageService imageService, IWarehouseProductRepository warehouseProductRepository)
         {
             _repository = repository;
             _imageService = imageService;
+            _warehouseProductRepository = warehouseProductRepository;
         }
 
         public async Task<List<ProductResponseDto>> GetProductsAsync()
         {
             var products = await _repository.GetProductsAsync();
-            /*return products.Select(p => new ProductResponseDto
+
+            /*foreach (var product in products)
             {
-                ProductId = p.ProductId,
-                ProductCode = p.ProductCode,
-                ProductName = p.ProductName,
-                Unit = p.Unit,
-                DefaultExpiration = p.DefaultExpiration,
-                CategoryId = p.CategoryId,
-                Description = p.Description,
-                TaxId = p.TaxId,
-                CreatedBy = p.CreatedBy,
-                CreatedDate = p.CreatedDate,
-                UpdatedBy = p.UpdatedBy,
-                UpdatedDate = p.UpdatedDate,
-                AvailableStock = p.AvailableStock,
-                Price = p.Price,
-                Images = p.Images.Select(img => img.ImageUrl).ToList()
-            }).ToList();*/
+                var totalAvailable = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(product.ProductId);
+
+                if (product.AvailableStock != totalAvailable)
+                {
+                    product.AvailableStock = totalAvailable;
+                    await _repository.UpdateAsync(product);
+                }
+            }
+
+            // ✅ Lưu 1 lần duy nhất (tối ưu performance)
+            await _repository.SaveChangesAsync();*/
 
             return products.Select(p => new ProductResponseDto
             {
@@ -57,20 +55,30 @@ namespace Services.Service
                 CreatedBy = p.CreatedBy,
                 CreatedByName = p.Creator?.Employee?.FullName ?? p.Creator?.Username ?? "Unknown",
                 CreatedDate = p.CreatedDate,
-                UpdatedBy = p.UpdatedBy, // OK nếu DTO là Guid?
+                UpdatedBy = p.UpdatedBy,
                 UpdatedByName = p.Updater?.Employee?.FullName ?? p.Updater?.Username ?? "Chưa cập nhật",
                 UpdatedDate = p.UpdatedDate,
                 AvailableStock = p.AvailableStock,
                 Price = p.Price,
                 Images = p.Images.Select(img => img.ImageUrl).ToList()
             }).ToList();
-
         }
 
         public async Task<ProductResponseDto> GetProductByIdAsync(long id)
         {
             var product = await _repository.GetByIdAsync(id);
             if (product == null) return null;
+
+            /*// ✅ Tính tồn kho theo tất cả kho
+            var totalAvailable = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(product.ProductId);
+
+            // ✅ Cập nhật vào Product.AvailableStock nếu khác giá trị hiện tại
+            if (product.AvailableStock != totalAvailable)
+            {
+                product.AvailableStock = totalAvailable;
+                await _repository.UpdateAsync(product);            // cập nhật entity
+                await _repository.SaveChangesAsync();              // lưu thay đổi vào DB
+            }*/
 
             return new ProductResponseDto
             {
@@ -88,33 +96,14 @@ namespace Services.Service
                 UpdatedBy = product.UpdatedBy,
                 UpdatedByName = product.Updater?.Employee?.FullName ?? product.Updater?.Username ?? "Chưa cập nhật",
                 UpdatedDate = product.UpdatedDate,
-                AvailableStock = product.AvailableStock,
+                AvailableStock = product.AvailableStock, // ✅ tồn kho thực tế
                 Price = product.Price,
                 // ✅ Lấy danh sách URL hình ảnh từ database
                 Images = product.Images.Select(img => img.ImageUrl).ToList()
             };
         }
 
-        /*public async Task<ProductResponseDto> CreateProductAsync(ProductDto productDto, Guid userId)
-        {
-            var product = new Product
-            {
-                ProductCode = productDto.ProductCode,
-                ProductName = productDto.ProductName,
-                Unit = productDto.Unit,
-                DefaultExpiration = productDto.DefaultExpiration,
-                CategoryId = productDto.CategoryId,
-                Description = productDto.Description,
-                TaxId = productDto.TaxId,
-                CreatedBy = userId,
-                CreatedDate = DateTime.Now
-            };
-
-            // ✅ Lưu sản phẩm và danh sách hình ảnh
-            var createdProduct = await _repository.AddAsync(product, productDto.Images);
-
-            return await GetProductByIdAsync(createdProduct.ProductId);
-        }*/
+        
 
         public async Task<ProductResponseDto> CreateProductAsync(ProductDto model, Guid userId)
         {
@@ -128,8 +117,7 @@ namespace Services.Service
                 Description = model.Description,
                 TaxId = model.TaxId,
                 CreatedBy = userId,
-                CreatedDate = DateTime.Now
-            };
+                CreatedDate = DateTime.Now            };
 
             // ✅ Tạo product trước
             var createdProduct = await _repository.AddAsync(product); // KHÔNG truyền imageUrls
@@ -147,27 +135,6 @@ namespace Services.Service
 
             return await GetProductByIdAsync(createdProduct.ProductId);
         }
-
-
-
-
-        /*public async Task<ProductResponseDto> UpdateProductAsync(long id, UpdateProductDTO productDto, Guid userId)
-        {
-            var product = await _repository.GetByIdAsync(id);
-            if (product == null) return null;
-
-            product.ProductName = productDto.ProductName;
-            product.Unit = productDto.Unit;
-            product.DefaultExpiration = productDto.DefaultExpiration;
-            product.CategoryId = productDto.CategoryId;
-            product.Description = productDto.Description;
-            product.TaxId = productDto.TaxId;
-            product.UpdatedBy = userId;
-            product.UpdatedDate = DateTime.Now;
-
-            var updatedProduct = await _repository.UpdateAsync(product);
-            return await GetProductByIdAsync(updatedProduct.ProductId);
-        }*/
 
         public async Task<ProductResponseDto> UpdateProductAsync(long id, UpdateProductDTO productDto, Guid userId)
         {
