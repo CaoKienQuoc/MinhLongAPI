@@ -24,6 +24,7 @@ namespace Repo.IRepository
 
         Task<List<WarehouseTransferRequest>> GetByDestinationWarehouseAsync(long destinationWarehouseId);
 
+        Task AddRangeAsync(IEnumerable<WarehouseTransferRequest> transfers);
 
 
     }

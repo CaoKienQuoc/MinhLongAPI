@@ -177,8 +177,6 @@ namespace Services.Service
                     RequestedByAgencyId = requestBy,  // ✅ Lấy AgencyId từ RequestProduct
                     RequestDate = requestProduct.CreatedAt,
                     Status = "Processing",
-                    //ApprovedBy = approvedBy,  // ✅ Lấy EmployeeId từ User đăng nhập
-                    ApprovedDate = DateTime.Now,
                     Note = "Order approved and exported",
                     OrderId = order.OrderId,
                     RequestExportCode = requestExportCode,

@@ -146,10 +146,9 @@ namespace Services.Service
                 {
                     if (groupedExportDetails.TryGetValue(wr.ProductId, out int approvedQty))
                     {
-                        wr.QuantityApproved = approvedQty;
                         wr.RemainingQuantity = wr.QuantityRequested - approvedQty;
                         wr.Status = "APPROVED";
-                        wr.ApprovedBy = approvedBy;
+                        wr.RequestedBy = approvedBy;
                     }
                 }
 
@@ -352,7 +351,7 @@ namespace Services.Service
                 ExportType = "Xuất Điều Phối",
                 WarehouseId = sourceWarehouseId,
                 RequestExportId = transferRequest.RequestExportId,
-                OrderCode = transferRequest.OrderCode,
+                //OrderCode = transferRequest.OrderCode,
                 AgencyName = null,
                 Status = "Pending",
                 ExportWarehouseReceiptDetails = new List<ExportWarehouseReceiptDetail>(),
@@ -403,7 +402,7 @@ namespace Services.Service
 
             // ✅ Cập nhật trạng thái điều phối
             transferRequest.Status = "Approved";
-            transferRequest.ApprovedBy = userId;
+            //transferRequest.ApprovedBy = userId;
             await _transferRequestRepo.UpdateAsync(transferRequest);
 
             // ✅ Duyệt luôn phiếu

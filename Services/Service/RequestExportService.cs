@@ -128,16 +128,6 @@ namespace Services.Service
                             .OrderBy(re => statusPriority.ContainsKey(re.Status) ? statusPriority[re.Status] : 99)
                             .ToList();
                         break;
-                    case "approveddate_desc":
-                        requestExports = requestExports
-                            .OrderByDescending(re => re.ApprovedDate ?? DateTime.MinValue)
-                            .ToList();
-                        break;
-                    case "approveddate_asc":
-                        requestExports = requestExports
-                            .OrderBy(re => re.ApprovedDate ?? DateTime.MinValue)
-                            .ToList();
-                        break;
                     case "requestdate_desc":
                         requestExports = requestExports
                             .OrderByDescending(re => re.RequestDate)
@@ -158,9 +148,7 @@ namespace Services.Service
                 OrderId = re.OrderId,
                 AgencyName = re.RequestedByAgency?.AgencyName ?? "Unknown",
                 RequestDate = re.RequestDate,
-                ApprovedByName = re.ApprovedByEmployee?.FullName ?? "Chưa duyệt",
                 Status = re.Status,
-                ApprovedDate = re.ApprovedDate,
                 Note = re.Note,
                 RequestExportCode = re.RequestExportCode,
 
@@ -203,9 +191,7 @@ namespace Services.Service
                 OrderId = requestExport.OrderId,
                 AgencyName = requestExport.RequestedByAgency?.AgencyName ?? "Unknown", // 👈 Gán tên đại lý
                 RequestDate = requestExport.RequestDate,
-                ApprovedByName = requestExport.ApprovedByEmployee?.FullName ?? "Chưa duyệt",
                 Status = requestExport.Status,
-                ApprovedDate = requestExport.ApprovedDate,
                 Note = requestExport.Note,
                 RequestExportCode = requestExport.RequestExportCode,
                 RequestExportDetails = requestExport.RequestExportDetails != null

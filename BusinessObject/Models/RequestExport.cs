@@ -21,11 +21,6 @@ namespace BusinessObject.Models
 
         public string Status { get; set; } // Pending, Approved, Rejected
 
-        [ForeignKey("ApprovedBy")]
-        public long? ApprovedBy { get; set; }
-        public Employee ApprovedByEmployee { get; set; }
-
-        public DateTime? ApprovedDate { get; set; }
         public string Note { get; set; }
 
         // ✅ Định nghĩa quan hệ 1-1 với Order

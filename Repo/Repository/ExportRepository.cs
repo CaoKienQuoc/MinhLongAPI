@@ -25,7 +25,6 @@ namespace Repo.Repository
                 .Include(re => re.RequestExportDetails)
                     .ThenInclude(red => red.Product)
                 .Include(re => re.RequestedByAgency)             // Lấy tên Agency
-                .Include(re => re.ApprovedByEmployee)            // 👈 Lấy Employee để truy cập FullName
                 .ToListAsync();
         }
 

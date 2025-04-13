@@ -48,7 +48,7 @@ namespace Repo.Repository
             if (request == null) return false;
 
             request.SourceWarehouseId = sourceWarehouseId;
-            request.PlannedBy = plannerId;
+            //request.PlannedBy = plannerId;
             request.Status = "Planned";
 
             _context.WarehouseTransferRequests.Update(request);
@@ -76,8 +76,6 @@ namespace Repo.Repository
             return await _context.WarehouseTransferRequests
                 .Include(x => x.TransferProducts)
                     .ThenInclude(tp => tp.Product) // 🔍 Cần dòng này
-                .Include(x => x.ExportWarehouseReceipts.Where(e => e.Status == "Approved"))
-                    .ThenInclude(e => e.ExportWarehouseReceiptDetails)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
@@ -116,6 +114,10 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task AddRangeAsync(IEnumerable<WarehouseTransferRequest> transfers)
+        {
+            await _context.WarehouseTransferRequests.AddRangeAsync(transfers);
+        }
 
     }
 }

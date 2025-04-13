@@ -124,9 +124,6 @@ namespace Repo.Repository
                     .ThenInclude(re => re.Order)
                         .ThenInclude(o => o.RequestProduct)
                             .ThenInclude(rp => rp.AgencyAccount)
-                .Include(x => x.User)
-                    .ThenInclude(u => u.Employee)
-                .Where(x => x.WarehouseId == warehouseId)
                 .ToListAsync();
         }
 

@@ -616,6 +616,26 @@ namespace DataAccessLayer
                 .HasForeignKey(wre => wre.WarehouseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<WarehouseRequestExport>()
+                .HasOne(w => w.RequestedByUser)
+                .WithMany()
+                .HasForeignKey(w => w.RequestedBy)
+                .OnDelete(DeleteBehavior.Restrict); // ❌ Không cho cascade delete
+
+            modelBuilder.Entity<WarehouseRequestExport>()
+    .HasOne(wre => wre.RequestedByAgency)
+    .WithMany()
+    .HasForeignKey(wre => wre.RequestedByAgencyId)
+    .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarehouseRequestExport>()
+                .HasOne(wre => wre.Product)
+                .WithMany()
+                .HasForeignKey(wre => wre.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+
             // 🔹 Thiết lập mối quan hệ 1-1 giữa Order và RequestProduct
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.RequestProduct)
@@ -663,12 +683,6 @@ namespace DataAccessLayer
                 .HasForeignKey<RequestExport>(re => re.OrderId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // ✅ Quan hệ N-1 giữa Employee và RequestExport
-            modelBuilder.Entity<RequestExport>()
-                .HasOne(re => re.ApprovedByEmployee)
-                .WithMany()
-                .HasForeignKey(re => re.ApprovedBy)
-                .OnDelete(DeleteBehavior.SetNull);
 
             // ✅ Quan hệ N-1 giữa AgencyAccount và RequestExport
             modelBuilder.Entity<RequestExport>()

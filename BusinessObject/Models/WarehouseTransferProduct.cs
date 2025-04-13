@@ -13,27 +13,19 @@ namespace BusinessObject.Models
         [Key]
         public long Id { get; set; }
 
-        // 🔗 FK đến yêu cầu điều phối
-        [Required]
         public long WarehouseTransferRequestId { get; set; }
-
         [ForeignKey("WarehouseTransferRequestId")]
-        public WarehouseTransferRequest TransferRequest { get; set; }
+        public WarehouseTransferRequest WarehouseTransferRequest { get; set; }
 
-        // 🔗 FK đến sản phẩm
-        [Required]
         public long ProductId { get; set; }
-
         [ForeignKey("ProductId")]
         public Product Product { get; set; }
 
-        [Required]
+        public long? BatchId { get; set; } // Optional nếu có tracking batch
+        [ForeignKey("BatchId")]
+        public Batch? Batch { get; set; }
+
         public int Quantity { get; set; }
-
-        [MaxLength(50)]
-        public string? Unit { get; set; }
-
-        [MaxLength(255)]
-        public string? Notes { get; set; }
     }
+
 }

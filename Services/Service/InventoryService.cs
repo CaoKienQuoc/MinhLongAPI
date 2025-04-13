@@ -35,6 +35,12 @@ namespace Services.Service
 
             var stockList = await _warehouseProductRepo.GetAvailableWarehouseProductsAsync(productId);
 
+            // ✅ Sắp xếp theo hạn sử dụng (cũ nhất trước)
+            stockList = stockList
+                .Where(x => x.ExpirationDate != null) // nếu có thể null
+                .OrderBy(x => x.ExpirationDate)
+                .ToList();
+
             foreach (var stock in stockList)
             {
                 if (remainingQuantity <= 0)

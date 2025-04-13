@@ -13,6 +13,7 @@ namespace BusinessObject.Models
         [Key]
         public int WarehouseRequestExportId { get; set; }
 
+
         [ForeignKey("RequestExport")]
         public int RequestExportId { get; set; }
         public RequestExport RequestExport { get; set; }
@@ -26,14 +27,21 @@ namespace BusinessObject.Models
         public Product Product { get; set; }
 
         public int QuantityRequested { get; set; }
-        public int? QuantityApproved { get; set; }
         public int RemainingQuantity { get; set; }
 
-        [ForeignKey("User")]
-        public Guid? ApprovedBy { get; set; } // UserId của người duyệt
-        public User User { get; set; }
+        public string Status { get; set; } = "Pending";
 
-        public string Status { get; set; } // PENDING, APPROVED, REJECTED
+        [Required]
+        public Guid RequestedBy { get; set; }
+        [ForeignKey("RequestedBy")]
+        public User RequestedByUser { get; set; }
+
+        // ✅ Đại lý yêu cầu (gắn với Order/RequestExport)
+        [Required]
+        public long RequestedByAgencyId { get; set; }
+        [ForeignKey("RequestedByAgencyId")]
+        public AgencyAccount RequestedByAgency { get; set; }
+
     }
 
 }

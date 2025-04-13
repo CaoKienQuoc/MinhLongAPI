@@ -17,7 +17,7 @@ namespace MLHR.Controllers
 
         // ✅ API GET: Lấy danh sách RequestExport kèm RequestExportDetail
         [HttpGet("all")]
-        [Authorize(Roles = "3, 4")]
+        //[Authorize(Roles = "3, 4")]
         public async Task<IActionResult> GetAllRequestExports([FromQuery] string? sortBy)
         {
             var requestExports = await _requestExportService.GetAllRequestExportsAsync(sortBy);
@@ -25,7 +25,7 @@ namespace MLHR.Controllers
         }
 
         [HttpGet("{requestExportId}")]
-        [Authorize(Roles = "3, 4")]
+        //[Authorize(Roles = "3, 4")]
         public async Task<IActionResult> GetRequestExportByID(int requestExportId)
         {
             var requestExports = await _requestExportService.GetRequestExportByIdAsync(requestExportId);

@@ -33,7 +33,7 @@ namespace Services.Service
 
             var request = new WarehouseTransferRequest
             {
-                RequestCode = $"REQ-{DateTime.UtcNow.Ticks}",
+                //RequestCode = $"REQ-{DateTime.UtcNow.Ticks}",
                 SourceWarehouseId = dto.SourceWarehouseId,
                 DestinationWarehouseId = dto.DestinationWarehouseId,
                 ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
@@ -42,34 +42,44 @@ namespace Services.Service
                 Status = "Pending",
                 Notes = dto.Notes,
                 RequestExportId = dto.RequestExportId,
-                OrderCode = orderCode,
+                //OrderCode = orderCode,
                 TransferProducts = dto.Products.Select(p => new WarehouseTransferProduct
                 {
                     ProductId = p.ProductId,
                     Quantity = p.Quantity,
-                    Unit = p.Unit,
-                    Notes = p.Notes
+                    //Unit = p.Unit,
+                    //Notes = p.Notes
                 }).ToList()
             };
 
             var created = await _repository.CreateAsync(request);
 
+            // ✅ Gửi thông báo cho KHO (GroupId = 6)
+            var notification = new
+            {
+                title = "Kho Tổng", // Tiêu đề thông báo
+                message = $"🚚 Yêu cầu điều phối xuất kho mới!", // Nội dung thông báo
+                //payload = created.RequestCode // hoặc thêm thông tin khác nếu cần
+            };
+
+            await _hub.Clients.Group("6")
+                .SendAsync("ReceiveNotification", notification);
             return new WarehouseTransferRequestDetailDto
             {
                 Id = created.Id,
-                RequestCode = created.RequestCode,
+                //RequestCode = created.RequestCode,
                 SourceWarehouseId = created.SourceWarehouseId,
                 DestinationWarehouseId = created.DestinationWarehouseId,
                 RequestDate = created.RequestDate,
                 Status = created.Status,
                 Notes = created.Notes,
-                OrderCode = created.OrderCode,
+                //OrderCode = created.OrderCode,
                 Products = created.TransferProducts.Select(tp => new WarehouseTransferProductDto
                 {
                     ProductId = tp.ProductId,
                     Quantity = tp.Quantity,
-                    Unit = tp.Unit,
-                    Notes = tp.Notes
+                    //Unit = tp.Unit,
+                    //Notes = tp.Notes
                 }).ToList()
             };
         }
@@ -80,19 +90,19 @@ namespace Services.Service
             return list.Select(r => new WarehouseTransferRequestDetailDto
             {
                 Id = r.Id,
-                RequestCode = r.RequestCode,
+                //RequestCode = r.RequestCode,
                 SourceWarehouseId = r.SourceWarehouseId,
                 DestinationWarehouseId = r.DestinationWarehouseId,
                 RequestDate = r.RequestDate,
                 Status = r.Status,
                 Notes = r.Notes,
-                OrderCode = r.OrderCode,
+                //OrderCode = r.OrderCode,
                 Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
                 {
                     ProductId = p.ProductId,
                     Quantity = p.Quantity,
-                    Unit = p.Unit,
-                    Notes = p.Notes
+                    //Unit = p.Unit,
+                    //Notes = p.Notes
                 }).ToList()
             }).ToList();
         }
@@ -105,19 +115,19 @@ namespace Services.Service
             return new WarehouseTransferRequestDetailDto
             {
                 Id = r.Id,
-                RequestCode = r.RequestCode,
+                //RequestCode = r.RequestCode,
                 SourceWarehouseId = r.SourceWarehouseId,
                 DestinationWarehouseId = r.DestinationWarehouseId,
                 RequestDate = r.RequestDate,
                 Status = r.Status,
                 Notes = r.Notes,
-                OrderCode = r.OrderCode,
+                //OrderCode = r.OrderCode,
                 Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
                 {
                     ProductId = p.ProductId,
                     Quantity = p.Quantity,
-                    Unit = p.Unit,
-                    Notes = p.Notes
+                    //Unit = p.Unit,
+                    //Notes = p.Notes
                 }).ToList()
             };
         }
@@ -134,19 +144,19 @@ namespace Services.Service
             return list.Select(r => new WarehouseTransferRequestDetailDto
             {
                 Id = r.Id,
-                RequestCode = r.RequestCode,
+                //RequestCode = r.RequestCode,
                 SourceWarehouseId = r.SourceWarehouseId,
                 DestinationWarehouseId = r.DestinationWarehouseId,
                 RequestDate = r.RequestDate,
                 Status = r.Status,
                 Notes = r.Notes,
-                OrderCode = r.OrderCode,
+                //OrderCode = r.OrderCode,
                 Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
                 {
                     ProductId = p.ProductId,
                     Quantity = p.Quantity,
-                    Unit = p.Unit,
-                    Notes = p.Notes
+                   //Unit = p.Unit,
+                    //Notes = p.Notes
                 }).ToList()
             }).ToList();
         }
@@ -163,7 +173,7 @@ namespace Services.Service
 
             var transferRequest = new WarehouseTransferRequest
             {
-                RequestCode = $"REQ-{DateTime.UtcNow.Ticks}",
+                //RequestCode = $"REQ-{DateTime.UtcNow.Ticks}",
                 DestinationWarehouseId = dto.DestinationWarehouseId,
                 ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
                 RequestedBy = requestedBy,
@@ -171,13 +181,13 @@ namespace Services.Service
                 Status = "Pending",
                 Notes = dto.Notes,
                 RequestExportId = dto.RequestExportId,
-                OrderCode = requestExport.Order?.OrderCode,
+                //OrderCode = requestExport.Order?.OrderCode,
                 TransferProducts = remainingItems.Select(x => new WarehouseTransferProduct
                 {
                     ProductId = x.ProductId,
                     Quantity = x.RemainingQuantity,
-                    Unit = x.Product.Unit, // có thể cải tiến sau
-                    Notes = "Auto from remaining quantity"
+                    //Unit = x.Product.Unit, // có thể cải tiến sau
+                    //Notes = "Auto from remaining quantity"
                 }).ToList()
             };
 
@@ -188,7 +198,7 @@ namespace Services.Service
             {
                 title = "Kho Tổng", // Tiêu đề thông báo
                 message = $"🚚 Yêu cầu điều phối xuất kho mới!", // Nội dung thông báo
-                payload = created.RequestCode // hoặc thêm thông tin khác nếu cần
+                //payload = created.RequestCode // hoặc thêm thông tin khác nếu cần
             };
 
             await _hub.Clients.Group("6")
@@ -197,19 +207,19 @@ namespace Services.Service
             return new WarehouseTransferRequestDetailDto
             {
                 Id = created.Id,
-                RequestCode = created.RequestCode,
+                //RequestCode = created.RequestCode,
                 SourceWarehouseId = created.SourceWarehouseId,
                 DestinationWarehouseId = created.DestinationWarehouseId,
                 RequestDate = created.RequestDate,
                 Status = created.Status,
                 Notes = created.Notes,
-                OrderCode = created.OrderCode,
+                //OrderCode = created.OrderCode,
                 Products = created.TransferProducts.Select(tp => new WarehouseTransferProductDto
                 {
                     ProductId = tp.ProductId,
                     Quantity = tp.Quantity,
-                    Unit = tp.Unit,
-                    Notes = tp.Notes
+                    //Unit = tp.Unit,
+                   //Notes = tp.Notes
                 }).ToList()
             };
         }
@@ -231,21 +241,21 @@ namespace Services.Service
             return new WarehouseTransferRequestDetailDto
             {
                 Id = r.Id,
-                RequestCode = r.RequestCode,
+                //RequestCode = r.RequestCode,
                 SourceWarehouseId = r.SourceWarehouseId,
                 SourceWarehouseName = r.SourceWarehouse?.WarehouseName, 
                 DestinationWarehouseId = r.DestinationWarehouseId,
                 DestinationWarehouseName = r.DestinationWarehouse?.WarehouseName, 
                 RequestDate = r.RequestDate,
-                OrderCode = r.OrderCode,
+                //OrderCode = r.OrderCode,
                 Status = r.Status,
                 Notes = r.Notes,
                 Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
                 {
                     ProductId = p.ProductId,
                     Quantity = p.Quantity,
-                    Unit = p.Unit,
-                    Notes = p.Notes
+                    //Unit = p.Unit,
+                    //Notes = p.Notes
                 }).ToList()
             };
         }

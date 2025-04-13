@@ -18,6 +18,7 @@ namespace Services.Service
         private readonly IWarehouseRequestExportRepository _repository;
         private readonly IExportRepository _requestExportRepository;
         private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
+        private readonly IWarehouseTransferRepository _transferRepo;
         private readonly MinhLongDbContext _context;
         private readonly IHubContext<NotificationHub> _hub;
 
@@ -25,13 +26,15 @@ namespace Services.Service
             , MinhLongDbContext context
             , IHubContext<NotificationHub> hub
             , IExportRepository requestExportRepository
-            , ITemporaryWarehouseExportRepository tempExportRepo)
+            , ITemporaryWarehouseExportRepository tempExportRepo
+            ,IWarehouseTransferRepository transferRepo)
         {
             _repository = repository;
             _context = context;
             _hub = hub;
             _requestExportRepository = requestExportRepository;
             _tempExportRepo = tempExportRepo;
+            _transferRepo = transferRepo;
         }
 
         /* public async Task<WarehouseRequestExport> CreateWarehouseRequestExportAsync(long warehouseId, int requestExportId)
@@ -58,83 +61,105 @@ namespace Services.Service
              return result;
          }*/
 
-        /// <summary>
-        /// Tạo WarehouseRequestExport dựa trên RequestExport + bản ghi tạm (TemporaryStockExport).
-        /// </summary>
-        /// <param name="warehouseId">Kho đích do Sale gán</param>
-        /// <param name="requestExportId">Id của RequestExport</param>
-        public async Task<List<WarehouseRequestExport>> CreateWarehouseRequestExportAsync(long warehouseId, int requestExportId)
+
+        public async Task<List<WarehouseRequestExport>> CreateWarehouseRequestExportAsync(int requestExportId, Guid currentUserId)
         {
-            // 1) Lấy RequestExport
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId);
             if (requestExport == null || requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
-            {
-                return null; // hoặc throw new Exception tùy ý
-            }
+                throw new InvalidOperationException("RequestExport not found or invalid.");
 
-            // 2) Kiểm tra trạng thái
             if (requestExport.Status == "Requested" || requestExport.Status == "Approved")
-            {
-                throw new InvalidOperationException("This request has already been assigned to a warehouse.");
-            }
+                throw new InvalidOperationException("This request has already been assigned.");
 
-            // 3) Lấy OrderId (nếu RequestExport chứa OrderId)
-            //    Hoặc bạn lấy từ requestExport.Order (nếu đã Include)...
             var orderId = requestExport.OrderId;
-            if (orderId == null)
-            {
-                throw new InvalidOperationException("RequestExport doesn't have associated OrderId.");
-            }
+            if (orderId == Guid.Empty)
+                throw new InvalidOperationException("OrderId is missing.");
 
-            // 4) Lấy danh sách bản ghi tạm (TemporaryStockExport) theo OrderId
-            //    Từ đó bạn sẽ lấy WarehouseId, ProductId, Quantity...
             var tempStockExports = await _tempExportRepo.GetByOrderIdAsync(orderId);
             if (tempStockExports == null || !tempStockExports.Any())
-            {
-                throw new InvalidOperationException("No temporary stock exports found for this order.");
-            }
+                throw new InvalidOperationException("No temporary stock exports found.");
 
-            // 5) Tạo danh sách WarehouseRequestExport dựa trên các bản ghi tạm
-            //    => Kho có thể là warehouseId từ tham số (nếu muốn gán cho 1 kho đích),
-            //       Hoặc lấy WarehouseId từ chính `tempStockExports` nếu bạn muốn
+            var groupedByProduct = tempStockExports
+                .GroupBy(t => t.ProductId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.GroupBy(x => x.WarehouseId)
+                          .ToDictionary(y => y.Key, y => y.Sum(z => z.Quantity))
+                );
+
             var warehouseRequestExports = new List<WarehouseRequestExport>();
-            foreach (var tmp in tempStockExports)
+            var warehouseTransfers = new List<WarehouseTransferRequest>();
+
+            foreach (var productGroup in groupedByProduct)
             {
-                var wre = new WarehouseRequestExport
+                var productId = productGroup.Key;
+                var warehouseQuantities = productGroup.Value;
+
+                var mainWarehouse = warehouseQuantities
+                    .OrderByDescending(x => x.Value)
+                    .First().Key;
+
+                var mainQuantity = warehouseQuantities[mainWarehouse];
+
+                warehouseRequestExports.Add(new WarehouseRequestExport
                 {
-                    WarehouseId = tmp.WarehouseId,       // => Nếu bạn muốn lấy kho từ TSE
-                                                         //WarehouseId = warehouseId,         // => Nếu bạn muốn ép tất cả về kho do Sale chọn
+                    WarehouseId = mainWarehouse,
                     RequestExportId = requestExportId,
-                    ProductId = tmp.ProductId,
-                    QuantityRequested = (int)tmp.Quantity,
-                    RemainingQuantity = (int)tmp.Quantity,
-                    Status = "PENDING"
-                };
-                warehouseRequestExports.Add(wre);
+                    ProductId = productId,
+                    QuantityRequested = (int)mainQuantity,
+                    RemainingQuantity = (int)mainQuantity,
+                    Status = "Pending",
+                    RequestedBy = currentUserId,
+                    RequestedByAgencyId = requestExport.RequestedByAgencyId
+                });
+
+                foreach (var kvp in warehouseQuantities.Where(x => x.Key != mainWarehouse))
+                {
+                    var sourceWarehouseId = kvp.Key;
+                    var quantity = kvp.Value;
+
+                    var transfer = new WarehouseTransferRequest
+                    {
+                        SourceWarehouseId = sourceWarehouseId,
+                        DestinationWarehouseId = mainWarehouse,
+                        RequestedBy = currentUserId,
+                        RequestDate = DateTime.UtcNow,
+                        RequestExportId = requestExportId,
+                        Status = "Pending",
+                        Notes = $"Transfer ProductId {productId} - Qty: {quantity}",
+                        TransferProducts = new List<WarehouseTransferProduct>
+                {
+                    new WarehouseTransferProduct
+                    {
+                        ProductId = productId,
+                        Quantity = (int)quantity,
+                        BatchId = tempStockExports
+                            .FirstOrDefault(t => t.ProductId == productId && t.WarehouseId == sourceWarehouseId)?.BatchId
+                    }
+                }
+                    };
+
+                    warehouseTransfers.Add(transfer);
+                }
             }
 
-            // 6) Lưu danh sách WarehouseRequestExport vào DB qua repository
             await _repository.AddRangeAsync(warehouseRequestExports);
+            await _transferRepo.AddRangeAsync(warehouseTransfers);
 
-            // 7) Cập nhật trạng thái RequestExport => "Requested"
             requestExport.Status = "Requested";
             await _requestExportRepository.UpdateRequestExportAsync(requestExport);
-
-            // Lưu lại thay đổi
             await _requestExportRepository.SaveChangesAsync();
 
-            // 8) Gửi thông báo SignalR cho nhóm "3"
-            var notification = new
+            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
             {
                 title = "Kho",
                 message = "🚚 Yêu cầu xuất kho mới!",
                 payload = $"RequestExportCode: {requestExport.RequestExportCode}"
-            };
-            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", notification);
+            });
 
-            // 9) Trả về danh sách WarehouseRequestExport vừa tạo
             return warehouseRequestExports;
         }
+
 
 
         public async Task<List<WarehouseRequestExportDtoResponse>> GetByWarehouseIdAsync(long warehouseId, string? sortBy = null)
@@ -172,7 +197,7 @@ namespace Services.Service
                 QuantityRequested = x.QuantityRequested,
                 RemainingQuantity = x.RemainingQuantity,
                 Status = x.Status,
-                ApprovedByFullName = x.User?.Employee?.FullName
+                /*ApprovedByFullName = x.User?.Employee?.FullName*/
             }).ToList();
         }
 
@@ -194,7 +219,7 @@ namespace Services.Service
                 QuantityRequested = x.QuantityRequested,
                 RemainingQuantity = x.RemainingQuantity,
                 Status = x.Status,
-                ApprovedByFullName = x.User?.Employee?.FullName
+                //ApprovedByFullName = x.User?.Employee?.FullName
             };
         }
 
@@ -208,8 +233,7 @@ namespace Services.Service
             if (request.QuantityRequested < quantityApproved)
                 throw new InvalidOperationException("Approved quantity cannot exceed requested quantity");
 
-            request.QuantityApproved = quantityApproved;
-            request.ApprovedBy = approvedBy;
+            request.RequestedBy = approvedBy;
             request.Status = "APPROVED";
             request.RemainingQuantity = request.QuantityRequested - quantityApproved;
 
@@ -253,8 +277,7 @@ namespace Services.Service
                 if (approvedQuantity > request.QuantityRequested)
                     throw new InvalidOperationException($"Approved quantity for product {request.ProductId} exceeds requested quantity");
 
-                request.QuantityApproved = approvedQuantity;
-                request.ApprovedBy = approvedBy;
+                request.RequestedBy = approvedBy;
                 request.Status = "APPROVED";
                 request.RemainingQuantity = request.QuantityRequested - approvedQuantity;
             }
@@ -263,6 +286,6 @@ namespace Services.Service
             return true;
         }
 
-        
+
     }
 }

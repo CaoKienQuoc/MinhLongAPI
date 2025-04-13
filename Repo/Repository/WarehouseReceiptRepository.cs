@@ -189,8 +189,6 @@ namespace Repo.Repository
         {
             return await _context.WarehouseTransferRequests
                 .Include(r => r.TransferProducts)
-                .Include(r => r.ExportWarehouseReceipts)
-                    .ThenInclude(e => e.ExportWarehouseReceiptDetails)
                 .FirstOrDefaultAsync(r => r.Id == transferRequestId);
         }
 
