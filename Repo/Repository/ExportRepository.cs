@@ -60,6 +60,20 @@ namespace Repo.Repository
             _context.RequestExports.Update(export);
             await Task.CompletedTask; // hoặc bạn có thể không await gì vì update chỉ cập nhật tracking entity
         }
+
+
+        public async Task<RequestExport> GetRequestExportByIdAsync(int requestExportId)
+        {
+            return await _context.RequestExports
+                .Include(re => re.RequestExportDetails)
+                .FirstOrDefaultAsync(re => re.RequestExportId == requestExportId);
+        }
+
+        public async Task UpdateRequestExportAsync(RequestExport requestExport)
+        {
+            _context.RequestExports.Update(requestExport);
+            await Task.CompletedTask;
+        }
     }
 
 

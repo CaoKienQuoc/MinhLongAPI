@@ -52,6 +52,14 @@ namespace Repo.Repository
             // Không cần await ở đây nếu không có xử lý bất đồng bộ riêng
             await Task.CompletedTask;
         }
+
+        public async Task<List<TemporaryStockExport>> GetByOrderIdsAsync(List<Guid> orderIds)
+        {
+            return await _context.TemporaryStockExports
+                .Where(t => orderIds.Contains(t.OrderId))
+                .ToListAsync();
+        }
+
     }
 
 }

@@ -59,6 +59,7 @@ namespace BusinessObject.Models
 
         // Navigation Property: Một Product có thể có nhiều ProductDetail
         public ICollection<RequestProductDetail> RequestProductDetail { get; set; }
+        public virtual ICollection<TemporaryStockExport> TemporaryStockExports { get; set; } = new List<TemporaryStockExport>();
 
     }
 }

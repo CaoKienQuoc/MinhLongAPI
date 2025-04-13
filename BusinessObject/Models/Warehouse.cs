@@ -36,6 +36,8 @@ namespace BusinessObject.Models
         public ICollection<WarehouseLedger> WarehouseLedgers { get; set; } // Một kho có nhiều bản ghi nhật ký kho
 
         public string Note { get; set; } // Ghi chú cho kho
+
+        public virtual ICollection<TemporaryStockExport> TemporaryStockExports { get; set; } = new List<TemporaryStockExport>();
     }
 
 }

@@ -16,38 +16,124 @@ namespace Services.Service
     public class WarehouseRequestExportService : IWarehouseRequestExportService
     {
         private readonly IWarehouseRequestExportRepository _repository;
+        private readonly IExportRepository _requestExportRepository;
+        private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
         private readonly MinhLongDbContext _context;
         private readonly IHubContext<NotificationHub> _hub;
 
-        public WarehouseRequestExportService(IWarehouseRequestExportRepository repository, MinhLongDbContext context, IHubContext<NotificationHub> hub)
+        public WarehouseRequestExportService(IWarehouseRequestExportRepository repository
+            , MinhLongDbContext context
+            , IHubContext<NotificationHub> hub
+            , IExportRepository requestExportRepository
+            , ITemporaryWarehouseExportRepository tempExportRepo)
         {
             _repository = repository;
             _context = context;
             _hub = hub;
+            _requestExportRepository = requestExportRepository;
+            _tempExportRepo = tempExportRepo;
         }
 
-        public async Task<WarehouseRequestExport> CreateWarehouseRequestExportAsync(long warehouseId, int requestExportId)
+        /* public async Task<WarehouseRequestExport> CreateWarehouseRequestExportAsync(long warehouseId, int requestExportId)
+         {
+             var result = await _repository.CreateWarehouseRequestExportAsync(warehouseId, requestExportId);
+
+             *//*// ✅ Gửi thông báo cho KHO (GroupId = 3)
+             await _hub.Clients.Group("3").SendAsync("ReceiveNotification",
+                 $"🚚 Yêu cầu xuất kho mới!");*//*
+
+             // ✅ Gửi thông báo cho KHO (GroupId = 3)
+             var notification = new
+             {
+                 title = "Kho", // Tiêu đề thông báo
+                 message = $"🚚 Yêu cầu xuất kho mới!", // Nội dung thông báo
+                 payload = "Yêu cầu xuất kho", // Bạn có thể thay bằng thông tin chi tiết nếu muốn
+             };
+
+             // Gửi thông báo qua SignalR
+             await _hub.Clients.Group("3")
+                 .SendAsync("ReceiveNotification", notification);
+
+
+             return result;
+         }*/
+
+        /// <summary>
+        /// Tạo WarehouseRequestExport dựa trên RequestExport + bản ghi tạm (TemporaryStockExport).
+        /// </summary>
+        /// <param name="warehouseId">Kho đích do Sale gán</param>
+        /// <param name="requestExportId">Id của RequestExport</param>
+        public async Task<List<WarehouseRequestExport>> CreateWarehouseRequestExportAsync(long warehouseId, int requestExportId)
         {
-            var result = await _repository.CreateWarehouseRequestExportAsync(warehouseId, requestExportId);
+            // 1) Lấy RequestExport
+            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId);
+            if (requestExport == null || requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
+            {
+                return null; // hoặc throw new Exception tùy ý
+            }
 
-            /*// ✅ Gửi thông báo cho KHO (GroupId = 3)
-            await _hub.Clients.Group("3").SendAsync("ReceiveNotification",
-                $"🚚 Yêu cầu xuất kho mới!");*/
+            // 2) Kiểm tra trạng thái
+            if (requestExport.Status == "Requested" || requestExport.Status == "Approved")
+            {
+                throw new InvalidOperationException("This request has already been assigned to a warehouse.");
+            }
 
-            // ✅ Gửi thông báo cho KHO (GroupId = 3)
+            // 3) Lấy OrderId (nếu RequestExport chứa OrderId)
+            //    Hoặc bạn lấy từ requestExport.Order (nếu đã Include)...
+            var orderId = requestExport.OrderId;
+            if (orderId == null)
+            {
+                throw new InvalidOperationException("RequestExport doesn't have associated OrderId.");
+            }
+
+            // 4) Lấy danh sách bản ghi tạm (TemporaryStockExport) theo OrderId
+            //    Từ đó bạn sẽ lấy WarehouseId, ProductId, Quantity...
+            var tempStockExports = await _tempExportRepo.GetByOrderIdAsync(orderId);
+            if (tempStockExports == null || !tempStockExports.Any())
+            {
+                throw new InvalidOperationException("No temporary stock exports found for this order.");
+            }
+
+            // 5) Tạo danh sách WarehouseRequestExport dựa trên các bản ghi tạm
+            //    => Kho có thể là warehouseId từ tham số (nếu muốn gán cho 1 kho đích),
+            //       Hoặc lấy WarehouseId từ chính `tempStockExports` nếu bạn muốn
+            var warehouseRequestExports = new List<WarehouseRequestExport>();
+            foreach (var tmp in tempStockExports)
+            {
+                var wre = new WarehouseRequestExport
+                {
+                    WarehouseId = tmp.WarehouseId,       // => Nếu bạn muốn lấy kho từ TSE
+                                                         //WarehouseId = warehouseId,         // => Nếu bạn muốn ép tất cả về kho do Sale chọn
+                    RequestExportId = requestExportId,
+                    ProductId = tmp.ProductId,
+                    QuantityRequested = (int)tmp.Quantity,
+                    RemainingQuantity = (int)tmp.Quantity,
+                    Status = "PENDING"
+                };
+                warehouseRequestExports.Add(wre);
+            }
+
+            // 6) Lưu danh sách WarehouseRequestExport vào DB qua repository
+            await _repository.AddRangeAsync(warehouseRequestExports);
+
+            // 7) Cập nhật trạng thái RequestExport => "Requested"
+            requestExport.Status = "Requested";
+            await _requestExportRepository.UpdateRequestExportAsync(requestExport);
+
+            // Lưu lại thay đổi
+            await _requestExportRepository.SaveChangesAsync();
+
+            // 8) Gửi thông báo SignalR cho nhóm "3"
             var notification = new
             {
-                title = "Kho", // Tiêu đề thông báo
-                message = $"🚚 Yêu cầu xuất kho mới!", // Nội dung thông báo
-                payload = "Yêu cầu xuất kho", // Bạn có thể thay bằng thông tin chi tiết nếu muốn
+                title = "Kho",
+                message = "🚚 Yêu cầu xuất kho mới!",
+                payload = $"RequestExportCode: {requestExport.RequestExportCode}"
             };
+            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", notification);
 
-            // Gửi thông báo qua SignalR
-            await _hub.Clients.Group("3")
-                .SendAsync("ReceiveNotification", notification);
-
-
-            return result;
+            // 9) Trả về danh sách WarehouseRequestExport vừa tạo
+            return warehouseRequestExports;
         }
 
 

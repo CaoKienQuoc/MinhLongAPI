@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250412163636_NewDb")]
-    partial class NewDb
+    [Migration("20250413164624_UpdateDB")]
+    partial class UpdateDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -795,8 +795,8 @@ namespace DataAccessLayer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ProductId"));
 
-                    b.Property<int>("AvailableStock")
-                        .HasColumnType("int");
+                    b.Property<long>("AvailableStock")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("CategoryId")
                         .HasColumnType("bigint");
@@ -1218,6 +1218,9 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("TemporaryStockExportId"));
+
+                    b.Property<long>("BatchId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -2135,21 +2138,21 @@ namespace DataAccessLayer.Migrations
             modelBuilder.Entity("BusinessObject.Models.TemporaryStockExport", b =>
                 {
                     b.HasOne("BusinessObject.Models.Order", "Order")
-                        .WithMany()
+                        .WithMany("TemporaryStockExports")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BusinessObject.Models.Product", "Product")
-                        .WithMany()
+                        .WithMany("TemporaryStockExports")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("BusinessObject.Models.Warehouse", "Warehouse")
-                        .WithMany()
+                        .WithMany("TemporaryStockExports")
                         .HasForeignKey("WarehouseId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
@@ -2424,6 +2427,8 @@ namespace DataAccessLayer.Migrations
 
                     b.Navigation("RequestExport")
                         .IsRequired();
+
+                    b.Navigation("TemporaryStockExports");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.PaymentHistory", b =>
@@ -2445,6 +2450,8 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("RequestProductDetail");
+
+                    b.Navigation("TemporaryStockExports");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.Province", b =>
@@ -2499,6 +2506,8 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("ExportTransactions");
 
                     b.Navigation("ExportWarehouseReceipts");
+
+                    b.Navigation("TemporaryStockExports");
 
                     b.Navigation("WarehouseLedgers");
 

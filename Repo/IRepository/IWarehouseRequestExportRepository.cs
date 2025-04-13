@@ -20,6 +20,7 @@ namespace Repo.IRepository
         Task UpdateManyAsync(List<WarehouseRequestExport> requests);
         Task<List<WarehouseRequestExport>> GetByWarehouseIdAsync(long warehouseId);
 
+        Task AddRangeAsync(IEnumerable<WarehouseRequestExport> entities);
 
     }
 }

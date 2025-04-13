@@ -137,6 +137,11 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
-        
+        public async Task AddRangeAsync(IEnumerable<WarehouseRequestExport> entities)
+        {
+            await _context.WarehouseRequestExports.AddRangeAsync(entities);
+            // Không SaveChanges ở đây, vì ta muốn gọi SaveChanges ở service/tầng trên
+        }
+
     }
 }

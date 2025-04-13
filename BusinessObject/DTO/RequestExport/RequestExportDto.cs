@@ -21,5 +21,7 @@ namespace BusinessObject.DTO.RequestExport
         public DateTime? ApprovedDate { get; set; }
         public string Note { get; set; }
         public List<RequestExportDetailDto> RequestExportDetails { get; set; }
+        // ✅ Thêm dòng này:
+        public List<TemporaryStockExportDto> TemporaryStockExportDetails { get; set; }
     }
 }

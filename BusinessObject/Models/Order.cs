@@ -31,5 +31,8 @@ namespace BusinessObject.Models
         /*public ICollection<RequestExport> RequestExports { get; set; }*/
         // ✅ Quan hệ 1-1: Một Order chỉ có một RequestExport
         public virtual RequestExport RequestExport { get; set; }
+
+        // 1-n: Một Order có thể có nhiều bản ghi tạm TemporaryStockExport
+        public virtual ICollection<TemporaryStockExport> TemporaryStockExports { get; set; } = new List<TemporaryStockExport>();
     }
 }

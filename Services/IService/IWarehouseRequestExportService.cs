@@ -10,7 +10,8 @@ namespace Services.IService
 {
     public interface IWarehouseRequestExportService
     {
-        Task<WarehouseRequestExport> CreateWarehouseRequestExportAsync(long warehouseId, int requestExportId);
+        /*Task<WarehouseRequestExport> CreateWarehouseRequestExportAsync(long warehouseId, int requestExportId);*/
+        Task<List<WarehouseRequestExport>> CreateWarehouseRequestExportAsync(long warehouseId, int requestExportId);
 
         Task<bool> ApproveRequestAsync(int warehouseRequestExportId, int quantityApproved, Guid approvedBy);
 

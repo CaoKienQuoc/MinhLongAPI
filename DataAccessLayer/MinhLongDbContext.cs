@@ -37,7 +37,7 @@ namespace DataAccessLayer
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                 .AddJsonFile("appsettings.json")
                 .Build();
-            optionsBuilder.UseSqlServer(configuration.GetConnectionString("ServerConnection"));
+            optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
         }
 
 
@@ -710,23 +710,30 @@ namespace DataAccessLayer
                 .HasForeignKey(w => w.DestinationWarehouseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // 🔑 Khóa chính
             modelBuilder.Entity<TemporaryStockExport>()
-       .HasKey(t => t.TemporaryStockExportId);
+                .HasKey(t => t.TemporaryStockExportId);
 
+            // 🔗 Mối quan hệ với Product (1 Product - nhiều TemporaryStockExport)
             modelBuilder.Entity<TemporaryStockExport>()
                 .HasOne(t => t.Product)
-                .WithMany()
-                .HasForeignKey(t => t.ProductId);
+                .WithMany(p => p.TemporaryStockExports)
+                .HasForeignKey(t => t.ProductId)
+                .OnDelete(DeleteBehavior.Restrict); // tránh xóa cascade nếu không mong muốn
 
+            // 🔗 Mối quan hệ với Warehouse (1 Warehouse - nhiều TemporaryStockExport)
             modelBuilder.Entity<TemporaryStockExport>()
                 .HasOne(t => t.Warehouse)
-                .WithMany()
-                .HasForeignKey(t => t.WarehouseId);
+                .WithMany(w => w.TemporaryStockExports)
+                .HasForeignKey(t => t.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // 🔗 Mối quan hệ với Order (1 Order - nhiều TemporaryStockExport)
             modelBuilder.Entity<TemporaryStockExport>()
                 .HasOne(t => t.Order)
-                .WithMany()
-                .HasForeignKey(t => t.OrderId);
+                .WithMany(o => o.TemporaryStockExports)
+                .HasForeignKey(t => t.OrderId)
+                .OnDelete(DeleteBehavior.Cascade); // có thể để Cascade nếu muốn xóa Order thì xóa luôn tạm
 
         }
     }
