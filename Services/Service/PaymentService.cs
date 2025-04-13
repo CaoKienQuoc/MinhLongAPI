@@ -63,80 +63,7 @@ namespace Services.Service
             _client = client;
             _repository = repository;
         }
-        /*public async Task<CreatePaymentResult> SendPaymentLink(Guid accountId, CreatePaymentRequest request)
-        {
-            try
-            {
-                var order = await _orderRepository.SingleOrDefaultAsync(p => p.OrderId == request.OrderId);
-                if (order == null)
-                    throw new Exception("Không tìm thấy đơn hàng.");
-
-                Guid orderId = order.OrderId;
-
-                //string returnUrl = $"https://minhlong.mlhr.org/api/Payment/Payment-confirm?accountId={accountId}&amount={request.Price}&appointment={request.AgencyId}";
-                string returnUrl = $"https://minhlong.mlhr.org/api/Payment/Payment-confirm" +
-                                    $"?status=PAID" +
-                                    $"&code=00" +
-                                    $"&desc=Thanh+toan+thanh+cong" +
-                                    $"&accountId={accountId}" +
-                                    $"&amount={request.Price}" +
-                                    $"&orderid={request.OrderId}";
-
-
-                //var account = await _unitOfWork.GetRepository<Domain.Entitities.Account>().SingleOrDefaultAsync(predicate: p => p.Id == accountId);
-                var agency = await _userRepository.GetAgencyAccountByUserIdAsync(accountId);
-                if (agency == null) throw new Exception("account not null!!");
-
-
-                int amount = (int)request.Price;
-                string currentTimeString = DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
-                long orderCode = long.Parse(currentTimeString.Substring(currentTimeString.Length - 6));
-                var description = request.Description;
-                string? clientId = _configuration["PayOS:ClientId"];
-                var apikey = _configuration["PayOS:APIKey"];
-                var checksumkey = _configuration["PayOS:ChecksumKey"];
-                var returnurlfail = _configuration["PayOS:ReturnUrlFail"];
-
-                PayOS pos = new PayOS(clientId, apikey, checksumkey);
-
-                var signatureData = new Dictionary<string, object>
-                 {
-                     { "amount", amount },
-                     { "cancelUrl", returnurlfail},
-                     { "description", description },
-                     { "expiredAt", DateTimeOffset.Now.ToUnixTimeSeconds() },
-                     { "orderCode", orderCode },
-                     { "returnUrl", returnUrl}
-                 };
-                var sortedSignatureData = new SortedDictionary<string, object>(signatureData);
-                var dataForSignature = string.Join("&", sortedSignatureData.Select(p => $"{p.Key}={p.Value}"));
-                var signature = ComputeHmacSha256(dataForSignature, checksumkey);
-                DateTimeOffset expiredAt = DateTimeOffset.Now.AddMinutes(10);
-
-                var paymentData = new PaymentData(
-                    orderCode: orderCode,
-                    amount: amount,
-                    description: description,
-                    items: new List<ItemData>(), // Provide a list of items if needed
-                    cancelUrl: returnurlfail,
-                    returnUrl: returnUrl,
-                    signature: signature,
-                    buyerName: agency.AgencyName,
-                    expiredAt: (int)DateTimeOffset.Now.AddMinutes(10).ToUnixTimeSeconds()
-                );
-
-                paymentData.items.Add(new ItemData(agency.AgencyName, 1, amount));
-                var createPaymentResult = await pos.createPaymentLink(paymentData);
-                string url = createPaymentResult.checkoutUrl;
-                return createPaymentResult;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                throw;
-            }
-        }*/
-
+    
         public async Task<CreatePaymentResult> SendPaymentLink(Guid accountId, CreatePaymentRequest request)
         {
             try
@@ -165,8 +92,8 @@ namespace Services.Service
                 var returnurlfail = _configuration["PayOS:ReturnUrlFail"];
 
                 // ✅ returnUrl chỉ cần OrderId
-                //string returnUrl = $"http://localhost:5214/api/Payment/paymentconfirm" +
-                string returnUrl = $"https://minhlong.mlhr.org/api/Payment/paymentconfirm" +
+                string returnUrl = $"http://localhost:5214/api/Payment/paymentconfirm" +
+                //string returnUrl = $"https://minhlong.mlhr.org/api/Payment/paymentconfirm" +
                    $"?orderCode={orderCode}" +
                    $"&accountId={accountId}" +
                    $"&amount={request.Price}"+
