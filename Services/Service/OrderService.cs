@@ -22,6 +22,7 @@ namespace Services.Service
         private readonly IUserRepository _userRepository;
         private readonly IHubContext<NotificationHub> _hub;
         private readonly IPaymentHistoryRepository _paymentHistoryRepository;
+        private readonly IInventoryService _iventoryService;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -29,7 +30,8 @@ namespace Services.Service
             IRequestProductRepository requestProductRepository,
             IUserRepository agencyRepository,
             IHubContext<NotificationHub> hub,
-            IPaymentHistoryRepository paymentHistoryRepository)
+            IPaymentHistoryRepository paymentHistoryRepository
+            ,IInventoryService inventoryService)
         {
             _orderRepository = orderRepository;
             _exportRepository = exportRepository;
@@ -37,6 +39,7 @@ namespace Services.Service
             _userRepository = agencyRepository;
             _hub = hub;
             _paymentHistoryRepository = paymentHistoryRepository;
+            _iventoryService = inventoryService;
         }
         public async Task<List<OrderDto>> GetAllOrdersAsync()
         {
@@ -241,6 +244,8 @@ namespace Services.Service
                 order.Status = "Canceled";
                 await _orderRepository.UpdateOrderAsync(order);
                await _orderRepository.SaveAsync();
+
+                await _iventoryService.RollbackStockForCancelledOrderAsync(orderId);
             }
             return true;
         }

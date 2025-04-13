@@ -12,6 +12,8 @@ namespace Repo.IRepository
         Task<List<WarehouseProduct>> GetAvailableWarehouseProductsAsync(long productId);
         Task UpdateAsync(WarehouseProduct entity);
         Task SaveChangesAsync();
+        // Thêm khai báo phương thức mới:
+        Task<WarehouseProduct> GetByProductWarehouseBatchAsync(long productId, long warehouseId, long batchId);
 
         Task<long> GetTotalAvailableStockByProductIdAsync(long productId);
     }

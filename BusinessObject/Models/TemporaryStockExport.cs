@@ -16,6 +16,9 @@ namespace BusinessObject.Models
         public long WarehouseId { get; set; }
         public Warehouse Warehouse { get; set; }
 
+        // ✅ Thêm BatchId:
+        public long BatchId { get; set; }
+
         public long Quantity { get; set; }
 
         public Guid OrderId { get; set; }
@@ -25,5 +28,6 @@ namespace BusinessObject.Models
 
         public bool IsReverted { get; set; } = false;
     }
+
 
 }

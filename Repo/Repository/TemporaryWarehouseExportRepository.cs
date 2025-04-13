@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.Models;
 using DataAccessLayer;
+using Microsoft.EntityFrameworkCore;
 using Repo.IRepository;
 
 namespace Repo.Repository
@@ -26,6 +27,22 @@ namespace Repo.Repository
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<TemporaryStockExport>> GetByOrderIdAsync(Guid orderId)
+        {
+            return await _context.TemporaryStockExports
+                                 .Where(t => t.OrderId == orderId)
+                                 .ToListAsync();
+        }
+
+        public async Task DeleteByOrderIdAsync(Guid orderId)
+        {
+            var exports = await GetByOrderIdAsync(orderId);
+            if (exports != null && exports.Any())
+            {
+                _context.TemporaryStockExports.RemoveRange(exports);
+            }
         }
     }
 

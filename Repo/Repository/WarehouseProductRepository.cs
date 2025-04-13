@@ -22,11 +22,15 @@ namespace Repo.Repository
         public async Task<List<WarehouseProduct>> GetAvailableWarehouseProductsAsync(long productId)
         {
             return await _context.WarehouseProduct
-                .Where(wp => wp.ProductId == productId && wp.Quantity > 0 && wp.Status == "Active")
-                .OrderBy(wp => wp.WarehouseId)
-                .ThenBy(wp => wp.BatchId)
+                .Where(wp => wp.ProductId == productId
+                             && wp.Quantity > 0
+                             && wp.Status == "ACTIVE"
+                             && wp.ExpirationDate > DateTime.UtcNow) // chỉ lấy hàng còn hạn
+                .OrderBy(wp => wp.ExpirationDate) // ví dụ ưu tiên lô hết hạn sớm
+                .ThenBy(wp => wp.WarehouseId)     // rồi mới đến ID kho
                 .ToListAsync();
         }
+
 
         public async Task UpdateAsync(WarehouseProduct entity)
         {
@@ -44,6 +48,16 @@ namespace Repo.Repository
                 .Where(wp => wp.ProductId == productId && wp.Status == "ACTIVE")
                 .SumAsync(wp => (long?)wp.Quantity) ?? 0;
         }
-    }
 
-}
+        public async Task<WarehouseProduct> GetByProductWarehouseBatchAsync(long productId, long warehouseId, long batchId)
+        {
+            return await _context.WarehouseProduct
+                .FirstOrDefaultAsync(wp => wp.ProductId == productId
+                                        && wp.WarehouseId == warehouseId
+                                        && wp.BatchId == batchId);
+
+        }
+
+        
+    }
+    }

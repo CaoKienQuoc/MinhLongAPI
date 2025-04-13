@@ -11,5 +11,11 @@ namespace Repo.IRepository
     {
         Task AddAsync(TemporaryStockExport entity);
         Task SaveChangesAsync();
+
+        // Thêm khai báo phương thức GetByOrderIdAsync:
+        Task<List<TemporaryStockExport>> GetByOrderIdAsync(Guid orderId);
+
+        // Nếu cần: phương thức xoá các bản ghi theo OrderId
+        Task DeleteByOrderIdAsync(Guid orderId);
     }
 }

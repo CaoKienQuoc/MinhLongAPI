@@ -15,15 +15,18 @@ namespace Services.Service
         private readonly IWarehouseProductRepository _warehouseProductRepo;
         private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
         private readonly IProductRepository _productRepository;
+        private readonly IOrderRepository _orderRepository;
 
         public InventoryService(
             IWarehouseProductRepository warehouseProductRepo,
             ITemporaryWarehouseExportRepository tempExportRepo,
-            IProductRepository productRepository)
+            IProductRepository productRepository,
+            IOrderRepository orderRepository)
         {
             _warehouseProductRepo = warehouseProductRepo;
             _tempExportRepo = tempExportRepo;
             _productRepository = productRepository;
+            _orderRepository = orderRepository;
         }
 
         public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
@@ -47,6 +50,7 @@ namespace Services.Service
                 {
                     ProductId = productId,
                     WarehouseId = stock.WarehouseId,
+                    BatchId = stock.BatchId,
                     Quantity = deductQuantity,
                     OrderId = orderId,
                     CreatedAt = DateTime.UtcNow
@@ -77,6 +81,60 @@ namespace Services.Service
                 await _productRepository.SaveChangesAsync();
             }
         }
+
+        public async Task RollbackStockForCancelledOrderAsync(Guid orderId)
+        {
+            // 1. Lấy danh sách các bản ghi từ bảng tạm ứng với OrderId của đơn bị hủy
+            var tempExports = await _tempExportRepo.GetByOrderIdAsync(orderId);
+            if (tempExports == null || !tempExports.Any())
+            {
+                // Không có dữ liệu nào trong bảng tạm => không cần xử lý gì thêm
+                return;
+            }
+
+            // 2. Duyệt từng bản ghi tạm để hoàn tác lại số lượng đã trừ ở từng kho
+            foreach (var tempExport in tempExports)
+            {
+                // Lấy bản ghi WarehouseProduct tương ứng (giả sử có 1 bản ghi duy nhất với ProductId và WarehouseId)
+                var warehouseProduct = await _warehouseProductRepo.GetByProductWarehouseBatchAsync(
+                    tempExport.ProductId, 
+                    tempExport.WarehouseId
+                    ,tempExport.BatchId);
+                if (warehouseProduct != null)
+                {
+                    // Cộng số lượng đã trừ vào kho
+                    warehouseProduct.Quantity += (int)tempExport.Quantity; // Nếu Quantity là int (cần ép kiểu nếu deductQuantity là long)
+                    await _warehouseProductRepo.UpdateAsync(warehouseProduct);
+                }
+            }
+
+            await _warehouseProductRepo.SaveChangesAsync();
+
+            // 3. Xoá các bản ghi trong bảng tạm theo OrderId
+            await _tempExportRepo.DeleteByOrderIdAsync(orderId);
+            await _tempExportRepo.SaveChangesAsync();
+
+            // 4. Cập nhật lại AvailableStock của các sản phẩm liên quan
+            // Lấy danh sách ProductId duy nhất từ các bản ghi tạm vừa xử lý
+            var productIds = tempExports.Select(te => te.ProductId).Distinct();
+
+            foreach (var productId in productIds)
+            {
+                // Tính lại tổng tồn kho của sản phẩm từ bảng WarehouseProduct (chỉ tính các bản ghi có Status = 'ACTIVE')
+                var totalAvailable = await _warehouseProductRepo.GetTotalAvailableStockByProductIdAsync(productId);
+
+                // Lấy thông tin sản phẩm
+                var product = await _productRepository.GetByIdAsync(productId);
+                if (product != null)
+                {
+                    // Cập nhật AvailableStock (ép kiểu nếu cần)
+                    product.AvailableStock = (int)totalAvailable;
+                    await _productRepository.UpdateAsync(product);
+                }
+            }
+            await _productRepository.SaveChangesAsync();
+        }
+
     }
 
 
