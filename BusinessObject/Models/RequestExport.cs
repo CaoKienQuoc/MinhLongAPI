@@ -28,6 +28,10 @@ namespace BusinessObject.Models
         public DateTime? ApprovedDate { get; set; }
         public string Note { get; set; }
 
+        public long WarehouseId { get; set; }
+        public long ProductId { get; set; }
+        public long BatchId { get; set; }
+
         // ✅ Định nghĩa quan hệ 1-1 với Order
         [ForeignKey("Order")]
         public Guid OrderId { get; set; }

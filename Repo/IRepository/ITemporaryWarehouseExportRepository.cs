@@ -17,5 +17,6 @@ namespace Repo.IRepository
 
         // Nếu cần: phương thức xoá các bản ghi theo OrderId
         Task DeleteByOrderIdAsync(Guid orderId);
+        Task UpdateAsync(TemporaryStockExport entity); // <-- Thêm định nghĩa này
     }
 }

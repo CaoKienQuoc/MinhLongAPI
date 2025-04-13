@@ -23,6 +23,7 @@ namespace Services.Service
         private readonly IHubContext<NotificationHub> _hub;
         private readonly IPaymentHistoryRepository _paymentHistoryRepository;
         private readonly IInventoryService _iventoryService;
+        private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -31,7 +32,8 @@ namespace Services.Service
             IUserRepository agencyRepository,
             IHubContext<NotificationHub> hub,
             IPaymentHistoryRepository paymentHistoryRepository
-            ,IInventoryService inventoryService)
+            ,IInventoryService inventoryService,
+            ITemporaryWarehouseExportRepository tempExportRepo)
         {
             _orderRepository = orderRepository;
             _exportRepository = exportRepository;
@@ -40,6 +42,7 @@ namespace Services.Service
             _hub = hub;
             _paymentHistoryRepository = paymentHistoryRepository;
             _iventoryService = inventoryService;
+            _tempExportRepo = tempExportRepo;
         }
         public async Task<List<OrderDto>> GetAllOrdersAsync()
         {
@@ -122,8 +125,6 @@ namespace Services.Service
             };
         }
 
-
-
         public async Task<bool> ProcessPaymentAsync(Guid orderId)
         {
             try
@@ -139,13 +140,8 @@ namespace Services.Service
                 if (requestProduct == null)
                     throw new Exception("RequestProduct not found.");
 
-                // ✅ Lấy `AgencyId` từ RequestProduct (RequestBy)
-                long requestBy = requestProduct.AgencyId; // ✅ Lưu vào RequestExport.RequestedBy
-                /*
-                                // ✅ Lấy UserId từ JWT Token
-                                var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                                if (string.IsNullOrEmpty(userId))
-                                    throw new Exception("User ID not found in token.");*/
+                // ✅ Lấy AgencyId từ RequestProduct (để làm RequestedBy)
+                long requestBy = requestProduct.AgencyId;
 
                 var userId = await _userRepository.GetUserIdByAgencyIdAsync(requestBy);
                 if (userId == null)
@@ -156,38 +152,27 @@ namespace Services.Service
 
                 // ✅ Kiểm tra giới hạn công nợ
                 var creditLimit = await _paymentHistoryRepository.GetCreditLimitByUserIdAsync(userId.Value);
-
-                // Nếu tổng nợ vượt hoặc bằng giới hạn công nợ, từ chối thanh toán
                 if (creditLimit.HasValue && totalDebt >= creditLimit.Value)
                     throw new Exception("Bạn cần thanh toán các công nợ hiện tại trước khi tiếp tục.");
 
-
-
-                // ✅ Lấy EmployeeId từ UserId thông qua UserRepository
-                /*var employeeId = requestProduct.ApprovedBy;
-                if (employeeId == null)
-                    throw new Exception("Employee not found for the logged-in user.");
-
-                long approvedBy = employeeId.Value; // ✅ Lưu vào RequestExport.ApprovedBy*/
-
-                // ✅ Tạo RequestExport từ Order
+                // ✅ Tạo RequestExport từ Order (các trường mới sẽ được cập nhật sau)
                 var requestExport = new RequestExport
                 {
-                    RequestedByAgencyId = requestBy,  // ✅ Lấy AgencyId từ RequestProduct
+                    RequestedByAgencyId = requestBy,      // Lấy từ RequestProduct
                     RequestDate = requestProduct.CreatedAt,
                     Status = "Processing",
-                    //ApprovedBy = approvedBy,  // ✅ Lấy EmployeeId từ User đăng nhập
                     ApprovedDate = DateTime.Now,
                     Note = "Order approved and exported",
                     OrderId = order.OrderId,
                     RequestExportCode = requestExportCode,
+                    // Các trường mới: WarehouseId, ProductId, BatchId chưa có giá trị tại thời điểm này
                 };
 
-                // ✅ Lưu RequestExport vào database
+                // ✅ Lưu RequestExport để lấy RequestExportId
                 await _exportRepository.AddExportAsync(requestExport);
-                await _exportRepository.SaveChangesAsync(); // 🔥 Lưu để lấy RequestExportId
+                await _exportRepository.SaveChangesAsync();
 
-                // ✅ Lấy danh sách OrderDetails từ OrderId và lưu vào RequestExportDetail
+                // ✅ Lấy danh sách RequestExportDetail từ OrderDetails và lưu vào RequestExportDetail
                 var requestExportDetails = order.OrderDetails
                     .Select(od => new RequestExportDetail
                     {
@@ -196,41 +181,66 @@ namespace Services.Service
                         RequestedQuantity = od.Quantity
                     }).ToList();
 
-                // ✅ Lưu danh sách RequestExportDetail vào database
                 await _exportRepository.AddExportDetailsAsync(requestExportDetails);
                 await _exportRepository.SaveChangesAsync();
+
+                // -----------------------------
+                // THÊM PHẦN XỬ LÝ DỮ LIỆU TỪ TemporaryStockExport
+                // -----------------------------
+                // Lấy danh sách các bản ghi tạm dựa trên OrderId
+                var tempExports = await _tempExportRepo.GetByOrderIdAsync(orderId);
+                if (tempExports != null && tempExports.Any())
+                {
+                    // Giả sử trường hợp đơn hàng chỉ sử dụng 1 nguồn từ TemporaryStockExport,
+                    // ta lấy bản ghi đầu tiên để cập nhật các trường mới trong RequestExport.
+                    var firstTemp = tempExports.First();
+
+                    requestExport.WarehouseId = firstTemp.WarehouseId;
+                    requestExport.ProductId = firstTemp.ProductId;
+                    requestExport.BatchId = firstTemp.BatchId;
+
+                    // Cập nhật lại RequestExport với 3 trường mới
+                    await _exportRepository.UpdateExportAsync(requestExport);
+                    await _exportRepository.SaveChangesAsync();
+
+                    // Sau đó, cập nhật tất cả bản ghi tạm có OrderId này, set IsReverted thành true
+                    foreach (var temp in tempExports)
+                    {
+                        temp.IsReverted = true;
+                        await _tempExportRepo.UpdateAsync(temp);
+                    }
+                    await _tempExportRepo.SaveChangesAsync();
+                }
+                // -----------------------------
+                // KẾT THÚC PHẦN XỬ LÝ TẠM
 
                 // ✅ Cập nhật trạng thái đơn hàng
                 order.Status = "Paid";
                 await _orderRepository.UpdateOrderAsync(order);
                 await _orderRepository.SaveChangesAsync();
 
-                /*// Gửi cho Sale
-                await _hub.Clients.Group("4")
-                    .SendAsync("ReceiveNotification", $"🚚 Có Đơn Hàng Mới Được Thanh Toán!");*/
-
+                // Gửi thông báo qua SignalR cho Sales (nếu cần)
                 var notification = new
                 {
-                    title = "Sales", // Tiêu đề thông báo
-                    message = "🚚 Có Đơn Hàng Mới Được Thanh Toán!", // Nội dung thông báo
-                    payload = order.OrderCode // Có thể thêm mã đơn hàng hoặc thông tin chi tiết nếu cần
+                    title = "Sales",
+                    message = "🚚 Có Đơn Hàng Mới Được Thanh Toán!",
+                    payload = order.OrderCode
                 };
 
-                // Gửi thông báo qua SignalR cho Sale
-                await _hub.Clients.Group("4")
-                    .SendAsync("ReceiveNotification", notification);
+                await _hub.Clients.Group("4").SendAsync("ReceiveNotification", notification);
 
                 return true;
             }
-            catch (DbUpdateException ex) // ✅ Bắt lỗi từ Entity Framework
+            catch (DbUpdateException ex)
             {
                 throw new Exception($"Database update failed: {ex.InnerException?.Message}", ex);
             }
-            catch (Exception ex) // ✅ Bắt lỗi tổng quát
+            catch (Exception ex)
             {
                 throw new Exception($"An error occurred: {ex.Message}", ex);
             }
         }
+
 
 
         public async Task<bool> CancelOrderAsync(Guid orderId)

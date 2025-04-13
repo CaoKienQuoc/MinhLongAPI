@@ -54,6 +54,12 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(r => r.RequestExportId == requestId);
              
         }
+
+        public async Task UpdateExportAsync(RequestExport export)
+        {
+            _context.RequestExports.Update(export);
+            await Task.CompletedTask; // hoặc bạn có thể không await gì vì update chỉ cập nhật tracking entity
+        }
     }
 
 

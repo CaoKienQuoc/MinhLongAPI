@@ -92,6 +92,13 @@ namespace Services.Service
                 return;
             }
 
+            // 2. Kiểm tra nếu có bản ghi nào trong TemporaryStockExport có IsReverted == true
+            if (tempExports.Any(te => te.IsReverted))
+            {
+                // Nếu đơn hàng đã được điều phối (IsReverted == true), thông báo lỗi và dừng xử lý rollback
+                throw new InvalidOperationException("Đơn hàng đã được điều phối và không thể huỷ điều phối lại.");
+            }
+
             // 2. Duyệt từng bản ghi tạm để hoàn tác lại số lượng đã trừ ở từng kho
             foreach (var tempExport in tempExports)
             {

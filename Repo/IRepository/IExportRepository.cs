@@ -14,6 +14,7 @@ namespace Repo.IRepository
         Task AddExportDetailsAsync(List<RequestExportDetail> exportDetails);
         Task<RequestExport> GetRequestExportById(int requestId);
         Task SaveChangesAsync();
+        Task UpdateExportAsync(RequestExport export);
     }
 
 }

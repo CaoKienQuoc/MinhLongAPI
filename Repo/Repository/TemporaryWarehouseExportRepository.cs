@@ -44,6 +44,14 @@ namespace Repo.Repository
                 _context.TemporaryStockExports.RemoveRange(exports);
             }
         }
+
+        public async Task UpdateAsync(TemporaryStockExport entity)
+        {
+            // Cập nhật entity trong DbContext
+            _context.TemporaryStockExports.Update(entity);
+            // Không cần await ở đây nếu không có xử lý bất đồng bộ riêng
+            await Task.CompletedTask;
+        }
     }
 
 }
