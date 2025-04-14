@@ -135,6 +135,7 @@ namespace Services.Service
         }
 
 
+
         /*public async Task CreateRequestAsync(RequestProduct requestProduct, List<RequestProductDetail> requestDetails, Guid userId)
         {
             *//*long requestCodeID = Math.Abs(userId.GetHashCode()) % 1000000000;*//*
@@ -570,6 +571,9 @@ namespace Services.Service
                 }
 
                 finalPrice += totalAmount;
+
+                // ✅ Trừ kho và ghi kho tạm
+                await _inventoryService.DeductStockByWarehouseProductAsync(order.OrderId, detail.ProductId, detail.Quantity);
             }
 
             if (orderDetails.Any())
