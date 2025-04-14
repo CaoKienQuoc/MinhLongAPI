@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.Models;
@@ -22,5 +23,7 @@ namespace Repo.IRepository
         Task<List<TemporaryStockExport>> GetByOrderIdsAsync(List<Guid> orderIds);
 
         Task<long> GetReservedStockByProductIdAsync(long productId);
+        Task<List<TemporaryStockExport>> GetByConditionAsync(Expression<Func<TemporaryStockExport, bool>> predicate);
+
     }
 }

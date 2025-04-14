@@ -29,7 +29,7 @@ namespace Services.Service
             _orderRepository = orderRepository;
         }
 
-        public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
+        /*public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
         {
             var remainingQuantity = requiredQuantity;
 
@@ -78,18 +78,70 @@ namespace Services.Service
             // ✅ Tính lại tổng tồn kho thực tế từ bảng WarehouseProduct
             var totalAvailable = await _warehouseProductRepo.GetTotalAvailableStockByProductIdAsync(productId);
 
-            /*// ✅ Cập nhật lại Product.AvailableStock
-            var product = await _productRepository.GetByIdAsync(productId);
-            if (product != null)
+        }*/
+
+        public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
+        {
+            var remainingQuantity = requiredQuantity;
+
+            var stockList = await _warehouseProductRepo.GetAvailableWarehouseProductsAsync(productId);
+
+            stockList = stockList
+                .Where(x => x.ExpirationDate != null)
+                .OrderBy(x => x.ExpirationDate)
+                .ToList();
+
+            foreach (var stock in stockList)
             {
-                product.AvailableStock = (int)totalAvailable; // hoặc đổi AvailableStock sang long để tránh ép kiểu
-                await _productRepository.UpdateAsync(product);
-                await _productRepository.SaveChangesAsync();
-            }*/
+                if (remainingQuantity <= 0)
+                    break;
 
-            //await _productRepository.UpdateAvailableStockOnlyAsync(productId, (int)totalAvailable);
+                var deductQuantity = Math.Min(stock.Quantity, remainingQuantity);
 
+                // Kiểm tra lại tồn kho
+                if (stock.Quantity < deductQuantity)
+                    throw new InvalidOperationException($"Tồn kho không đủ tại kho {stock.WarehouseId}.");
+
+                stock.Quantity -= (int)deductQuantity;
+                await _warehouseProductRepo.UpdateAsync(stock);
+
+                // ✅ Kiểm tra tồn tại bản ghi trong kho tạm
+                var existingTemp = await _tempExportRepo.GetByConditionAsync(x =>
+                    x.OrderId == orderId &&
+                    x.ProductId == productId &&
+                    x.WarehouseId == stock.WarehouseId &&
+                    !x.IsReverted
+                );
+
+                var matchedTemp = existingTemp.FirstOrDefault();
+                if (matchedTemp != null)
+                {
+                    matchedTemp.Quantity += deductQuantity;
+                    await _tempExportRepo.UpdateAsync(matchedTemp);
+                }
+                else
+                {
+                    await _tempExportRepo.AddAsync(new TemporaryStockExport
+                    {
+                        ProductId = productId,
+                        WarehouseId = stock.WarehouseId,
+                        BatchId = stock.BatchId,
+                        Quantity = deductQuantity,
+                        OrderId = orderId,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                remainingQuantity -= deductQuantity;
+            }
+
+            if (remainingQuantity > 0)
+                throw new InvalidOperationException($"Không đủ tồn kho cho sản phẩm {productId}. Thiếu {remainingQuantity}");
+
+            await _warehouseProductRepo.SaveChangesAsync();
+            await _tempExportRepo.SaveChangesAsync();
         }
+
 
         public async Task RollbackStockForCancelledOrderAsync(Guid orderId)
         {

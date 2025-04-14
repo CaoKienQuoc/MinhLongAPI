@@ -398,7 +398,6 @@ namespace Services.Service
             }
         }*/
 
-        // ✅ Phiên bản CreateRequestAsync: chỉ tạo RequestProduct và gọi xử lý Order riêng
         // ✅ Phiên bản hoàn chỉnh: bám theo logic cũ, thay thế ApproveRequestAsync bằng ProcessOrderCreationAsync
         public async Task CreateRequestAsync(RequestProduct requestProduct, List<RequestProductDetail> requestDetails, Guid userId)
         {
@@ -425,6 +424,8 @@ namespace Services.Service
                 }
             }
 
+            var deltaRequests = new List<(long ProductId, long DeltaQuantity)>();
+
             foreach (var newItem in requestDetails)
             {
                 var product = await _productRepository.GetByIdAsync(newItem.ProductId, asNoTracking: true);
@@ -448,6 +449,7 @@ namespace Services.Service
                     if (existingDetail != null)
                     {
                         existingDetail.Quantity += newItem.Quantity;
+                        deltaRequests.Add((newItem.ProductId, newItem.Quantity));
                     }
                     else
                     {
@@ -458,6 +460,7 @@ namespace Services.Service
                             Price = unitPrice,
                             Unit = newItem.Unit
                         });
+                        deltaRequests.Add((newItem.ProductId, newItem.Quantity));
                     }
                 }
                 else
@@ -470,8 +473,11 @@ namespace Services.Service
                         Unit = newItem.Unit,
                         Price = unitPrice
                     });
+                    deltaRequests.Add((newItem.ProductId, newItem.Quantity));
                 }
             }
+
+            Guid requestProductId;
 
             if (existingRequest != null)
             {
@@ -479,8 +485,7 @@ namespace Services.Service
                 await _requestProductRepository.UpdateRequestAsync(existingRequest);
                 await _requestProductRepository.SaveChangesAsync();
 
-                // ✅ Gọi xử lý đơn hàng thay vì duyệt thủ công
-                await ProcessOrderCreationAsync(existingRequest.RequestProductId);
+                requestProductId = existingRequest.RequestProductId;
             }
             else
             {
@@ -492,12 +497,23 @@ namespace Services.Service
                 await _requestProductRepository.AddRequestAsync(requestProduct);
                 await _requestProductRepository.SaveChangesAsync();
 
-                // ✅ Gọi xử lý đơn hàng thay vì duyệt thủ công
-                await ProcessOrderCreationAsync(requestProduct.RequestProductId);
+                requestProductId = requestProduct.RequestProductId;
+            }
+
+            // ✅ Gọi xử lý đơn hàng
+            await ProcessOrderCreationAsync(requestProductId);
+
+            // ✅ Lấy lại đơn hàng để biết OrderId sau khi tạo
+            var order = await _orderRepository.GetOrderByRequestIdAsync(requestProductId);
+
+            // ✅ Chỉ trừ kho đúng phần người dùng vừa thêm (delta), không trừ toàn bộ lại lần nữa
+            foreach (var delta in deltaRequests)
+            {
+                await _inventoryService.DeductStockByWarehouseProductAsync(order.OrderId, delta.ProductId, delta.DeltaQuantity);
             }
         }
 
-        // ✅ Hàm xử lý tạo hoặc cập nhật đơn hàng từ RequestProduct
+        // ✅ Hàm xử lý tạo hoặc cập nhật đơn hàng từ RequestProduct (không xử lý trừ kho)
         public async Task ProcessOrderCreationAsync(Guid requestId)
         {
             string requestOrderCode = await _requestProductRepository.GenerateOrderCodeAsync();
@@ -507,7 +523,7 @@ namespace Services.Service
 
             var existingOrder = await _orderRepository.GetOrderByRequestIdAsync(requestId);
             if (existingOrder != null && existingOrder.Status == "Paid")
-                return; // Đã thanh toán thì không xử lý thêm
+                return;
 
             Order order;
             bool isNewOrder = false;
@@ -571,9 +587,6 @@ namespace Services.Service
                 }
 
                 finalPrice += totalAmount;
-
-                // ✅ Trừ kho và ghi kho tạm
-                await _inventoryService.DeductStockByWarehouseProductAsync(order.OrderId, detail.ProductId, detail.Quantity);
             }
 
             if (orderDetails.Any())
@@ -583,6 +596,7 @@ namespace Services.Service
             await _orderRepository.UpdateOrderAsync(order);
             await _orderRepository.SaveChangesAsync();
         }
+
 
 
         public async Task<bool> CancelRequestAsync(Guid requestId, long approvedBy)

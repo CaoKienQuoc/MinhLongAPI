@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.Models;
@@ -17,6 +18,13 @@ namespace Repo.Repository
         public TemporaryWarehouseExportRepository(MinhLongDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<List<TemporaryStockExport>> GetByConditionAsync(Expression<Func<TemporaryStockExport, bool>> predicate)
+        {
+            return await _context.TemporaryStockExports
+                .Where(predicate)
+                .ToListAsync();
         }
 
         public async Task AddAsync(TemporaryStockExport entity)
