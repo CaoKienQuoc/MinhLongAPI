@@ -241,7 +241,7 @@ namespace Services.Service
             var total = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(productId);
             var reserved = await _temporaryRepository.GetReservedStockByProductIdAsync(productId);
 
-            return (int)Math.Max(total - reserved, 0);
+            return (int)Math.Max(total, 0);
         }
 
 
