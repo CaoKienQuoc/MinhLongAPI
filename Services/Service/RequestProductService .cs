@@ -216,7 +216,7 @@ namespace Services.Service
                 }
             }
 
-            if (existingRequest != null)
+            /*if (existingRequest != null)
             {
                 existingRequest.RequestCode = requestCode; // Gán requestCode cho đơn hàng đã tồn tại
                 await _requestProductRepository.UpdateRequestAsync(existingRequest);
@@ -231,7 +231,33 @@ namespace Services.Service
             requestProduct.RequestCode = requestCode;
             await _requestProductRepository.SaveChangesAsync();
 
-            await ApproveRequestAsync(requestProduct.RequestProductId);
+            await ApproveRequestAsync(requestProduct.RequestProductId);*/
+
+            if (existingRequest != null)
+            {
+                existingRequest.RequestCode = requestCode; // Gán mã nếu muốn update
+                await _requestProductRepository.UpdateRequestAsync(existingRequest);
+                await _requestProductRepository.SaveChangesAsync();
+
+                // ❗ Chỉ gọi Approve nếu RequestProduct chưa có Order
+                var existingOrder = await _orderRepository.GetOrderByRequestIdAsync(existingRequest.RequestProductId);
+                if (existingOrder == null || existingOrder.Status != "WaitPaid")
+                {
+                    await ApproveRequestAsync(existingRequest.RequestProductId);
+                }
+            }
+            else
+            {
+                requestProduct.AgencyId = agencyId.Value;
+                requestProduct.CreatedAt = DateTime.Now;
+                requestProduct.RequestStatus = "Pending";
+
+                await _requestProductRepository.AddRequestAsync(requestProduct);
+                await _requestProductRepository.SaveChangesAsync();
+
+                await ApproveRequestAsync(requestProduct.RequestProductId);
+            }
+
 
             /*// Tạo object notification theo yêu cầu
             var agencyName = await _userRepository.GetAgencyNameByUserIdAsync(userId);
