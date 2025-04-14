@@ -417,7 +417,7 @@ namespace Services.Service
             if (existingRequest != null)
             {
                 existingOrder = await _orderRepository.GetOrderByRequestIdAsync(existingRequest.RequestProductId);
-                if (existingOrder?.Status == "Paid")
+                if (existingOrder?.Status == "Paid" || existingOrder?.Status == "Canceled")
                 {
                     existingRequest = null;
                     existingOrder = null;
