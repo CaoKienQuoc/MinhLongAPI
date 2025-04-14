@@ -173,6 +173,12 @@ namespace Services.Service
             return await GetProductByIdAsync(updatedProduct.ProductId);
         }
 
+        public async Task RecalculateAvailableStockAsync(long productId)
+        {
+            var totalAvailable = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(productId);
+            await _repository.UpdateAvailableStockOnlyAsync(productId, (int)totalAvailable);
+
+        }
 
 
         public async Task<bool> DeleteProductAsync(long id)

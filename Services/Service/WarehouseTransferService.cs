@@ -34,14 +34,14 @@ namespace Services.Service
             var request = new WarehouseTransferRequest
             {
                 //RequestCode = $"REQ-{DateTime.UtcNow.Ticks}",
-                SourceWarehouseId = dto.SourceWarehouseId,
+                //SourceWarehouseId = ourceWarehouseId ?? defaultWarehouseId,
                 DestinationWarehouseId = dto.DestinationWarehouseId,
-                ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
-                RequestedBy = requestedBy,
+                //ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
+                //RequestedBy = requestedBy,
                 RequestDate = DateTime.UtcNow,
                 Status = "Pending",
                 Notes = dto.Notes,
-                RequestExportId = dto.RequestExportId,
+                //RequestExportId = dto.RequestExportId,
                 //OrderCode = orderCode,
                 TransferProducts = dto.Products.Select(p => new WarehouseTransferProduct
                 {
@@ -175,12 +175,12 @@ namespace Services.Service
             {
                 //RequestCode = $"REQ-{DateTime.UtcNow.Ticks}",
                 DestinationWarehouseId = dto.DestinationWarehouseId,
-                ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
-                RequestedBy = requestedBy,
+                //ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
+                //RequestedBy = requestedBy,
                 RequestDate = DateTime.UtcNow,
                 Status = "Pending",
                 Notes = dto.Notes,
-                RequestExportId = dto.RequestExportId,
+                //RequestExportId = dto.RequestExportId,
                 //OrderCode = requestExport.Order?.OrderCode,
                 TransferProducts = remainingItems.Select(x => new WarehouseTransferProduct
                 {

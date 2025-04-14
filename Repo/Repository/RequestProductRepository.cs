@@ -85,15 +85,8 @@ namespace Repo.Repository
         }
 
 
-       /* public async Task<List<RequestProduct>> GetRequestProductByIdAsync(Guid requestId)
-        {
-            return await _context.RequestProducts
-                        .Where(rp => rp.RequestProductId == requestId)
-                        .Include(rp => rp.RequestProductDetails)
-                        .ThenInclude(d => d.Product)
-                        .Include(rp => rp.AgencyAccount) // ✅ Thêm để lấy AgencyName
-                        .ToListAsync();
-        }*/
+        
+
 
         public async Task<string> GenerateRequestCodeAsync()
         {

@@ -108,6 +108,12 @@ namespace Repo.Repository
         {
             await _context.SaveChangesAsync();
         }
-
+        public async Task UpdateAvailableStockOnlyAsync(long productId, int availableStock)
+        {
+            var product = new Product { ProductId = productId };
+            _context.Products.Attach(product);
+            product.AvailableStock = availableStock;
+            _context.Entry(product).Property(x => x.AvailableStock).IsModified = true;
+        }
     }
 }

@@ -27,6 +27,7 @@ namespace Services.Service
         private readonly IRequestProductRepository _requestProductRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IInventoryService _inventoryService;
+        private readonly IProductService _productService;
 
         private readonly IBatchRepository _batchRepository;
         private readonly IProductRepository _productRepository;
@@ -40,7 +41,8 @@ namespace Services.Service
             IProductRepository productRepository,
             IUserRepository userRepository,
             IHubContext<NotificationHub> hub,
-            IInventoryService inventoryService)
+            IInventoryService inventoryService,
+            IProductService productService)
         {
             _requestProductRepository = requestProductRepository;
             _orderRepository = orderRepository;
@@ -49,6 +51,7 @@ namespace Services.Service
             _userRepository = userRepository;
             _hub = hub;
             _inventoryService = inventoryService;
+            _productService = productService;
         }
 
 
@@ -290,6 +293,9 @@ namespace Services.Service
                     foreach (var detail in requestProduct.RequestProductDetails)
                     {
                         await _inventoryService.DeductStockByWarehouseProductAsync(order.OrderId, detail.ProductId, detail.Quantity);
+
+                        // ✅ Cập nhật lại tồn kho sau khi trừ
+                        await _productService.RecalculateAvailableStockAsync(detail.ProductId);
                     }
                 }
                 else

@@ -24,5 +24,7 @@ namespace Repo.IRepository
         Task<Product?> GetProductByIdAsync(long productId);
 
         Task SaveChangesAsync();
+
+        Task UpdateAvailableStockOnlyAsync(long productId, int availableStock);
     }
 }

@@ -57,9 +57,6 @@ namespace MLHR.Controllers
             return null;
         }
 
-
-
-
         [HttpGet("warehouse/{warehouseId}")]
         public async Task<IActionResult> GetByWarehouseId(long warehouseId, [FromQuery] string? sortBy)
         {

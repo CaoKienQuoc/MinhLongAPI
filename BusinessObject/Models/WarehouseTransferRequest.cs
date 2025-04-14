@@ -13,40 +13,32 @@ namespace BusinessObject.Models
         [Key]
         public long Id { get; set; }
 
-        [Required, MaxLength(50)]
-
-        public long? SourceWarehouseId { get; set; }
+        // Kho xuất hàng (bắt buộc)
+        [Required]
+        public long SourceWarehouseId { get; set; }
         [ForeignKey("SourceWarehouseId")]
-        public Warehouse? SourceWarehouse { get; set; }
+        public Warehouse SourceWarehouse { get; set; }
 
+        // Kho nhận hàng (bắt buộc)
         [Required]
         public long DestinationWarehouseId { get; set; }
         [ForeignKey("DestinationWarehouseId")]
         public Warehouse DestinationWarehouse { get; set; }
 
+        // Ngày điều phối (xuất hàng)
         public DateTime RequestDate { get; set; } = DateTime.UtcNow;
 
-        // Nếu bạn không cần thời gian giao dự kiến có thể bỏ dòng này luôn
-        public DateTime? ExpectedDeliveryDate { get; set; }
-
-        [Required]
-        public Guid RequestedBy { get; set; }
-        [ForeignKey("RequestedBy")]
-        public User Requester { get; set; }
-
-        [Required]
-        public int RequestExportId { get; set; }
-        [ForeignKey("RequestExportId")]
-        public RequestExport RequestExport { get; set; }
-
-        [Required, MaxLength(20)]
-        public string Status { get; set; } = "Pending"; // Pending, Approved, Completed...
-
+        // Ghi chú thêm nếu có
         [MaxLength(500)]
         public string? Notes { get; set; }
 
+        [Required, MaxLength(20)]
+        public string Status { get; set; } = "Pending"; // Pending, Approved, Completed..
+
+        // Danh sách sản phẩm cần chuyển
         public ICollection<WarehouseTransferProduct> TransferProducts { get; set; } = new List<WarehouseTransferProduct>();
     }
+
 
 
 }

@@ -340,7 +340,7 @@ namespace Services.Service
             if (transferRequest.SourceWarehouseId == null)
                 throw new Exception("Yêu cầu điều phối chưa được chỉ định kho nguồn.");
 
-            var sourceWarehouseId = transferRequest.SourceWarehouseId.Value;
+            var sourceWarehouseId = transferRequest.SourceWarehouseId;
 
             // ✅ Tạo phiếu xuất
             var receipt = new ExportWarehouseReceipt
@@ -350,7 +350,7 @@ namespace Services.Service
                 ExportDate = DateTime.Now,
                 ExportType = "Xuất Điều Phối",
                 WarehouseId = sourceWarehouseId,
-                RequestExportId = transferRequest.RequestExportId,
+                //RequestExportId = transferRequest.RequestExportId,
                 //OrderCode = transferRequest.OrderCode,
                 AgencyName = null,
                 Status = "Pending",

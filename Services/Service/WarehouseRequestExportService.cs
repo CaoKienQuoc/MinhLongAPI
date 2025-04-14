@@ -101,12 +101,17 @@ namespace Services.Service
 
                 var mainQuantity = warehouseQuantities[mainWarehouse];
 
+                // Lấy tổng số lượng yêu cầu từ chi tiết đơn hàng
+                var totalRequestedQty = requestExport.RequestExportDetails
+                    .Where(d => d.ProductId == productId)
+                    .Sum(d => d.RequestedQuantity);
+
                 warehouseRequestExports.Add(new WarehouseRequestExport
                 {
                     WarehouseId = mainWarehouse,
                     RequestExportId = requestExportId,
                     ProductId = productId,
-                    QuantityRequested = (int)mainQuantity,
+                    QuantityRequested = (int)totalRequestedQty,
                     RemainingQuantity = (int)mainQuantity,
                     Status = "Pending",
                     RequestedBy = currentUserId,
@@ -122,13 +127,14 @@ namespace Services.Service
                     {
                         SourceWarehouseId = sourceWarehouseId,
                         DestinationWarehouseId = mainWarehouse,
-                        RequestedBy = currentUserId,
+                        //RequestedBy = currentUserId,
                         RequestDate = DateTime.UtcNow,
-                        RequestExportId = requestExportId,
+                        //RequestExportId = requestExportId,
                         Status = "Pending",
                         Notes = $"Transfer ProductId {productId} - Qty: {quantity}",
-                        TransferProducts = new List<WarehouseTransferProduct>
-                {
+
+                        /*TransferProducts = new List<WarehouseTransferProduct>
+                    {
                     new WarehouseTransferProduct
                     {
                         ProductId = productId,
@@ -136,7 +142,21 @@ namespace Services.Service
                         BatchId = tempStockExports
                             .FirstOrDefault(t => t.ProductId == productId && t.WarehouseId == sourceWarehouseId)?.BatchId
                     }
-                }
+                }*/
+
+                        TransferProducts = new List<WarehouseTransferProduct>
+                        {
+                            new WarehouseTransferProduct
+                            {
+                                ProductId = productId,
+                                Quantity = (int)quantity,
+                                BatchId = tempStockExports
+                                    .Where(t => t.ProductId == productId && t.WarehouseId == sourceWarehouseId)
+                                    .OrderByDescending(t => t.Quantity)
+                                    .Select(t => t.BatchId)
+                                    .FirstOrDefault()
+                            }
+                        }
                     };
 
                     warehouseTransfers.Add(transfer);

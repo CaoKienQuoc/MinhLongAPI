@@ -37,8 +37,6 @@ namespace Repo.Repository
         {
             return await _context.WarehouseTransferRequests
                 .Include(r => r.TransferProducts)
-                .Include(r => r.RequestExport)
-                    .ThenInclude(re => re.Order) // nếu RequestExport liên kết đến Order
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
