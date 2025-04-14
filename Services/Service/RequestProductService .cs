@@ -399,9 +399,9 @@ namespace Services.Service
         }*/
 
         // ✅ Phiên bản hoàn chỉnh: bám theo logic cũ, thay thế ApproveRequestAsync bằng ProcessOrderCreationAsync
+        // ✅ Phiên bản hoàn chỉnh: xử lý cộng dồn đơn hàng và kho tạm đúng logic
         public async Task CreateRequestAsync(RequestProduct requestProduct, List<RequestProductDetail> requestDetails, Guid userId)
         {
-            Random random = new Random();
             string requestCode = await _requestProductRepository.GenerateRequestCodeAsync();
 
             if (requestDetails == null || !requestDetails.Any())
@@ -412,8 +412,8 @@ namespace Services.Service
                 throw new UnauthorizedAccessException("Không tìm thấy AgencyId từ User đang đăng nhập.");
 
             var existingRequest = await _requestProductRepository.GetPendingRequestByAgencyAsync(agencyId.Value);
-
             Order existingOrder = null;
+
             if (existingRequest != null)
             {
                 existingOrder = await _orderRepository.GetOrderByRequestIdAsync(existingRequest.RequestProductId);
@@ -429,7 +429,6 @@ namespace Services.Service
             foreach (var newItem in requestDetails)
             {
                 var product = await _productRepository.GetByIdAsync(newItem.ProductId, asNoTracking: true);
-
                 if (product == null)
                     throw new ArgumentException($"ProductId {newItem.ProductId} không tồn tại.");
 
@@ -484,7 +483,6 @@ namespace Services.Service
                 existingRequest.RequestCode = requestCode;
                 await _requestProductRepository.UpdateRequestAsync(existingRequest);
                 await _requestProductRepository.SaveChangesAsync();
-
                 requestProductId = existingRequest.RequestProductId;
             }
             else
@@ -496,24 +494,22 @@ namespace Services.Service
 
                 await _requestProductRepository.AddRequestAsync(requestProduct);
                 await _requestProductRepository.SaveChangesAsync();
-
                 requestProductId = requestProduct.RequestProductId;
             }
 
-            // ✅ Gọi xử lý đơn hàng
+            // ✅ Gọi xử lý đơn hàng (không trừ kho trong hàm này)
             await ProcessOrderCreationAsync(requestProductId);
 
             // ✅ Lấy lại đơn hàng để biết OrderId sau khi tạo
             var order = await _orderRepository.GetOrderByRequestIdAsync(requestProductId);
 
-            // ✅ Chỉ trừ kho đúng phần người dùng vừa thêm (delta), không trừ toàn bộ lại lần nữa
+            // ✅ Trừ kho đúng số lượng mới thêm
             foreach (var delta in deltaRequests)
             {
                 await _inventoryService.DeductStockByWarehouseProductAsync(order.OrderId, delta.ProductId, delta.DeltaQuantity);
             }
         }
 
-        // ✅ Hàm xử lý tạo hoặc cập nhật đơn hàng từ RequestProduct (không xử lý trừ kho)
         public async Task ProcessOrderCreationAsync(Guid requestId)
         {
             string requestOrderCode = await _requestProductRepository.GenerateOrderCodeAsync();
@@ -596,6 +592,7 @@ namespace Services.Service
             await _orderRepository.UpdateOrderAsync(order);
             await _orderRepository.SaveChangesAsync();
         }
+
 
 
 
