@@ -78,14 +78,17 @@ namespace Services.Service
             // ✅ Tính lại tổng tồn kho thực tế từ bảng WarehouseProduct
             var totalAvailable = await _warehouseProductRepo.GetTotalAvailableStockByProductIdAsync(productId);
 
-            // ✅ Cập nhật lại Product.AvailableStock
+            /*// ✅ Cập nhật lại Product.AvailableStock
             var product = await _productRepository.GetByIdAsync(productId);
             if (product != null)
             {
                 product.AvailableStock = (int)totalAvailable; // hoặc đổi AvailableStock sang long để tránh ép kiểu
                 await _productRepository.UpdateAsync(product);
                 await _productRepository.SaveChangesAsync();
-            }
+            }*/
+
+            //await _productRepository.UpdateAvailableStockOnlyAsync(productId, (int)totalAvailable);
+
         }
 
         public async Task RollbackStockForCancelledOrderAsync(Guid orderId)

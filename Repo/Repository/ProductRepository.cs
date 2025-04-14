@@ -37,7 +37,7 @@ namespace Repo.Repository
         }
 
 
-        public async Task<Product> GetByIdAsync(long id)
+        /*public async Task<Product> GetByIdAsync(long id)
         {
             return await _context.Products
                 .Include(p => p.Images)
@@ -46,8 +46,25 @@ namespace Repo.Repository
                 .Include(p => p.Updater)
                     .ThenInclude(u => u.Employee)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
-        }
+        }*/
 
+        public async Task<Product> GetByIdAsync(long id, bool asNoTracking = false)
+        {
+            var query = _context.Products
+                .Include(p => p.Images)
+                .Include(p => p.Creator)
+                    .ThenInclude(u => u.Employee)
+                .Include(p => p.Updater)
+                    .ThenInclude(u => u.Employee)
+                .Where(p => p.ProductId == id);
+
+            if (asNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+
+            return await query.FirstOrDefaultAsync();
+        }
 
 
 
@@ -108,12 +125,14 @@ namespace Repo.Repository
         {
             await _context.SaveChangesAsync();
         }
+
         public async Task UpdateAvailableStockOnlyAsync(long productId, int availableStock)
         {
-            var product = new Product { ProductId = productId };
-            _context.Products.Attach(product);
-            product.AvailableStock = availableStock;
-            _context.Entry(product).Property(x => x.AvailableStock).IsModified = true;
+            await _context.Database.ExecuteSqlRawAsync(
+                "UPDATE Product SET AvailableStock = {0} WHERE ProductId = {1}",
+                availableStock, productId);
         }
+
+
     }
 }

@@ -16,19 +16,21 @@ namespace Services.Service
         private readonly IProductRepository _repository;
         private readonly IImageService _imageService;
         private readonly IWarehouseProductRepository _warehouseProductRepository;
+        private readonly ITemporaryWarehouseExportRepository _temporaryRepository;
 
-        public ProductService(IProductRepository repository, IImageService imageService, IWarehouseProductRepository warehouseProductRepository)
+        public ProductService(IProductRepository repository, IImageService imageService, IWarehouseProductRepository warehouseProductRepository, ITemporaryWarehouseExportRepository temporaryWarehouseExportRepository)
         {
             _repository = repository;
             _imageService = imageService;
             _warehouseProductRepository = warehouseProductRepository;
+            _temporaryRepository = temporaryWarehouseExportRepository;
         }
 
-        public async Task<List<ProductResponseDto>> GetProductsAsync()
+        /*public async Task<List<ProductResponseDto>> GetProductsAsync()
         {
             var products = await _repository.GetProductsAsync();
 
-            /*foreach (var product in products)
+            *//*foreach (var product in products)
             {
                 var totalAvailable = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(product.ProductId);
 
@@ -40,7 +42,7 @@ namespace Services.Service
             }
 
             // ✅ Lưu 1 lần duy nhất (tối ưu performance)
-            await _repository.SaveChangesAsync();*/
+            await _repository.SaveChangesAsync();*//*
 
             return products.Select(p => new ProductResponseDto
             {
@@ -69,7 +71,7 @@ namespace Services.Service
             var product = await _repository.GetByIdAsync(id);
             if (product == null) return null;
 
-            /*// ✅ Tính tồn kho theo tất cả kho
+            *//*// ✅ Tính tồn kho theo tất cả kho
             var totalAvailable = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(product.ProductId);
 
             // ✅ Cập nhật vào Product.AvailableStock nếu khác giá trị hiện tại
@@ -78,7 +80,7 @@ namespace Services.Service
                 product.AvailableStock = totalAvailable;
                 await _repository.UpdateAsync(product);            // cập nhật entity
                 await _repository.SaveChangesAsync();              // lưu thay đổi vào DB
-            }*/
+            }*//*
 
             return new ProductResponseDto
             {
@@ -101,9 +103,71 @@ namespace Services.Service
                 // ✅ Lấy danh sách URL hình ảnh từ database
                 Images = product.Images.Select(img => img.ImageUrl).ToList()
             };
+        }*/
+
+        public async Task<ProductResponseDto> GetProductByIdAsync(long id)
+        {
+            var product = await _repository.GetByIdAsync(id);
+            if (product == null) return null;
+
+            var availableStock = await GetAvailableStockAsync(product.ProductId);
+
+            return new ProductResponseDto
+            {
+                ProductId = product.ProductId,
+                ProductCode = product.ProductCode,
+                ProductName = product.ProductName,
+                Unit = product.Unit,
+                DefaultExpiration = product.DefaultExpiration,
+                CategoryId = product.CategoryId,
+                Description = product.Description,
+                TaxId = product.TaxId,
+                CreatedBy = product.CreatedBy,
+                CreatedByName = product.Creator?.Employee?.FullName ?? product.Creator?.Username ?? "Unknown",
+                CreatedDate = product.CreatedDate,
+                UpdatedBy = product.UpdatedBy,
+                UpdatedByName = product.Updater?.Employee?.FullName ?? product.Updater?.Username ?? "Chưa cập nhật",
+                UpdatedDate = product.UpdatedDate,
+                AvailableStock = availableStock,
+                Price = product.Price,
+                Images = product.Images.Select(img => img.ImageUrl).ToList()
+            };
         }
 
-        
+        public async Task<List<ProductResponseDto>> GetProductsAsync()
+        {
+            var products = await _repository.GetProductsAsync();
+            var result = new List<ProductResponseDto>();
+
+            foreach (var product in products)
+            {
+                var availableStock = await GetAvailableStockAsync(product.ProductId);
+
+                result.Add(new ProductResponseDto
+                {
+                    ProductId = product.ProductId,
+                    ProductCode = product.ProductCode,
+                    ProductName = product.ProductName,
+                    Unit = product.Unit,
+                    DefaultExpiration = product.DefaultExpiration,
+                    CategoryId = product.CategoryId,
+                    Description = product.Description,
+                    TaxId = product.TaxId,
+                    CreatedBy = product.CreatedBy,
+                    CreatedByName = product.Creator?.Employee?.FullName ?? product.Creator?.Username ?? "Unknown",
+                    CreatedDate = product.CreatedDate,
+                    UpdatedBy = product.UpdatedBy,
+                    UpdatedByName = product.Updater?.Employee?.FullName ?? product.Updater?.Username ?? "Chưa cập nhật",
+                    UpdatedDate = product.UpdatedDate,
+                    AvailableStock = availableStock,
+                    Price = product.Price,
+                    Images = product.Images.Select(img => img.ImageUrl).ToList()
+                });
+            }
+
+            return result;
+        }
+
 
         public async Task<ProductResponseDto> CreateProductAsync(ProductDto model, Guid userId)
         {
@@ -172,12 +236,12 @@ namespace Services.Service
 
             return await GetProductByIdAsync(updatedProduct.ProductId);
         }
-
-        public async Task RecalculateAvailableStockAsync(long productId)
+        public async Task<int> GetAvailableStockAsync(long productId)
         {
-            var totalAvailable = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(productId);
-            await _repository.UpdateAvailableStockOnlyAsync(productId, (int)totalAvailable);
+            var total = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(productId);
+            var reserved = await _temporaryRepository.GetReservedStockByProductIdAsync(productId);
 
+            return (int)Math.Max(total - reserved, 0);
         }
 
 

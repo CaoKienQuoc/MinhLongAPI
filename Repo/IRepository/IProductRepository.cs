@@ -11,7 +11,7 @@ namespace Repo.IRepository
     {
         Task<int> GetTotalProductsAsync(); // ✅ Thêm phương thức này
         Task<List<Product>> GetProductsAsync();
-        Task<Product> GetByIdAsync(long id);
+        //Task<Product> GetByIdAsync(long id);
         //Task<Product> AddAsync(Product product, List<string> imageUrls);
 
         Task<Product> AddAsync(Product product);
@@ -22,9 +22,10 @@ namespace Repo.IRepository
         Task<List<Product>> GetProductsByCategoryIdAsync(long categoryId);
 
         Task<Product?> GetProductByIdAsync(long productId);
+        Task<Product> GetByIdAsync(long id, bool asNoTracking = false);
 
         Task SaveChangesAsync();
-
         Task UpdateAvailableStockOnlyAsync(long productId, int availableStock);
+
     }
 }

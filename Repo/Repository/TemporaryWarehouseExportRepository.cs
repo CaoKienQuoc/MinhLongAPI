@@ -60,6 +60,12 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<long> GetReservedStockByProductIdAsync(long productId)
+        {
+            return await _context.TemporaryStockExports
+                .Where(t => t.ProductId == productId && !t.IsReverted)
+                .SumAsync(t => (long?)t.Quantity) ?? 0;
+        }
     }
 
 }

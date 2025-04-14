@@ -16,6 +16,11 @@ namespace Services.IService
         Task<ProductResponseDto> UpdateProductAsync(long id, UpdateProductDTO productDto, Guid userId);
         Task<bool> DeleteProductAsync(long id);
         Task<List<ProductSimpleResponseDto>> GetProductsByCategoryIdAsync(long categoryId);
-        Task RecalculateAvailableStockAsync(long productId);
+
+        Task<int> GetAvailableStockAsync(long productId);
+
+        
+
+
     }
 }

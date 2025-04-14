@@ -156,17 +156,21 @@ namespace Services.Service
             foreach (var newItem in requestDetails)
             {
                 // ✅ Lấy thông tin sản phẩm từ Product
-                var product = await _productRepository.GetByIdAsync(newItem.ProductId);
+                //var product = await _productRepository.GetByIdAsync(newItem.ProductId);
+                var product = await _productRepository.GetByIdAsync(newItem.ProductId, asNoTracking: true);
+
                 if (product == null)
                 {
                     throw new ArgumentException($"ProductId {newItem.ProductId} không tồn tại.");
                 }
 
-                // ✅ Kiểm tra số lượng tồn kho
-                if (newItem.Quantity > product.AvailableStock)
+                // ✅ Kiểm tra số lượng tồn kho tính động
+                var availableStock = await _productService.GetAvailableStockAsync(newItem.ProductId);
+                if (newItem.Quantity > availableStock)
                 {
-                    throw new ArgumentException($"Sản phẩm {newItem.ProductId} không đủ hàng. Bạn chỉ có thể đặt tối đa {product.AvailableStock}.");
+                    throw new ArgumentException($"Sản phẩm {newItem.ProductId} không đủ hàng. Bạn chỉ có thể đặt tối đa {availableStock}.");
                 }
+
 
                 // ✅ Lấy giá từ Batch và tính giá bán (SellingPrice)
                 var batch = await _batchRepository.GetLatestBatchByProductIdAsync(newItem.ProductId);
@@ -295,7 +299,7 @@ namespace Services.Service
                         await _inventoryService.DeductStockByWarehouseProductAsync(order.OrderId, detail.ProductId, detail.Quantity);
 
                         // ✅ Cập nhật lại tồn kho sau khi trừ
-                        await _productService.RecalculateAvailableStockAsync(detail.ProductId);
+                        //await _productService.RecalculateAvailableStockAsync(detail.ProductId);
                     }
                 }
                 else

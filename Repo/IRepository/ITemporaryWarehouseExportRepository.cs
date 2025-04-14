@@ -21,6 +21,6 @@ namespace Repo.IRepository
 
         Task<List<TemporaryStockExport>> GetByOrderIdsAsync(List<Guid> orderIds);
 
-
+        Task<long> GetReservedStockByProductIdAsync(long productId);
     }
 }

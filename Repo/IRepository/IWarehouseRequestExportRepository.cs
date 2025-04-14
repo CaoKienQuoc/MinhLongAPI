@@ -22,5 +22,6 @@ namespace Repo.IRepository
 
         Task AddRangeAsync(IEnumerable<WarehouseRequestExport> entities);
 
+
     }
 }
