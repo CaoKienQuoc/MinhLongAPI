@@ -182,7 +182,7 @@ namespace Services.Service
             await _tempExportRepo.DeleteByOrderIdAsync(orderId);
             await _tempExportRepo.SaveChangesAsync();
 
-            // 4. Cập nhật lại AvailableStock của các sản phẩm liên quan
+            /*// 4. Cập nhật lại AvailableStock của các sản phẩm liên quan
             // Lấy danh sách ProductId duy nhất từ các bản ghi tạm vừa xử lý
             var productIds = tempExports.Select(te => te.ProductId).Distinct();
 
@@ -200,7 +200,7 @@ namespace Services.Service
                     await _productRepository.UpdateAsync(product);
                 }
             }
-            await _productRepository.SaveChangesAsync();
+            await _productRepository.SaveChangesAsync();*/
         }
 
     }
