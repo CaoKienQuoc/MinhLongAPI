@@ -242,6 +242,7 @@ namespace Services.Service
             
             if(order.Status == "WaitPaid")
             {
+                requestProduct.RequestStatus = "Canceled";
                 order.Status = "Canceled";
                 await _orderRepository.UpdateOrderAsync(order);
                await _orderRepository.SaveAsync();

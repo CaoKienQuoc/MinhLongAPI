@@ -412,6 +412,12 @@ namespace Services.Service
                 throw new UnauthorizedAccessException("Không tìm thấy AgencyId từ User đang đăng nhập.");
 
             var existingRequest = await _requestProductRepository.GetPendingRequestByAgencyAsync(agencyId.Value);
+
+            if(existingRequest.RequestStatus == "Canceled")
+            {
+                existingRequest = null;
+            }
+            
             Order existingOrder = null;
 
             if (existingRequest != null)
