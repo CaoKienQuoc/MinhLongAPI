@@ -413,10 +413,6 @@ namespace Services.Service
 
             var existingRequest = await _requestProductRepository.GetPendingRequestByAgencyAsync(agencyId.Value);
 
-            if(existingRequest.RequestStatus == "Canceled")
-            {
-                existingRequest = null;
-            }
             
             Order existingOrder = null;
 
