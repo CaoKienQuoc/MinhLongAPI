@@ -19,94 +19,28 @@ namespace Repo.Repository
             _context = context;
         }
 
-        public async Task<WarehouseTransferRequest> CreateAsync(WarehouseTransferRequest request)
+        public async Task<int> SaveChangesAsync()
         {
-            _context.WarehouseTransferRequests.Add(request);
-            await _context.SaveChangesAsync();
-            return request;
+            return await _context.SaveChangesAsync();
         }
 
-        public async Task<List<WarehouseTransferRequest>> GetAllAsync()
+        public async Task AddRangeAsync(IEnumerable<WarehouseTransferRequest> requests)
+        {
+            await _context.WarehouseTransferRequests.AddRangeAsync(requests);
+        }
+
+        public async Task<WarehouseTransferRequest?> GetByIdAsync(int id)
         {
             return await _context.WarehouseTransferRequests
-                .Include(r => r.TransferProducts)
-                .ToListAsync();
-        }
-
-        public async Task<WarehouseTransferRequest?> GetByIdAsync(long id)
-        {
-            return await _context.WarehouseTransferRequests
-                .Include(r => r.TransferProducts)
-                .FirstOrDefaultAsync(r => r.Id == id);
-        }
-
-        public async Task<bool> PlanTransferRequestAsync(long requestId, long sourceWarehouseId, Guid plannerId)
-        {
-            var request = await _context.WarehouseTransferRequests.FindAsync(requestId);
-            if (request == null) return false;
-
-            request.SourceWarehouseId = sourceWarehouseId;
-            //request.PlannedBy = plannerId;
-            request.Status = "Planned";
-
-            _context.WarehouseTransferRequests.Update(request);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<List<WarehouseTransferRequest>> GetPlannedRequestsByWarehouseAsync(long sourceWarehouseId)
-        {
-            return await _context.WarehouseTransferRequests
-                .Include(r => r.TransferProducts)
-                .Where(r => r.SourceWarehouseId == sourceWarehouseId && r.Status == "Planned")
-                .ToListAsync();
-        }
-
-        public async Task<RequestExport?> GetRequestExportWithOrderAsync(int requestExportId)
-        {
-            return await _context.RequestExports
-                .Include(re => re.Order)
-                .FirstOrDefaultAsync(re => re.RequestExportId == requestExportId);
-        }
-
-        public async Task<WarehouseTransferRequest?> GetByIdWithProductsAsync(long id)
-        {
-            return await _context.WarehouseTransferRequests
-                .Include(x => x.TransferProducts)
-                    .ThenInclude(tp => tp.Product) // 🔍 Cần dòng này
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .Include(w => w.TransferProducts) // 👈 nếu bạn cần load TransferProducts
+                .FirstOrDefaultAsync(w => w.Id == id);
         }
 
         public async Task UpdateAsync(WarehouseTransferRequest request)
         {
             _context.WarehouseTransferRequests.Update(request);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // 👈 nếu bạn muốn update tự commit ở đây
         }
-
-        public async Task<List<WarehouseTransferRequest>> GetBySourceWarehouseAsync(long sourceWarehouseId)
-        {
-            return await _context.WarehouseTransferRequests
-                .Include(r => r.TransferProducts)
-                .Include(r => r.SourceWarehouse)            // 🔹 Kho nguồn
-                .Include(r => r.DestinationWarehouse)       // 🔸 Kho đích — thêm dòng này!
-                .Where(r => r.SourceWarehouseId == sourceWarehouseId)
-                .ToListAsync();
-        }
-
-        public async Task<List<WarehouseTransferRequest>> GetByDestinationWarehouseAsync(long destinationWarehouseId)
-        {
-            return await _context.WarehouseTransferRequests
-                .Include(r => r.TransferProducts)
-                .Include(r => r.SourceWarehouse)            // 🔹 Kho nguồn — thêm dòng này!
-                .Include(r => r.DestinationWarehouse)       // 🔸 Kho đích
-                .Where(r => r.DestinationWarehouseId == destinationWarehouseId)
-                .ToListAsync();
-        }
-
-        public async Task AddRangeAsync(IEnumerable<WarehouseTransferRequest> transfers)
-        {
-            await _context.WarehouseTransferRequests.AddRangeAsync(transfers);
-        }
-
     }
 }
+

@@ -73,6 +73,14 @@ namespace Repo.Repository
             _context.RequestExports.Update(requestExport);
             await Task.CompletedTask;
         }
+
+        public async Task<Guid?> GetOrderIdByRequestExportIdAsync(int requestExportId)
+        {
+            return await _context.RequestExports
+                .Where(r => r.RequestExportId == requestExportId)
+                .Select(r => r.OrderId)
+                .FirstOrDefaultAsync();
+        }
     }
 
 

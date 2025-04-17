@@ -74,6 +74,24 @@ namespace Repo.Repository
                 .Where(t => t.ProductId == productId && !t.IsReverted)
                 .SumAsync(t => (long?)t.Quantity) ?? 0;
         }
+
+        public async Task<TemporaryStockExport?> GetByProductAndBatchAsync(long productId, long batchId, long warehouseId)
+        {
+            return await _context.TemporaryStockExports
+                .FirstOrDefaultAsync(t =>
+                    t.ProductId == productId &&
+                    t.BatchId == batchId &&
+                    t.WarehouseId == warehouseId);
+        }
+
+        public async Task DeleteByTemporaryExportIdsAsync(List<long> tempExportIds)
+        {
+            var stocksToDelete = await _context.TemporaryStockExports
+                .Where(s => tempExportIds.Contains(s.TemporaryStockExportId))
+                .ToListAsync();
+
+            _context.TemporaryStockExports.RemoveRange(stocksToDelete);
+        }
     }
 
 }

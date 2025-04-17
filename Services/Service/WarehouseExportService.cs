@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
 using Repo.IRepository;
+using Repo.Repository;
 using Services.IService;
 
 namespace Services.Service
@@ -17,6 +18,8 @@ namespace Services.Service
         private readonly IProductRepository _productRepository;
         private readonly IRequestExportRepository _requestExportRepository;
         private readonly IWarehouseExportRepository _exportReceiptRepo;
+        private readonly IRequestExportRepository _requestExportRepo;
+        private readonly IOrderRepository _orderRepo;
 
         private readonly IHubContext<NotificationHub> _hub;
 
@@ -26,7 +29,9 @@ namespace Services.Service
             IProductRepository productRepository,
             IHubContext<NotificationHub> hub,
             IRequestExportRepository requestExportRepository,
-            IWarehouseExportRepository exportReceiptRepo)
+            IWarehouseExportRepository exportReceiptRepo,
+            IRequestExportRepository requestExportRepo,
+            IOrderRepository orderRepository)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -34,10 +39,13 @@ namespace Services.Service
             _hub = hub;
             _requestExportRepository = requestExportRepository;
             _exportReceiptRepo = exportReceiptRepo;
+            _requestExportRepo = requestExportRepo;
+            _orderRepo = orderRepository;
         }
 
         public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
         {
+            
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId);
             if (requestExport == null || requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
                 throw new InvalidOperationException("RequestExport not found or invalid.");
@@ -48,6 +56,7 @@ namespace Services.Service
             var orderId = requestExport.OrderId;
             if (orderId == Guid.Empty)
                 throw new InvalidOperationException("OrderId is missing.");
+            var order = await _orderRepo.GetOrderByIdAsync(orderId);
 
             var tempStockExports = await _tempExportRepo.GetByOrderIdAsync(orderId);
             if (tempStockExports == null || !tempStockExports.Any())
@@ -136,7 +145,10 @@ namespace Services.Service
             await _transferRepo.AddRangeAsync(transferRequestsToSave);
 
             requestExport.Status = "Requested"; // hoặc Approved
+            order.Status = "WaitingDelivery"; // Cập nhật trạng thái đơn hàng
+            
             await _requestExportRepository.UpdateRequestExportAsync(requestExport);
+            await _orderRepo.UpdateOrderAsync(order);
             await _requestExportRepository.SaveChangesAsync();
 
             // Gửi thông báo đến kho chính
@@ -150,6 +162,51 @@ namespace Services.Service
             return exportReceipt;
         }
 
+        public async Task FinalizeExportSaleAsync(int exportReceiptId, Guid currentUserId)
+        {
+            // 1. Lấy phiếu xuất kho và kiểm tra hợp lệ
+            var receipt = await _exportReceiptRepo.GetByIdWithDetailsAsync(exportReceiptId);
+            if (receipt == null)
+                throw new InvalidOperationException("Không tìm thấy phiếu xuất kho.");
+
+            if (receipt.Status != "Pending")
+                throw new InvalidOperationException("Phiếu xuất kho đã được xử lý.");
+
+            if (receipt.RequestExportId == null)
+                throw new InvalidOperationException("Phiếu xuất không liên kết với đơn yêu cầu xuất kho.");
+
+            // 2. Lấy OrderId từ RequestExport
+            var orderId = await _requestExportRepo.GetOrderIdByRequestExportIdAsync(receipt.RequestExportId);
+            if (orderId == null || orderId == Guid.Empty)
+                throw new InvalidOperationException("Không tìm thấy OrderId tương ứng từ đơn yêu cầu xuất kho.");
+            var order = await _orderRepo.GetOrderByIdAsync(orderId.Value);
+
+            // 3. Lấy danh sách bản ghi tạm
+            var tempExports = await _tempExportRepo.GetByOrderIdAsync(orderId.Value);
+            if (tempExports == null || !tempExports.Any())
+                throw new InvalidOperationException("Không tìm thấy dữ liệu tạm để xoá tồn kho.");
+
+            // 4. Lấy danh sách Id của bản ghi tạm để xoá trong bảng Stock
+            var tempIds = tempExports.Select(t => t.TemporaryStockExportId).ToList();
+            await _tempExportRepo.DeleteByTemporaryExportIdsAsync(tempIds);
+
+            // 5. Cập nhật phiếu xuất kho thành xuất bán
+            receipt.Status = "Completed";
+            order.Status = "Exported"; // Cập nhật trạng thái đơn hàng
+            receipt.ExportType = "ExportSale";
+            
+            await _exportReceiptRepo.UpdateAsync(receipt);
+            await _orderRepo.UpdateOrderAsync(order);
+            await _exportReceiptRepo.SaveChangesAsync();
+
+            // 6. Gửi thông báo (tuỳ chọn)
+            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
+            {
+                title = "Xuất kho",
+                message = $"✅ Phiếu xuất kho đã hoàn tất: {receipt.DocumentNumber}",
+                payload = receipt.ExportWarehouseReceiptId
+            });
+        }
     }
 
 }

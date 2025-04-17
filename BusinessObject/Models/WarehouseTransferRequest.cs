@@ -23,6 +23,8 @@ namespace BusinessObject.Models
         [ForeignKey("DestinationWarehouseId")]
         public Warehouse DestinationWarehouse { get; set; }
 
+        public int RequestExportId { get; set; }             // ✅ Cần – liên kết yêu cầu xuất (nếu có)
+
         public DateTime RequestDate { get; set; } = DateTime.UtcNow; // ✅ Cần
 
         [MaxLength(500)]

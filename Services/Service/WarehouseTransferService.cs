@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
 using Repo.IRepository;
@@ -13,256 +12,95 @@ namespace Services.Service
 {
     public class WarehouseTransferService : IWarehouseTransferService
     {
-        private readonly IWarehouseTransferRepository _repository;
+        private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
+        private readonly IWarehouseTransferRepository _transferRepo;
+        private readonly IProductRepository _productRepository;
+        private readonly IWarehouseExportRepository _exportReceiptRepo;
+
         private readonly IHubContext<NotificationHub> _hub;
 
-        public WarehouseTransferService(IWarehouseTransferRepository repository, IHubContext<NotificationHub> hub)
+        public WarehouseTransferService(
+            ITemporaryWarehouseExportRepository tempExportRepo,
+            IWarehouseTransferRepository transferRepo,
+            IProductRepository productRepository,
+            IHubContext<NotificationHub> hub,
+            IWarehouseExportRepository exportReceiptRepo)
         {
-            _repository = repository;
+            _tempExportRepo = tempExportRepo;
+            _transferRepo = transferRepo;
+            _productRepository = productRepository;
             _hub = hub;
+            _exportReceiptRepo = exportReceiptRepo;
         }
-
-        public async Task<WarehouseTransferRequestDetailDto> CreateTransferRequestAsync(WarehouseTransferRequestCreateDto dto, Guid requestedBy)
+        public async Task<ExportWarehouseReceipt> ApproveTransferRequestAndCreateReceiptAsync(int transferRequestId)
         {
-            // ✳️ Gọi repo thay vì DbContext trực tiếp
-            var requestExport = await _repository.GetRequestExportWithOrderAsync(dto.RequestExportId);
-            if (requestExport == null)
-                throw new Exception("RequestExport không tồn tại.");
+            var transferRequest = await _transferRepo.GetByIdAsync(transferRequestId);
 
-            var orderCode = requestExport.Order?.OrderCode;
+            if (transferRequest == null || transferRequest.TransferProducts == null || !transferRequest.TransferProducts.Any())
+                throw new InvalidOperationException("Transfer request not found or invalid.");
 
-            var request = new WarehouseTransferRequest
+            if (transferRequest.Status == "Approved")
+                throw new InvalidOperationException("Transfer request has already been approved.");
+
+            // ✅ Tạo phiếu xuất kho điều phối từ kho phụ
+            var exportReceipt = new ExportWarehouseReceipt
             {
-                //RequestCode = $"REQ-{DateTime.UtcNow.Ticks}",
-                //SourceWarehouseId = ourceWarehouseId ?? defaultWarehouseId,
-                DestinationWarehouseId = dto.DestinationWarehouseId,
-                //ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
-                //RequestedBy = requestedBy,
-                RequestDate = DateTime.UtcNow,
-                Status = "Pending",
-                Notes = dto.Notes,
-                //RequestExportId = dto.RequestExportId,
-                //OrderCode = orderCode,
-                TransferProducts = dto.Products.Select(p => new WarehouseTransferProduct
-                {
-                    ProductId = p.ProductId,
-                    Quantity = p.Quantity,
-                    //Unit = p.Unit,
-                    //Notes = p.Notes
-                }).ToList()
+                DocumentNumber = $"PXK-DP-{DateTime.UtcNow.Ticks}",
+                DocumentDate = DateTime.UtcNow,
+                ExportDate = DateTime.UtcNow,
+                ExportType = "ExportCoordination",
+                Status = "Approved",
+                WarehouseId = transferRequest.SourceWarehouseId,
+                RequestExportId = transferRequest.RequestExportId, // không liên quan trực tiếp đến RequestExport
+                ExportWarehouseReceiptDetails = new List<ExportWarehouseReceiptDetail>()
             };
 
-            var created = await _repository.CreateAsync(request);
-
-            // ✅ Gửi thông báo cho KHO (GroupId = 6)
-            var notification = new
+            foreach (var product in transferRequest.TransferProducts)
             {
-                title = "Kho Tổng", // Tiêu đề thông báo
-                message = $"🚚 Yêu cầu điều phối xuất kho mới!", // Nội dung thông báo
-                //payload = created.RequestCode // hoặc thêm thông tin khác nếu cần
-            };
+                var productInfo = await _productRepository.GetByIdAsync(product.ProductId);
 
-            await _hub.Clients.Group("6")
-                .SendAsync("ReceiveNotification", notification);
-            return new WarehouseTransferRequestDetailDto
-            {
-                Id = created.Id,
-                //RequestCode = created.RequestCode,
-                SourceWarehouseId = created.SourceWarehouseId,
-                DestinationWarehouseId = created.DestinationWarehouseId,
-                RequestDate = created.RequestDate,
-                Status = created.Status,
-                Notes = created.Notes,
-                //OrderCode = created.OrderCode,
-                Products = created.TransferProducts.Select(tp => new WarehouseTransferProductDto
+                var tempExport = await _tempExportRepo.GetByProductAndBatchAsync(
+                    product.ProductId,
+                    product.BatchId.Value,
+                    transferRequest.SourceWarehouseId
+                );
+
+                if (tempExport == null)
+                    throw new InvalidOperationException("Không tìm thấy dữ liệu tạm thời (TemporaryStockExport) cho sản phẩm cần điều phối.");
+
+                exportReceipt.ExportWarehouseReceiptDetails.Add(new ExportWarehouseReceiptDetail
                 {
-                    ProductId = tp.ProductId,
-                    Quantity = tp.Quantity,
-                    //Unit = tp.Unit,
-                    //Notes = tp.Notes
-                }).ToList()
-            };
-        }
-        public async Task<List<WarehouseTransferRequestDetailDto>> GetAllAsync()
-        {
-            var list = await _repository.GetAllAsync();
+                    ProductId = product.ProductId,
+                    ProductName = productInfo?.ProductName ?? "Unknown",
+                    Quantity = product.Quantity,
+                    UnitPrice = productInfo?.Price ?? 0,
+                    TotalProductAmount = (productInfo?.Price ?? 0) * product.Quantity,
+                    BatchId = product.BatchId.Value,
+                    ExpiryDate = tempExport.ExpiryDate, // ✅ Lấy ngày hết hạn từ bảng tạm
+                    BatchNumber = tempExport.BatchNumber
+                });
+            }
 
-            return list.Select(r => new WarehouseTransferRequestDetailDto
+
+            exportReceipt.TotalQuantity = exportReceipt.ExportWarehouseReceiptDetails.Sum(x => x.Quantity);
+            exportReceipt.TotalAmount = exportReceipt.ExportWarehouseReceiptDetails.Sum(x => x.TotalProductAmount);
+
+            await _exportReceiptRepo.AddRangeAsync(new List<ExportWarehouseReceipt> { exportReceipt });
+
+            // ✅ Cập nhật trạng thái điều phối
+            transferRequest.Status = "Approved";
+            await _transferRepo.UpdateAsync(transferRequest);
+            await _transferRepo.SaveChangesAsync();
+
+            // Gửi thông báo (nếu cần)
+            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
             {
-                Id = r.Id,
-                //RequestCode = r.RequestCode,
-                SourceWarehouseId = r.SourceWarehouseId,
-                DestinationWarehouseId = r.DestinationWarehouseId,
-                RequestDate = r.RequestDate,
-                Status = r.Status,
-                Notes = r.Notes,
-                //OrderCode = r.OrderCode,
-                Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
-                {
-                    ProductId = p.ProductId,
-                    Quantity = p.Quantity,
-                    //Unit = p.Unit,
-                    //Notes = p.Notes
-                }).ToList()
-            }).ToList();
+                title = "Kho phụ",
+                message = "📦 Phiếu điều phối đã được duyệt và xuất kho.",
+                payload = $"TransferRequestId: {transferRequestId}"
+            });
+
+            return exportReceipt;
         }
-
-        public async Task<WarehouseTransferRequestDetailDto?> GetByIdAsync(long id)
-        {
-            var r = await _repository.GetByIdAsync(id);
-            if (r == null) return null;
-
-            return new WarehouseTransferRequestDetailDto
-            {
-                Id = r.Id,
-                //RequestCode = r.RequestCode,
-                SourceWarehouseId = r.SourceWarehouseId,
-                DestinationWarehouseId = r.DestinationWarehouseId,
-                RequestDate = r.RequestDate,
-                Status = r.Status,
-                Notes = r.Notes,
-                //OrderCode = r.OrderCode,
-                Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
-                {
-                    ProductId = p.ProductId,
-                    Quantity = p.Quantity,
-                    //Unit = p.Unit,
-                    //Notes = p.Notes
-                }).ToList()
-            };
-        }
-
-        public async Task<bool> PlanTransferRequestAsync(long requestId, long sourceWarehouseId, Guid plannerId)
-        {
-            return await _repository.PlanTransferRequestAsync(requestId, sourceWarehouseId, plannerId);
-        }
-
-        public async Task<List<WarehouseTransferRequestDetailDto>> GetRequestsToExportAsync(long sourceWarehouseId)
-        {
-            var list = await _repository.GetPlannedRequestsByWarehouseAsync(sourceWarehouseId);
-
-            return list.Select(r => new WarehouseTransferRequestDetailDto
-            {
-                Id = r.Id,
-                //RequestCode = r.RequestCode,
-                SourceWarehouseId = r.SourceWarehouseId,
-                DestinationWarehouseId = r.DestinationWarehouseId,
-                RequestDate = r.RequestDate,
-                Status = r.Status,
-                Notes = r.Notes,
-                //OrderCode = r.OrderCode,
-                Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
-                {
-                    ProductId = p.ProductId,
-                    Quantity = p.Quantity,
-                   //Unit = p.Unit,
-                    //Notes = p.Notes
-                }).ToList()
-            }).ToList();
-        }
-
-        public async Task<WarehouseTransferRequestDetailDto> AutoCreateTransferRequestFromRemainingAsync(AutoCreateTransferRequestDto dto, Guid requestedBy)
-        {
-            var requestExport = await _repository.GetRequestExportWithOrderAsync(dto.RequestExportId);
-            if (requestExport == null)
-                throw new Exception("RequestExport không tồn tại.");
-
-            /*var remainingItems = await _repository.GetRemainingRequestExportsAsync(dto.RequestExportId);
-            if (remainingItems == null || remainingItems.Count == 0)
-                throw new Exception("Không có sản phẩm còn thiếu.");*/
-
-            var transferRequest = new WarehouseTransferRequest
-            {
-                //RequestCode = $"REQ-{DateTime.UtcNow.Ticks}",
-                DestinationWarehouseId = dto.DestinationWarehouseId,
-                //ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
-                //RequestedBy = requestedBy,
-                RequestDate = DateTime.UtcNow,
-                Status = "Pending",
-                Notes = dto.Notes,
-                //RequestExportId = dto.RequestExportId,
-                //OrderCode = requestExport.Order?.OrderCode,
-               /* TransferProducts = remainingItems.Select(x => new WarehouseTransferProduct
-                {
-                    ProductId = x.ProductId,
-                    Quantity = x.RemainingQuantity,
-                    //Unit = x.Product.Unit, // có thể cải tiến sau
-                    //Notes = "Auto from remaining quantity"
-                }).ToList()*/
-            };
-
-            var created = await _repository.CreateAsync(transferRequest);
-
-            // ✅ Gửi thông báo cho KHO (GroupId = 6)
-            var notification = new
-            {
-                title = "Kho Tổng", // Tiêu đề thông báo
-                message = $"🚚 Yêu cầu điều phối xuất kho mới!", // Nội dung thông báo
-                //payload = created.RequestCode // hoặc thêm thông tin khác nếu cần
-            };
-
-            await _hub.Clients.Group("6")
-                .SendAsync("ReceiveNotification", notification);
-
-            return new WarehouseTransferRequestDetailDto
-            {
-                Id = created.Id,
-                //RequestCode = created.RequestCode,
-                SourceWarehouseId = created.SourceWarehouseId,
-                DestinationWarehouseId = created.DestinationWarehouseId,
-                RequestDate = created.RequestDate,
-                Status = created.Status,
-                Notes = created.Notes,
-                //OrderCode = created.OrderCode,
-                Products = created.TransferProducts.Select(tp => new WarehouseTransferProductDto
-                {
-                    ProductId = tp.ProductId,
-                    Quantity = tp.Quantity,
-                    //Unit = tp.Unit,
-                   //Notes = tp.Notes
-                }).ToList()
-            };
-        }
-
-        public async Task<List<WarehouseTransferRequestDetailDto>> GetBySourceWarehouseAsync(long sourceWarehouseId)
-        {
-            var list = await _repository.GetBySourceWarehouseAsync(sourceWarehouseId);
-            return list.Select(MapToDto).ToList();
-        }
-
-        public async Task<List<WarehouseTransferRequestDetailDto>> GetByDestinationWarehouseAsync(long destinationWarehouseId)
-        {
-            var list = await _repository.GetByDestinationWarehouseAsync(destinationWarehouseId);
-            return list.Select(MapToDto).ToList();
-        }
-
-        private WarehouseTransferRequestDetailDto MapToDto(WarehouseTransferRequest r)
-        {
-            return new WarehouseTransferRequestDetailDto
-            {
-                Id = r.Id,
-                //RequestCode = r.RequestCode,
-                SourceWarehouseId = r.SourceWarehouseId,
-                SourceWarehouseName = r.SourceWarehouse?.WarehouseName, 
-                DestinationWarehouseId = r.DestinationWarehouseId,
-                DestinationWarehouseName = r.DestinationWarehouse?.WarehouseName, 
-                RequestDate = r.RequestDate,
-                //OrderCode = r.OrderCode,
-                Status = r.Status,
-                Notes = r.Notes,
-                Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
-                {
-                    ProductId = p.ProductId,
-                    Quantity = p.Quantity,
-                    //Unit = p.Unit,
-                    //Notes = p.Notes
-                }).ToList()
-            };
-        }
-
-
-
-
     }
-
 }

@@ -25,5 +25,8 @@ namespace Repo.IRepository
         Task<long> GetReservedStockByProductIdAsync(long productId);
         Task<List<TemporaryStockExport>> GetByConditionAsync(Expression<Func<TemporaryStockExport, bool>> predicate);
 
+        Task<TemporaryStockExport?> GetByProductAndBatchAsync(long productId, long batchId, long warehouseId);
+
+        Task DeleteByTemporaryExportIdsAsync(List<long> tempExportIds);
     }
 }

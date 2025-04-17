@@ -126,8 +126,6 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 
-builder.Services.AddScoped<IWarehouseReceiptRepository, WarehouseReceiptRepository>();
-builder.Services.AddScoped<IWarehouseReceiptService, WarehouseReceiptService>();
 
 builder.Services.AddScoped<IRequestProductRepository, RequestProductRepository>(); 
 builder.Services.AddScoped<IRequestProductService, RequestProductService>();

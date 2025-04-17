@@ -16,6 +16,8 @@ namespace Repo.IRepository
         Task<ExportWarehouseReceipt?> GetByIdAsync(long receiptId);
         Task UpdateAsync(ExportWarehouseReceipt receipt);
         Task SaveChangesAsync();
+
+        Task<ExportWarehouseReceipt?> GetByIdWithDetailsAsync(int id);
     }
 
 }

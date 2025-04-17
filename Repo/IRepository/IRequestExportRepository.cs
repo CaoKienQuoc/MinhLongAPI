@@ -18,6 +18,8 @@ namespace Repo.IRepository
 
         Task<RequestExport> GetRequestExportByIdAsync(int requestExportId);
         Task UpdateRequestExportAsync(RequestExport requestExport);
+
+        Task<Guid?> GetOrderIdByRequestExportIdAsync(int requestExportId);
     }
 
 }

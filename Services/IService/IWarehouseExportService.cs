@@ -15,6 +15,8 @@ namespace Services.IService
     {
         Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId);
 
+        
+
         /*Task<List<ExportWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId);
 
         Task<List<ExportWarehouseReceipt>> GetInternalTransfersByWarehouseAsync(long warehouseId);

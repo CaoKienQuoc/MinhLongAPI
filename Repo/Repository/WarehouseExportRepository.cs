@@ -56,6 +56,13 @@ namespace Repo.Repository
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<ExportWarehouseReceipt?> GetByIdWithDetailsAsync(int id)
+        {
+            return await _context.ExportWarehouseReceipts
+                .Include(r => r.ExportWarehouseReceiptDetails) // load chi tiết sản phẩm
+                .FirstOrDefaultAsync(r => r.ExportWarehouseReceiptId == id);
+        }
     }
 
 
