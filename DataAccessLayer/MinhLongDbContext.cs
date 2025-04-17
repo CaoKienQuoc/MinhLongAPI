@@ -78,7 +78,6 @@ namespace DataAccessLayer
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
         public DbSet<RequestExport> RequestExports { get; set; }
         public DbSet<RequestExportDetail> RequestExportDetails { get; set; }
-        public DbSet<WarehouseRequestExport> WarehouseRequestExports { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<OTPEmail> OTPEmails { get; set; }
         public DbSet<WarehouseTransferRequest> WarehouseTransferRequests { get; set; }
@@ -123,7 +122,6 @@ namespace DataAccessLayer
             modelBuilder.Entity<PaymentTransaction>().ToTable("PaymentTransaction");
             modelBuilder.Entity<RequestExport>().ToTable("RequestExport");
             modelBuilder.Entity<RequestExportDetail>().ToTable("RequestExportDetail");
-            modelBuilder.Entity<WarehouseRequestExport>().ToTable("WarehouseRequestExport");
             modelBuilder.Entity<OrderDetail>().ToTable("OrderDetail");
             modelBuilder.Entity<WarehouseTransferRequest>().ToTable("WarehouseTransferRequest");
             modelBuilder.Entity<WarehouseTransferProduct>().ToTable("WarehouseTransferProduct");
@@ -603,37 +601,27 @@ namespace DataAccessLayer
                 .HasForeignKey(red => red.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<WarehouseRequestExport>()
-                .ToTable("WarehouseRequestExport")
-                .HasOne(wre => wre.RequestExport)
-                .WithMany(re => re.WarehouseRequestExports)
-                .HasForeignKey(wre => wre.RequestExportId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<WarehouseRequestExport>()
-                .HasOne(wre => wre.Warehouse)
+            modelBuilder.Entity<ExportWarehouseReceiptDetail>()
+                .HasOne(e => e.Product)
                 .WithMany()
-                .HasForeignKey(wre => wre.WarehouseId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Restrict); // ❌ Không cascade ở đây
 
-            modelBuilder.Entity<WarehouseRequestExport>()
-                .HasOne(w => w.RequestedByUser)
+            modelBuilder.Entity<ExportWarehouseReceiptDetail>()
+                .HasOne(e => e.Batch)
                 .WithMany()
-                .HasForeignKey(w => w.RequestedBy)
-                .OnDelete(DeleteBehavior.Restrict); // ❌ Không cho cascade delete
+                .HasForeignKey(e => e.BatchId)
+                .OnDelete(DeleteBehavior.Restrict); // ❌ Không cascade
 
-            modelBuilder.Entity<WarehouseRequestExport>()
-    .HasOne(wre => wre.RequestedByAgency)
-    .WithMany()
-    .HasForeignKey(wre => wre.RequestedByAgencyId)
-    .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ExportWarehouseReceiptDetail>()
+                .HasOne(e => e.ExportWarehouseReceipt)
+                .WithMany(e => e.ExportWarehouseReceiptDetails)
+                .HasForeignKey(e => e.ExportWarehouseReceiptId)
+                .OnDelete(DeleteBehavior.Cascade); // ✅ Cho phép cascade ở đây
 
-            modelBuilder.Entity<WarehouseRequestExport>()
-                .HasOne(wre => wre.Product)
-                .WithMany()
-                .HasForeignKey(wre => wre.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
-
+            modelBuilder.Entity<TemporaryStockExport>()
+                 .Property(p => p.UnitPrice)
+                .HasPrecision(18, 4); // ✅ chính xác để lưu giá tiền
 
 
             // 🔹 Thiết lập mối quan hệ 1-1 giữa Order và RequestProduct

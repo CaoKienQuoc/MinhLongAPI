@@ -16,8 +16,13 @@ namespace BusinessObject.Models
         public long WarehouseId { get; set; }
         public Warehouse Warehouse { get; set; }
 
-        // ✅ Thêm BatchId:
         public long BatchId { get; set; }
+        public Batch Batch { get; set; }
+
+        public string BatchNumber { get; set; }  // ✅ để hiển thị
+        public decimal UnitPrice { get; set; }   // ✅ để tính tiền
+        public DateTime ExpiryDate { get; set; } // ✅ để điều phối đúng lô
+        public long WarehouseProductId { get; set; } // ✅ để tracking lại
 
         public long Quantity { get; set; }
 
@@ -25,9 +30,7 @@ namespace BusinessObject.Models
         public Order Order { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
         public bool IsReverted { get; set; } = false;
     }
-
 
 }

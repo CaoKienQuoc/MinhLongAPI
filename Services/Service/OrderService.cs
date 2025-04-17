@@ -17,7 +17,7 @@ namespace Services.Service
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IExportRepository _exportRepository;
+        private readonly IRequestExportRepository _exportRepository;
         private readonly IRequestProductRepository _requestProductRepository;
         private readonly IUserRepository _userRepository;
         private readonly IHubContext<NotificationHub> _hub;
@@ -27,7 +27,7 @@ namespace Services.Service
 
         public OrderService(
             IOrderRepository orderRepository,
-            IExportRepository exportRepository,
+            IRequestExportRepository exportRepository,
             IRequestProductRepository requestProductRepository,
             IUserRepository agencyRepository,
             IHubContext<NotificationHub> hub,

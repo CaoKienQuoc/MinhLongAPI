@@ -83,15 +83,6 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<WarehouseRequestExport>> GetRemainingRequestExportsAsync(int requestExportId)
-        {
-            return await _context.WarehouseRequestExports
-                .AsNoTracking()
-                .Include(x => x.Product) // để lấy Unit
-                .Where(x => x.RequestExportId == requestExportId && x.RemainingQuantity > 0)
-                .ToListAsync();
-        }
-
         public async Task<List<WarehouseTransferRequest>> GetBySourceWarehouseAsync(long sourceWarehouseId)
         {
             return await _context.WarehouseTransferRequests

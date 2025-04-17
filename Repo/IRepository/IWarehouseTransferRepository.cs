@@ -19,7 +19,6 @@ namespace Repo.IRepository
         Task<WarehouseTransferRequest?> GetByIdWithProductsAsync(long id);
         Task UpdateAsync(WarehouseTransferRequest request);
 
-        Task<List<WarehouseRequestExport>> GetRemainingRequestExportsAsync(int requestExportId);
         Task<List<WarehouseTransferRequest>> GetBySourceWarehouseAsync(long sourceWarehouseId);
 
         Task<List<WarehouseTransferRequest>> GetByDestinationWarehouseAsync(long destinationWarehouseId);

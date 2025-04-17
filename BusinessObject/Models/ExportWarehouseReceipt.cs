@@ -11,40 +11,39 @@ namespace BusinessObject.Models
     public class ExportWarehouseReceipt
     {
         [Key]
-        public long ExportWarehouseReceiptId { get; set; }  // Mã phiếu xuất kho
-        public string DocumentNumber { get; set; }           // Số chứng từ
-        public DateTime DocumentDate { get; set; }           // Ngày chứng từ
-        public DateTime ExportDate { get; set; }             // Ngày xuất
-        public string ExportType { get; set; }               // Loại xuất (xuất bán, xuất chuyển, xuất hủy)
+        public long ExportWarehouseReceiptId { get; set; }
 
-        // 🔹 Thông tin tổng hợp
-        public int TotalQuantity { get; set; }               // Tổng số lượng xuất
-        public decimal TotalAmount { get; set; }             // Tổng tiền
+        [Required]
+        public string DocumentNumber { get; set; }           // ✅ Cần – mã chứng từ (PXK-001)
 
-        [ForeignKey("RequestExport")]
-        public int RequestExportId { get; set; }
+        [Required]
+        public DateTime DocumentDate { get; set; }           // ✅ Cần – ngày lập phiếu
+
+        [Required]
+        public DateTime ExportDate { get; set; }             // ✅ Cần – ngày thực tế xuất
+
+        [Required]
+        public string ExportType { get; set; }               // ✅ Cần – "SaleExport", "InternalTransfer", "Destroyed", etc.
+
+        public int TotalQuantity { get; set; }               // ✅ Cần – tổng số lượng
+
+        public decimal TotalAmount { get; set; }             // ✅ Cần – tổng tiền
+
+        [Required]
+        public int RequestExportId { get; set; }             // ✅ Cần – liên kết yêu cầu xuất
+        [ForeignKey("RequestExportId")]
         public RequestExport RequestExport { get; set; }
 
-        public string? AgencyName { get; set; }
-        public string? OrderCode { get; set; }
+        [Required]
+        public string Status { get; set; } = "Pending";      // ✅ Cần – Pending, Completed...
 
         [Required]
-        public string Status { get; set; } = "Pending"; // Trạng thái của phiếu xuất kho (Pending, Approved, Rejected)
-
-        // 🔹 Khóa ngoại đến Warehouse
-        [Required]
-        public long WarehouseId { get; set; }
+        public long WarehouseId { get; set; }                // ✅ Cần – kho thực hiện xuất
         [ForeignKey("WarehouseId")]
         public Warehouse Warehouse { get; set; }
 
-        // 🔹 Danh sách chi tiết sản phẩm (Liên kết với `ExportWarehouseReceiptDetail`)
-        [ForeignKey("WarehouseTransferRequest")]
-        public long? WarehouseTransferRequestId { get; set; }
-        public WarehouseTransferRequest? WarehouseTransferRequest { get; set; }
-
-
-
         public ICollection<ExportWarehouseReceiptDetail> ExportWarehouseReceiptDetails { get; set; }
     }
+
 
 }

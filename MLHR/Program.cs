@@ -136,20 +136,15 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-builder.Services.AddScoped<IExportRepository, ExportRepository>();
+builder.Services.AddScoped<IRequestExportRepository, RequestExportRepository>();
 builder.Services.AddScoped<IRequestExportService, RequestExportService>();
 
-builder.Services.AddScoped<IExportWarehouseReceiptService, ExportWarehouseReceiptService>();
-builder.Services.AddScoped<IExportWarehouseReceiptRepository, ExportWarehouseReceiptRepository>();
 
 builder.Services.AddScoped<IBatchRepository, BatchRepository>();
 builder.Services.AddScoped<IBatchService, BatchService>();
 
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-
-builder.Services.AddScoped<IWarehouseRequestExportRepository, WarehouseRequestExportRepository>();
-builder.Services.AddScoped<IWarehouseRequestExportService, WarehouseRequestExportService>();
 
 builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<IImageService, ImageService>();

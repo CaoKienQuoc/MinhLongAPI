@@ -373,9 +373,6 @@ namespace DataAccessLayer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ExportWarehouseReceiptId"));
 
-                    b.Property<string>("AgencyName")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("DocumentDate")
                         .HasColumnType("datetime2");
 
@@ -388,9 +385,6 @@ namespace DataAccessLayer.Migrations
 
                     b.Property<string>("ExportType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("OrderCode")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<long?>("ProductId")
@@ -413,9 +407,6 @@ namespace DataAccessLayer.Migrations
                     b.Property<long>("WarehouseId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("WarehouseTransferRequestId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("ExportWarehouseReceiptId");
 
                     b.HasIndex("ProductId");
@@ -423,8 +414,6 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("RequestExportId");
 
                     b.HasIndex("WarehouseId");
-
-                    b.HasIndex("WarehouseTransferRequestId");
 
                     b.ToTable("ExportWarehouseReceipt", (string)null);
                 });
@@ -436,6 +425,9 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ExportWarehouseReceiptDetailId"));
+
+                    b.Property<long>("BatchId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("BatchNumber")
                         .IsRequired()
@@ -469,6 +461,8 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("ExportWarehouseReceiptDetailId");
+
+                    b.HasIndex("BatchId");
 
                     b.HasIndex("ExportWarehouseReceiptId");
 
@@ -1211,7 +1205,14 @@ namespace DataAccessLayer.Migrations
                     b.Property<long>("BatchId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("BatchNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsReverted")
@@ -1226,10 +1227,19 @@ namespace DataAccessLayer.Migrations
                     b.Property<long>("Quantity")
                         .HasColumnType("bigint");
 
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
                     b.Property<long>("WarehouseId")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("WarehouseProductId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("TemporaryStockExportId");
+
+                    b.HasIndex("BatchId");
 
                     b.HasIndex("OrderId");
 
@@ -1504,54 +1514,6 @@ namespace DataAccessLayer.Migrations
                     b.ToTable("WarehouseReceipt", (string)null);
                 });
 
-            modelBuilder.Entity("BusinessObject.Models.WarehouseRequestExport", b =>
-                {
-                    b.Property<int>("WarehouseRequestExportId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WarehouseRequestExportId"));
-
-                    b.Property<long>("ProductId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("QuantityRequested")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RemainingQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RequestExportId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("RequestedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<long>("RequestedByAgencyId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("WarehouseId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("WarehouseRequestExportId");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("RequestExportId");
-
-                    b.HasIndex("RequestedBy");
-
-                    b.HasIndex("RequestedByAgencyId");
-
-                    b.HasIndex("WarehouseId");
-
-                    b.ToTable("WarehouseRequestExport", (string)null);
-                });
-
             modelBuilder.Entity("BusinessObject.Models.WarehouseTransferProduct", b =>
                 {
                     b.Property<long>("Id")
@@ -1594,9 +1556,6 @@ namespace DataAccessLayer.Migrations
                     b.Property<long>("DestinationWarehouseId")
                         .HasColumnType("bigint");
 
-                    b.Property<DateTime?>("ExpectedDeliveryDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -1604,14 +1563,7 @@ namespace DataAccessLayer.Migrations
                     b.Property<DateTime>("RequestDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("RequestExportId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("RequestedBy")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<long>("SourceWarehouseId")
-                        .HasMaxLength(50)
                         .HasColumnType("bigint");
 
                     b.Property<string>("Status")
@@ -1622,10 +1574,6 @@ namespace DataAccessLayer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DestinationWarehouseId");
-
-                    b.HasIndex("RequestExportId");
-
-                    b.HasIndex("RequestedBy");
 
                     b.HasIndex("SourceWarehouseId");
 
@@ -1816,29 +1764,29 @@ namespace DataAccessLayer.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("BusinessObject.Models.WarehouseTransferRequest", "WarehouseTransferRequest")
-                        .WithMany()
-                        .HasForeignKey("WarehouseTransferRequestId");
-
                     b.Navigation("RequestExport");
 
                     b.Navigation("Warehouse");
-
-                    b.Navigation("WarehouseTransferRequest");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.ExportWarehouseReceiptDetail", b =>
                 {
+                    b.HasOne("BusinessObject.Models.Batch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("BusinessObject.Models.ExportWarehouseReceipt", "ExportWarehouseReceipt")
                         .WithMany("ExportWarehouseReceiptDetails")
                         .HasForeignKey("ExportWarehouseReceiptId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BusinessObject.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("BusinessObject.Models.WarehouseProduct", "WarehouseProduct")
@@ -1846,6 +1794,8 @@ namespace DataAccessLayer.Migrations
                         .HasForeignKey("WarehouseProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Batch");
 
                     b.Navigation("ExportWarehouseReceipt");
 
@@ -2101,6 +2051,12 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("BusinessObject.Models.TemporaryStockExport", b =>
                 {
+                    b.HasOne("BusinessObject.Models.Batch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("BusinessObject.Models.Order", "Order")
                         .WithMany("TemporaryStockExports")
                         .HasForeignKey("OrderId")
@@ -2118,6 +2074,8 @@ namespace DataAccessLayer.Migrations
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Batch");
 
                     b.Navigation("Order");
 
@@ -2238,49 +2196,6 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("BusinessObject.Models.WarehouseRequestExport", b =>
-                {
-                    b.HasOne("BusinessObject.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessObject.Models.RequestExport", "RequestExport")
-                        .WithMany("WarehouseRequestExports")
-                        .HasForeignKey("RequestExportId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BusinessObject.Models.User", "RequestedByUser")
-                        .WithMany()
-                        .HasForeignKey("RequestedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessObject.Models.AgencyAccount", "RequestedByAgency")
-                        .WithMany()
-                        .HasForeignKey("RequestedByAgencyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessObject.Models.Warehouse", "Warehouse")
-                        .WithMany()
-                        .HasForeignKey("WarehouseId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("RequestExport");
-
-                    b.Navigation("RequestedByAgency");
-
-                    b.Navigation("RequestedByUser");
-
-                    b.Navigation("Warehouse");
-                });
-
             modelBuilder.Entity("BusinessObject.Models.WarehouseTransferProduct", b =>
                 {
                     b.HasOne("BusinessObject.Models.Batch", "Batch")
@@ -2314,18 +2229,6 @@ namespace DataAccessLayer.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("BusinessObject.Models.RequestExport", "RequestExport")
-                        .WithMany()
-                        .HasForeignKey("RequestExportId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BusinessObject.Models.User", "Requester")
-                        .WithMany()
-                        .HasForeignKey("RequestedBy")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("BusinessObject.Models.Warehouse", "SourceWarehouse")
                         .WithMany()
                         .HasForeignKey("SourceWarehouseId")
@@ -2333,10 +2236,6 @@ namespace DataAccessLayer.Migrations
                         .IsRequired();
 
                     b.Navigation("DestinationWarehouse");
-
-                    b.Navigation("RequestExport");
-
-                    b.Navigation("Requester");
 
                     b.Navigation("SourceWarehouse");
                 });
@@ -2433,8 +2332,6 @@ namespace DataAccessLayer.Migrations
             modelBuilder.Entity("BusinessObject.Models.RequestExport", b =>
                 {
                     b.Navigation("RequestExportDetails");
-
-                    b.Navigation("WarehouseRequestExports");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.RequestProduct", b =>

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Repo.IRepository
 {
-    public interface IExportRepository
+    public interface IRequestExportRepository
     {
         Task<List<RequestExport>> GetAllRequestExportsAsync();
         Task AddExportAsync(RequestExport export);

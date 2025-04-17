@@ -29,58 +29,8 @@ namespace Services.Service
             _orderRepository = orderRepository;
         }
 
+
         /*public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
-        {
-            var remainingQuantity = requiredQuantity;
-
-            var stockList = await _warehouseProductRepo.GetAvailableWarehouseProductsAsync(productId);
-
-            // ✅ Sắp xếp theo hạn sử dụng (cũ nhất trước)
-            stockList = stockList
-                .Where(x => x.ExpirationDate != null) // nếu có thể null
-                .OrderBy(x => x.ExpirationDate)
-                .ToList();
-
-            foreach (var stock in stockList)
-            {
-                if (remainingQuantity <= 0)
-                    break;
-
-                var deductQuantity = Math.Min(stock.Quantity, remainingQuantity);
-                stock.Quantity -= (int)deductQuantity;
-
-
-                await _warehouseProductRepo.UpdateAsync(stock);
-
-                var tempExport = new TemporaryStockExport
-                {
-                    ProductId = productId,
-                    WarehouseId = stock.WarehouseId,
-                    BatchId = stock.BatchId,
-                    Quantity = deductQuantity,
-                    OrderId = orderId,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                await _tempExportRepo.AddAsync(tempExport);
-
-                remainingQuantity -= deductQuantity;
-            }
-
-            if (remainingQuantity > 0)
-            {
-                throw new InvalidOperationException($"Không đủ tồn kho cho sản phẩm {productId}. Còn thiếu {remainingQuantity}.");
-            }
-
-            await _warehouseProductRepo.SaveChangesAsync();
-            await _tempExportRepo.SaveChangesAsync();
-
-            // ✅ Tính lại tổng tồn kho thực tế từ bảng WarehouseProduct
-            var totalAvailable = await _warehouseProductRepo.GetTotalAvailableStockByProductIdAsync(productId);
-
-        }*/
-
-        public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
         {
             var remainingQuantity = requiredQuantity;
 
@@ -126,6 +76,76 @@ namespace Services.Service
                         ProductId = productId,
                         WarehouseId = stock.WarehouseId,
                         BatchId = stock.BatchId,
+                        Quantity = deductQuantity,
+                        OrderId = orderId,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                remainingQuantity -= deductQuantity;
+            }
+
+            if (remainingQuantity > 0)
+                throw new InvalidOperationException($"Không đủ tồn kho cho sản phẩm {productId}. Thiếu {remainingQuantity}");
+
+            await _warehouseProductRepo.SaveChangesAsync();
+            await _tempExportRepo.SaveChangesAsync();
+        }*/
+
+
+        public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
+        {
+            var remainingQuantity = requiredQuantity;
+
+            var stockList = await _warehouseProductRepo.GetAvailableWarehouseProductsAsync(productId);
+
+            stockList = stockList
+                .Where(x => x.ExpirationDate != null)
+                .OrderBy(x => x.ExpirationDate)
+                .ToList();
+
+
+            foreach (var stock in stockList)
+            {
+
+                var unitPrice = stock.Batch?.SellingPrice ?? throw new InvalidOperationException("Không tìm thấy giá lô hàng.");
+
+                if (remainingQuantity <= 0)
+                    break;
+
+                var deductQuantity = Math.Min(stock.Quantity, remainingQuantity);
+
+                if (stock.Quantity < deductQuantity)
+                    throw new InvalidOperationException($"Tồn kho không đủ tại kho {stock.WarehouseId}.");
+
+                stock.Quantity -= (int)deductQuantity;
+                await _warehouseProductRepo.UpdateAsync(stock);
+
+                var existingTemp = await _tempExportRepo.GetByConditionAsync(x =>
+                    x.OrderId == orderId &&
+                    x.ProductId == productId &&
+                    x.WarehouseId == stock.WarehouseId &&
+                    x.BatchId == stock.BatchId &&
+                    !x.IsReverted
+                );
+
+                var matchedTemp = existingTemp.FirstOrDefault();
+                if (matchedTemp != null)
+                {
+                    matchedTemp.Quantity += deductQuantity;
+                    await _tempExportRepo.UpdateAsync(matchedTemp);
+                }
+                else
+                {
+                    await _tempExportRepo.AddAsync(new TemporaryStockExport
+                    {
+                        ProductId = productId,
+                        WarehouseId = stock.WarehouseId,
+                        BatchId = stock.BatchId,
+                        BatchNumber = stock.Batch.BatchCode,
+                        UnitPrice = unitPrice,
+                        ExpiryDate = stock.ExpirationDate,
+                        WarehouseProductId = stock.WarehouseProductId,
                         Quantity = deductQuantity,
                         OrderId = orderId,
                         CreatedAt = DateTime.UtcNow

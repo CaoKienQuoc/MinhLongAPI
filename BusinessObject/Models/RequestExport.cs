@@ -32,7 +32,6 @@ namespace BusinessObject.Models
         public AgencyAccount RequestedByAgency { get; set; }
 
         public ICollection<RequestExportDetail> RequestExportDetails { get; set; }
-        public ICollection<WarehouseRequestExport> WarehouseRequestExports { get; set; }
     }
 
 }

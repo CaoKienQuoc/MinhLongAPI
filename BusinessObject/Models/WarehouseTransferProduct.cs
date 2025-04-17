@@ -13,19 +13,23 @@ namespace BusinessObject.Models
         [Key]
         public long Id { get; set; }
 
+        [Required]
         public long WarehouseTransferRequestId { get; set; }
         [ForeignKey("WarehouseTransferRequestId")]
         public WarehouseTransferRequest WarehouseTransferRequest { get; set; }
 
+        [Required]
         public long ProductId { get; set; }
         [ForeignKey("ProductId")]
         public Product Product { get; set; }
 
-        public long? BatchId { get; set; } // Optional nếu có tracking batch
+        public long? BatchId { get; set; } // ✅ Cần – nếu có quản lý batch/lô hàng
         [ForeignKey("BatchId")]
         public Batch? Batch { get; set; }
 
-        public int Quantity { get; set; }
+        [Required]
+        public int Quantity { get; set; } // ✅ Cần
     }
+
 
 }

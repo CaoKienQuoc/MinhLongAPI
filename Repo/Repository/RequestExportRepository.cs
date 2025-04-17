@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace Repo.Repository
 {
-    public class ExportRepository : IExportRepository
+    public class RequestExportRepository : IRequestExportRepository
     {
         private readonly MinhLongDbContext _context;
 
-        public ExportRepository(MinhLongDbContext context)
+        public RequestExportRepository(MinhLongDbContext context)
         {
             _context = context;
         }

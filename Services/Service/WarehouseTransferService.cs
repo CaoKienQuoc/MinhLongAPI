@@ -167,9 +167,9 @@ namespace Services.Service
             if (requestExport == null)
                 throw new Exception("RequestExport không tồn tại.");
 
-            var remainingItems = await _repository.GetRemainingRequestExportsAsync(dto.RequestExportId);
+            /*var remainingItems = await _repository.GetRemainingRequestExportsAsync(dto.RequestExportId);
             if (remainingItems == null || remainingItems.Count == 0)
-                throw new Exception("Không có sản phẩm còn thiếu.");
+                throw new Exception("Không có sản phẩm còn thiếu.");*/
 
             var transferRequest = new WarehouseTransferRequest
             {
@@ -182,13 +182,13 @@ namespace Services.Service
                 Notes = dto.Notes,
                 //RequestExportId = dto.RequestExportId,
                 //OrderCode = requestExport.Order?.OrderCode,
-                TransferProducts = remainingItems.Select(x => new WarehouseTransferProduct
+               /* TransferProducts = remainingItems.Select(x => new WarehouseTransferProduct
                 {
                     ProductId = x.ProductId,
                     Quantity = x.RemainingQuantity,
                     //Unit = x.Product.Unit, // có thể cải tiến sau
                     //Notes = "Auto from remaining quantity"
-                }).ToList()
+                }).ToList()*/
             };
 
             var created = await _repository.CreateAsync(transferRequest);

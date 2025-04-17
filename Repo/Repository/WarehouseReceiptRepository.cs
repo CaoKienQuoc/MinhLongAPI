@@ -212,7 +212,7 @@ namespace Repo.Repository
             return await _context.ExportWarehouseReceipts
                 .Include(e => e.ExportWarehouseReceiptDetails)
                 .FirstOrDefaultAsync(r =>
-                    r.WarehouseTransferRequestId == transferRequestId &&
+                    r.ExportWarehouseReceiptId == transferRequestId &&
                     r.Status == "Approved");
         }
 
