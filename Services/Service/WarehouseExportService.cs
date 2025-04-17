@@ -36,14 +36,14 @@ namespace Services.Service
             _exportReceiptRepo = exportReceiptRepo;
         }
 
-        public async Task<List<ExportWarehouseReceipt>> CreateInternalTransferReceiptsAsync(int requestExportId, Guid currentUserId)
+        public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
         {
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId);
             if (requestExport == null || requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
                 throw new InvalidOperationException("RequestExport not found or invalid.");
 
             if (requestExport.Status == "Requested" || requestExport.Status == "Approved")
-                throw new InvalidOperationException("This request has already been assigned.");
+                throw new InvalidOperationException("This request has already been processed.");
 
             var orderId = requestExport.OrderId;
             if (orderId == Guid.Empty)
@@ -61,39 +61,29 @@ namespace Services.Service
                           .ToDictionary(y => y.Key, y => y.ToList())
                 );
 
-            var receiptsToSave = new List<ExportWarehouseReceipt>();
             var transferRequestsToSave = new List<WarehouseTransferRequest>();
+            var exportDetails = new List<ExportWarehouseReceiptDetail>();
+            long? mainWarehouseId = null;
 
             foreach (var productGroup in groupedByProduct)
             {
                 var productId = productGroup.Key;
                 var warehouseGroups = productGroup.Value;
-
-                var mainWarehouse = warehouseGroups
+                // ✅ Xác định kho chính
+                var maxWarehouse = warehouseGroups
                     .OrderByDescending(w => w.Value.Sum(x => x.Quantity))
-                    .First().Key;
+                    .First();
 
-                var requestedQty = requestExport.RequestExportDetails
-                    .Where(d => d.ProductId == productId)
-                    .Sum(d => d.RequestedQuantity);
+                var mainId = maxWarehouse.Key;
+                // Nếu lần đầu gặp sản phẩm → gán main warehouse
+                if (mainWarehouseId == null)
+                    mainWarehouseId = mainId;
 
-                // ✅ Tạo phiếu xuất từ kho chính (chờ điều phối)
-                var mainReceipt = new ExportWarehouseReceipt
-                {
-                    DocumentNumber = $"PXK-CHINH-{DateTime.UtcNow.Ticks}",
-                    DocumentDate = DateTime.UtcNow,
-                    ExportDate = DateTime.UtcNow,
-                    ExportType = "PendingTransfer", // chờ điều phối
-                    Status = "Pending",
-                    WarehouseId = mainWarehouse,
-                    RequestExportId = requestExportId,
-                    ExportWarehouseReceiptDetails = new List<ExportWarehouseReceiptDetail>()
-                };
-
-                foreach (var item in warehouseGroups[mainWarehouse])
+                // ✅ Tạo chi tiết xuất kho cho kho chính
+                foreach (var item in maxWarehouse.Value)
                 {
                     var product = await _productRepository.GetByIdAsync(item.ProductId);
-                    mainReceipt.ExportWarehouseReceiptDetails.Add(new ExportWarehouseReceiptDetail
+                    exportDetails.Add(new ExportWarehouseReceiptDetail
                     {
                         ProductId = item.ProductId,
                         ProductName = product?.ProductName ?? "Unknown",
@@ -107,86 +97,59 @@ namespace Services.Service
                     });
                 }
 
-                mainReceipt.TotalQuantity = mainReceipt.ExportWarehouseReceiptDetails.Sum(x => x.Quantity);
-                mainReceipt.TotalAmount = mainReceipt.ExportWarehouseReceiptDetails.Sum(x => x.TotalProductAmount);
-                receiptsToSave.Add(mainReceipt);
-
-                // ✅ Các kho còn lại → điều phối
-                foreach (var kvp in warehouseGroups.Where(w => w.Key != mainWarehouse))
+                // ✅ Các kho còn lại → tạo điều phối
+                foreach (var other in warehouseGroups.Where(x => x.Key != mainId))
                 {
-                    var sourceWarehouseId = kvp.Key;
-                    var transferBatches = kvp.Value;
-
-                    var internalReceipt = new ExportWarehouseReceipt
+                    transferRequestsToSave.Add(new WarehouseTransferRequest
                     {
-                        DocumentNumber = $"PXK-DP-{DateTime.UtcNow.Ticks}-{sourceWarehouseId}",
-                        DocumentDate = DateTime.UtcNow,
-                        ExportDate = DateTime.UtcNow,
-                        ExportType = "InternalTransfer",
-                        Status = "Pending",
-                        WarehouseId = sourceWarehouseId,
-                        RequestExportId = requestExportId,
-                        ExportWarehouseReceiptDetails = new List<ExportWarehouseReceiptDetail>()
-                    };
-
-                    foreach (var batch in transferBatches)
-                    {
-                        var product = await _productRepository.GetByIdAsync(batch.ProductId);
-                        internalReceipt.ExportWarehouseReceiptDetails.Add(new ExportWarehouseReceiptDetail
-                        {
-                            ProductId = batch.ProductId,
-                            ProductName = product?.ProductName ?? "Unknown",
-                            BatchNumber = batch.BatchNumber,
-                            Quantity = (int)batch.Quantity,
-                            UnitPrice = batch.UnitPrice,
-                            TotalProductAmount = batch.Quantity * batch.UnitPrice,
-                            ExpiryDate = batch.ExpiryDate,
-                            WarehouseProductId = batch.WarehouseProductId,
-                            BatchId = batch.BatchId
-                        });
-                    }
-
-                    internalReceipt.TotalQuantity = internalReceipt.ExportWarehouseReceiptDetails.Sum(x => x.Quantity);
-                    internalReceipt.TotalAmount = internalReceipt.ExportWarehouseReceiptDetails.Sum(x => x.TotalProductAmount);
-                    receiptsToSave.Add(internalReceipt);
-
-                    // Optional: tạo đơn điều phối để theo dõi riêng
-                    var transferRequest = new WarehouseTransferRequest
-                    {
-                        SourceWarehouseId = sourceWarehouseId,
-                        DestinationWarehouseId = mainWarehouse,
+                        SourceWarehouseId = other.Key,
+                        DestinationWarehouseId = mainId,
                         Status = "Pending",
                         RequestDate = DateTime.UtcNow,
-                        Notes = $"Transfer ProductId {productId} - Qty: {transferBatches.Sum(x => x.Quantity)}",
-                        TransferProducts = transferBatches.Select(t => new WarehouseTransferProduct
+                        Notes = $"Transfer ProductId {productId} - Qty: {other.Value.Sum(x => x.Quantity)}",
+                        TransferProducts = other.Value.Select(t => new WarehouseTransferProduct
                         {
                             ProductId = t.ProductId,
                             Quantity = (int)t.Quantity,
                             BatchId = t.BatchId
                         }).ToList()
-                    };
-                    transferRequestsToSave.Add(transferRequest);
+                    });
                 }
             }
-            await _exportReceiptRepo.AddRangeAsync(receiptsToSave); // ✅ Thêm dòng này
 
+            // ✅ Lưu ExportWarehouseReceipt cho kho chính
+            var exportReceipt = new ExportWarehouseReceipt
+            {
+                DocumentNumber = $"PXK-CHINH-{DateTime.UtcNow.Ticks}",
+                DocumentDate = DateTime.UtcNow,
+                ExportDate = DateTime.UtcNow,
+                ExportType = "PendingTransfer",
+                Status = "Pending",
+                WarehouseId = mainWarehouseId.Value,
+                RequestExportId = requestExportId,
+                ExportWarehouseReceiptDetails = exportDetails,
+                TotalQuantity = exportDetails.Sum(x => x.Quantity),
+                TotalAmount = exportDetails.Sum(x => x.TotalProductAmount)
+            };
+
+            await _exportReceiptRepo.AddRangeAsync(new List<ExportWarehouseReceipt> { exportReceipt }); // ✅ đúng
             await _transferRepo.AddRangeAsync(transferRequestsToSave);
 
-            requestExport.Status = "Requested";
-            //requestExport.FulfillmentStatus = "WaitingForTransfer";
-
+            requestExport.Status = "Requested"; // hoặc Approved
             await _requestExportRepository.UpdateRequestExportAsync(requestExport);
             await _requestExportRepository.SaveChangesAsync();
 
+            // Gửi thông báo đến kho chính
             await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
             {
                 title = "Kho",
-                message = "📦 Yêu cầu xuất kho đã được xử lý, chờ điều phối.",
+                message = "📦 Đơn xuất kho đã được duyệt. Vui lòng chuẩn bị xuất kho.",
                 payload = $"RequestExportCode: {requestExport.RequestExportCode}"
             });
 
-            return receiptsToSave;
+            return exportReceipt;
         }
+
     }
 
 }

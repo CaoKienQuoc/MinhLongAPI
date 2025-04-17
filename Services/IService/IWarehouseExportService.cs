@@ -13,7 +13,7 @@ namespace Services.IService
 
     public interface IWarehouseExportService
     {
-        Task<List<ExportWarehouseReceipt>> CreateInternalTransferReceiptsAsync(int requestExportId, Guid currentUserId);
+        Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId);
 
         /*Task<List<ExportWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId);
 
