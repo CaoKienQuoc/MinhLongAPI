@@ -158,6 +158,9 @@ builder.Services.AddScoped<IWarehouseTransferService, WarehouseTransferService>(
 builder.Services.AddScoped<IAgencyLevelRepository, AgencyLevelRepository>();
 builder.Services.AddScoped<IAgencyLevelService, AgencyLevelService>();
 
+builder.Services.AddScoped<IWarehouseExportRepository, WarehouseExportRepository>();
+builder.Services.AddScoped<IWarehouseExportService, WarehouseExportService>();
+
 builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
 builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
 builder.Services.AddMemoryCache(); // hoặc services.AddMemoryCache() nếu dùng Startup
