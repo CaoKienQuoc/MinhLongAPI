@@ -92,6 +92,13 @@ namespace Repo.Repository
 
             _context.TemporaryStockExports.RemoveRange(stocksToDelete);
         }
+
+        public async Task<List<TemporaryStockExport>> GetByWarehouseIdAsync(long warehouseId)
+        {
+            return await _context.TemporaryStockExports
+                .Where(t => t.WarehouseId == warehouseId)
+                .ToListAsync();
+        }
     }
 
 }
