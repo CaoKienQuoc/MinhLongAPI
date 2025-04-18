@@ -1563,6 +1563,9 @@ namespace DataAccessLayer.Migrations
                     b.Property<DateTime>("RequestDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("RequestExportId")
+                        .HasColumnType("int");
+
                     b.Property<long>("SourceWarehouseId")
                         .HasColumnType("bigint");
 

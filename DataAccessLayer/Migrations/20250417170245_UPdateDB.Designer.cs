@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250417154547_UpdateDB")]
-    partial class UpdateDB
+    [Migration("20250417170245_UPdateDB")]
+    partial class UPdateDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1565,6 +1565,9 @@ namespace DataAccessLayer.Migrations
 
                     b.Property<DateTime>("RequestDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("RequestExportId")
+                        .HasColumnType("int");
 
                     b.Property<long>("SourceWarehouseId")
                         .HasColumnType("bigint");

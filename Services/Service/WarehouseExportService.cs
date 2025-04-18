@@ -43,7 +43,7 @@ namespace Services.Service
             _orderRepo = orderRepository;
         }
 
-        public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
+        /*public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
         {
             
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId);
@@ -160,11 +160,166 @@ namespace Services.Service
             });
 
             return exportReceipt;
+        }*/
+
+        public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
+        {
+            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
+                ?? throw new InvalidOperationException("RequestExport not found.");
+
+            if (requestExport.Status == "Requested" || requestExport.Status == "Approved")
+                throw new InvalidOperationException("This request has already been processed.");
+
+            if (requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
+                throw new InvalidOperationException("No product details in request.");
+
+            var order = await _orderRepo.GetOrderByIdAsync(requestExport.OrderId);
+            if (order == null) throw new InvalidOperationException("Order not found.");
+
+            var tempStockExports = await _tempExportRepo.GetByOrderIdAsync(order.OrderId);
+            if (tempStockExports == null || !tempStockExports.Any())
+                throw new InvalidOperationException("No temporary stock exports found.");
+
+            var exportDetails = new List<ExportWarehouseReceiptDetail>();
+            var transferRequests = new List<WarehouseTransferRequest>();
+
+            var warehouseIds = tempStockExports.Select(t => t.WarehouseId).Distinct().ToList();
+
+            // ✅ Trường hợp 1: chỉ 1 kho duy nhất đủ tất cả
+            if (warehouseIds.Count == 1)
+            {
+                var warehouseId = warehouseIds.First();
+                foreach (var item in tempStockExports)
+                {
+                    var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    exportDetails.Add(new ExportWarehouseReceiptDetail
+                    {
+                        ProductId = item.ProductId,
+                        ProductName = product?.ProductName ?? "Unknown",
+                        BatchNumber = item.BatchNumber,
+                        Quantity = (int)item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        TotalProductAmount = item.UnitPrice * item.Quantity,
+                        ExpiryDate = item.ExpiryDate,
+                        WarehouseProductId = item.WarehouseProductId,
+                        BatchId = item.BatchId
+                    });
+                }
+
+                var receipt = new ExportWarehouseReceipt
+                {
+                    DocumentNumber = $"PXK-DUTRUC-{DateTime.UtcNow.Ticks}",
+                    DocumentDate = DateTime.UtcNow,
+                    ExportDate = DateTime.UtcNow,
+                    ExportType = "AvailableExport",
+                    Status = "Pending",
+                    WarehouseId = warehouseId,
+                    RequestExportId = requestExportId,
+                    ExportWarehouseReceiptDetails = exportDetails,
+                    TotalQuantity = exportDetails.Sum(x => x.Quantity),
+                    TotalAmount = exportDetails.Sum(x => x.TotalProductAmount)
+                };
+
+                await _exportReceiptRepo.AddRangeAsync(new[] { receipt });
+                await UpdateRequestAndOrderStatusAsync(requestExport, order);
+                await SendWarehouseNotification(requestExport.RequestExportCode, "📦 Đơn hàng đủ tồn, xuất kho trực tiếp.");
+                return receipt;
+            }
+
+            // ✅ Trường hợp 2: nhiều kho bị trừ → xác định kho chính
+            var mainWarehouseId = tempStockExports
+                .GroupBy(x => x.WarehouseId)
+                .OrderByDescending(g => g.Sum(x => x.Quantity))
+                .First().Key;
+
+            foreach (var item in tempStockExports)
+            {
+                if (item.WarehouseId == mainWarehouseId)
+                {
+                    var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    exportDetails.Add(new ExportWarehouseReceiptDetail
+                    {
+                        ProductId = item.ProductId,
+                        ProductName = product?.ProductName ?? "Unknown",
+                        BatchNumber = item.BatchNumber,
+                        Quantity = (int)item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        TotalProductAmount = item.UnitPrice * item.Quantity,
+                        ExpiryDate = item.ExpiryDate,
+                        WarehouseProductId = item.WarehouseProductId,
+                        BatchId = item.BatchId
+                    });
+                }
+                else
+                {
+                    var existing = transferRequests.FirstOrDefault(r => r.SourceWarehouseId == item.WarehouseId);
+                    if (existing == null)
+                    {
+                        existing = new WarehouseTransferRequest
+                        {
+                            SourceWarehouseId = item.WarehouseId,
+                            DestinationWarehouseId = mainWarehouseId,
+                            Status = "Pending",
+                            RequestDate = DateTime.UtcNow,
+                            Notes = $"Transfer for order {order.OrderCode}",
+                            TransferProducts = new List<WarehouseTransferProduct>()
+                        };
+                        transferRequests.Add(existing);
+                    }
+
+                    existing.TransferProducts.Add(new WarehouseTransferProduct
+                    {
+                        ProductId = item.ProductId,
+                        Quantity = (int)item.Quantity,
+                        BatchId = item.BatchId
+                    });
+                }
+            }
+
+            var transferReceipt = new ExportWarehouseReceipt
+            {
+                DocumentNumber = $"PXK-DIEUPHOI-{DateTime.UtcNow.Ticks}",
+                DocumentDate = DateTime.UtcNow,
+                ExportDate = DateTime.UtcNow,
+                ExportType = "PendingTransfer",
+                Status = "Pending",
+                WarehouseId = mainWarehouseId,
+                RequestExportId = requestExportId,
+                ExportWarehouseReceiptDetails = exportDetails,
+                TotalQuantity = exportDetails.Sum(x => x.Quantity),
+                TotalAmount = exportDetails.Sum(x => x.TotalProductAmount)
+            };
+
+            await _exportReceiptRepo.AddRangeAsync(new[] { transferReceipt });
+            await _transferRepo.AddRangeAsync(transferRequests);
+            await UpdateRequestAndOrderStatusAsync(requestExport, order);
+            await SendWarehouseNotification(requestExport.RequestExportCode, "📦 Đơn cần điều phối. Vui lòng chuẩn bị xuất kho.");
+            return transferReceipt;
         }
+
+        private async Task UpdateRequestAndOrderStatusAsync(RequestExport request, Order order)
+        {
+            request.Status = "Requested";
+            order.Status = "WaitingDelivery";
+            await _requestExportRepository.UpdateRequestExportAsync(request);
+            await _orderRepo.UpdateOrderAsync(order);
+            await _requestExportRepository.SaveChangesAsync();
+        }
+
+        private async Task SendWarehouseNotification(string code, string message)
+        {
+            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
+            {
+                title = "Kho",
+                message,
+                payload = $"RequestExportCode: {code}"
+            });
+        }
+
 
         public async Task FinalizeExportSaleAsync(int exportReceiptId, Guid currentUserId)
         {
-            // 1. Lấy phiếu xuất kho và kiểm tra hợp lệ
+            // 1. Lấy phiếu xuất kho
             var receipt = await _exportReceiptRepo.GetByIdWithDetailsAsync(exportReceiptId);
             if (receipt == null)
                 throw new InvalidOperationException("Không tìm thấy phiếu xuất kho.");
@@ -175,31 +330,37 @@ namespace Services.Service
             if (receipt.RequestExportId == null)
                 throw new InvalidOperationException("Phiếu xuất không liên kết với đơn yêu cầu xuất kho.");
 
-            // 2. Lấy OrderId từ RequestExport
+            // ❗ Nếu phiếu đang ở trạng thái "PendingTransfer", thì không cho xuất
+            if (receipt.ExportType == "PendingTransfer")
+            {
+                throw new InvalidOperationException("Số lượng tồn kho không đủ, vui lòng điều phối hoặc nhập hàng thêm.");
+            }
+
+            // 2. Truy vết Order từ RequestExport
             var orderId = await _requestExportRepo.GetOrderIdByRequestExportIdAsync(receipt.RequestExportId);
             if (orderId == null || orderId == Guid.Empty)
                 throw new InvalidOperationException("Không tìm thấy OrderId tương ứng từ đơn yêu cầu xuất kho.");
+
             var order = await _orderRepo.GetOrderByIdAsync(orderId.Value);
 
-            // 3. Lấy danh sách bản ghi tạm
+            // 3. Lấy danh sách bản ghi tạm và xoá tồn kho tạm
             var tempExports = await _tempExportRepo.GetByOrderIdAsync(orderId.Value);
             if (tempExports == null || !tempExports.Any())
                 throw new InvalidOperationException("Không tìm thấy dữ liệu tạm để xoá tồn kho.");
 
-            // 4. Lấy danh sách Id của bản ghi tạm để xoá trong bảng Stock
             var tempIds = tempExports.Select(t => t.TemporaryStockExportId).ToList();
             await _tempExportRepo.DeleteByTemporaryExportIdsAsync(tempIds);
 
-            // 5. Cập nhật phiếu xuất kho thành xuất bán
+            // 4. Cập nhật phiếu xuất kho & đơn hàng
             receipt.Status = "Completed";
-            order.Status = "Exported"; // Cập nhật trạng thái đơn hàng
             receipt.ExportType = "ExportSale";
-            
+            order.Status = "Exported";
+
             await _exportReceiptRepo.UpdateAsync(receipt);
             await _orderRepo.UpdateOrderAsync(order);
             await _exportReceiptRepo.SaveChangesAsync();
 
-            // 6. Gửi thông báo (tuỳ chọn)
+            // 5. Gửi thông báo
             await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
             {
                 title = "Xuất kho",
@@ -207,6 +368,7 @@ namespace Services.Service
                 payload = receipt.ExportWarehouseReceiptId
             });
         }
+
     }
 
 }

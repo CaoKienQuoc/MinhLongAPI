@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateDB : Migration
+    public partial class UPdateDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -577,6 +577,7 @@ namespace DataAccessLayer.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SourceWarehouseId = table.Column<long>(type: "bigint", nullable: false),
                     DestinationWarehouseId = table.Column<long>(type: "bigint", nullable: false),
+                    RequestExportId = table.Column<int>(type: "int", nullable: false),
                     RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
