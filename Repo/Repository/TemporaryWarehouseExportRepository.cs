@@ -99,6 +99,12 @@ namespace Repo.Repository
                 .Where(t => t.WarehouseId == warehouseId)
                 .ToListAsync();
         }
+        public async Task<List<TemporaryStockExport>> GetByBatchIdsAsync(List<long> batchIds)
+        {
+            return await _context.TemporaryStockExports
+                .Where(t => batchIds.Contains(t.BatchId))
+                .ToListAsync();
+        }
     }
 
 }

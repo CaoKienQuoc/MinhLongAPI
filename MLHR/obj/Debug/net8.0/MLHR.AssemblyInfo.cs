@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MLHR")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a78a50077fa2a07ae44a85b43d700dbe6b6094a1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3dd6ccafc789e4080701d2b8ee58439c6a5eb0b2")]
 [assembly: System.Reflection.AssemblyProductAttribute("MLHR")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MLHR")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

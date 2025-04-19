@@ -42,6 +42,9 @@ namespace BusinessObject.DTO.Warehouse
         public List<BatchRequest> Batches { get; set; } = new List<BatchRequest>();
 
         public bool IsApproved { get; set; }
+
+        public Guid? OrderId { get; set; } // Dành cho ImportCoordination
+
     }
 
 }

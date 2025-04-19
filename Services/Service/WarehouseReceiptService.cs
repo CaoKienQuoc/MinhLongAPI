@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO.Product;
+using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Newtonsoft.Json;
 using Repo.IRepository;
+using Repo.Repository;
+using Services.Exceptions;
 using Services.IService;
 
 namespace Services.Service
@@ -15,68 +19,111 @@ namespace Services.Service
         private readonly IWarehouseReceiptRepository _receiptRepo;
         private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
         private readonly IBatchRepository _batchRepo;
+        private readonly IWarehouseRepository _warehouseRepository;
 
         public WarehouseReceiptService(
             IWarehouseReceiptRepository receiptRepo,
             ITemporaryWarehouseExportRepository tempExportRepo,
-            IBatchRepository batchRepo)
+            IBatchRepository batchRepo,
+            IWarehouseRepository warehouseRepository)
         {
             _receiptRepo = receiptRepo;
             _tempExportRepo = tempExportRepo;
             _batchRepo = batchRepo;
+            _warehouseRepository = warehouseRepository;
         }
 
-        public async Task<WarehouseReceipt> CreateWarehouseReceiptFromCoordinationAsync(long warehouseId)
+        public async Task<bool> CreateReceiptAsync(WarehouseReceiptRequest request, Guid currentUserId)
         {
-            var tempExports = await _tempExportRepo.GetByWarehouseIdAsync(warehouseId);
-            if (tempExports == null || !tempExports.Any())
-                throw new InvalidOperationException("Không có dữ liệu điều phối vào kho này.");
+            var allowedTypes = new HashSet<string> { "ImportCoordination", "ImportProduction" };
 
-            var batches = new List<object>();
-            decimal totalQuantity = 0;
-            decimal totalAmount = 0;
+            if (!allowedTypes.Contains(request.ImportType))
+                throw new Exception("ImportType is invalid! Only accepted: ImportCoordination, ImportProduction");
 
-            foreach (var item in tempExports)
+            // ✅ Kiểm tra quyền sở hữu kho
+            var warehouseUserId = await _warehouseRepository.GetUserIdByWarehouseIdAsync(request.WarehouseId);
+            if (warehouseUserId != currentUserId)
+                throw new BadRequestException("Kho này không phải kho của bạn! Bạn không có quyền gì ở kho này.");
+
+            string datePart = DateTime.Now.ToString("yyyyMMdd");
+            int batchCountToday = await _batchRepo.CountBatchesByDateAsync(DateTime.Now);
+            string batchCode = $"BA{datePart}-{(batchCountToday + 1):D3}";
+
+            List<BatchResponseDto> processedBatches = new();
+            int totalQuantity = 0;
+            decimal totalPrice = 0;
+
+            if (request.ImportType == "ImportCoordination")
             {
-                var batch = await _batchRepo.GetByIdAsync(item.BatchId);
-                if (batch == null)
-                    throw new InvalidOperationException($"Không tìm thấy batch với ID: {item.BatchId}");
+                // ✅ Cần OrderId để truy xuất dữ liệu điều phối từ TemporaryStockExport
+                if (request.OrderId == null || request.OrderId == Guid.Empty)
+                    throw new Exception("OrderId is required for ImportCoordination.");
 
-                batches.Add(new
+                var tempExports = await _tempExportRepo.GetByOrderIdAsync(request.OrderId.Value);
+
+                if (tempExports == null || !tempExports.Any())
+                    throw new Exception("Không tìm thấy dữ liệu tạm xuất từ OrderId.");
+
+                foreach (var temp in tempExports)
                 {
-                    item.ProductId,
-                    item.BatchId,
-                    batch.BatchCode,
-                    Quantity = (decimal)item.Quantity,
-                    item.UnitPrice,
-                    batch.SellingPrice,
-                    batch.ExpiryDate
-                });
+                    processedBatches.Add(new BatchResponseDto
+                    {
+                        BatchCode = temp.BatchNumber,
+                        ProductId = temp.ProductId,
+                        Unit = temp.Batch?.Unit ?? "unit",
+                        Quantity = (int)temp.Quantity,
+                        UnitCost = temp.UnitPrice,
+                        TotalAmount = temp.Quantity * temp.UnitPrice,
+                        Status = "PENDING",
+                        DateOfManufacture = temp.Batch?.DateOfManufacture ?? DateTime.Now
+                    });
 
-                totalQuantity += (decimal)item.Quantity;
-                totalAmount += item.UnitPrice * (decimal)item.Quantity;
+                    totalQuantity += (int)temp.Quantity;
+                    totalPrice += temp.Quantity * temp.UnitPrice;
+                }
+            }
+            else if (request.ImportType == "ImportProduction")
+            {
+                foreach (var b in request.Batches)
+                {
+                    processedBatches.Add(new BatchResponseDto
+                    {
+                        BatchCode = batchCode,
+                        ProductId = b.ProductId,
+                        Unit = b.Unit,
+                        Quantity = b.Quantity,
+                        UnitCost = b.UnitCost,
+                        TotalAmount = b.Quantity * b.UnitCost,
+                        Status = "PENDING",
+                        DateOfManufacture = b.DateOfManufacture
+                    });
+
+                    totalQuantity += b.Quantity;
+                    totalPrice += b.Quantity * b.UnitCost;
+                }
             }
 
-            var receipt = new WarehouseReceipt
+            string batchesJson = JsonConvert.SerializeObject(processedBatches, Formatting.Indented);
+
+            var warehouseReceipt = new WarehouseReceipt
             {
-                DocumentNumber = $"PNK-Coord-{DateTime.UtcNow.Ticks}",
-                DocumentDate = DateTime.UtcNow,
-                WarehouseId = warehouseId,
-                ImportType = "ImportCoordination",
-                Supplier = "Điều phối nội bộ",
-                DateImport = DateTime.UtcNow,
-                TotalQuantity = (int)totalQuantity,
-                TotalPrice = totalAmount,
-                BatchesJson = JsonConvert.SerializeObject(batches),
-                Note = "Nhập hàng từ điều phối",
-                IsApproved = true
+                DocumentNumber = request.DocumentNumber,
+                DocumentDate = DateTime.Now,
+                WarehouseId = request.WarehouseId,
+                ImportType = request.ImportType,
+                Supplier = request.Supplier,
+                DateImport = DateTime.Now,
+                TotalQuantity = totalQuantity,
+                TotalPrice = totalPrice,
+                BatchesJson = batchesJson
             };
 
-            await _receiptRepo.AddAsync(receipt);
-            await _receiptRepo.SaveChangesAsync();
+            await _receiptRepo.AddAsync(warehouseReceipt);
+            return true; // ✅ báo thêm thành công
 
-            return receipt;
         }
+
+
     }
 
 }
