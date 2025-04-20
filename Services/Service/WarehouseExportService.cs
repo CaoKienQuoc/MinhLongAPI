@@ -208,7 +208,7 @@ namespace Services.Service
 
                 var receipt = new ExportWarehouseReceipt
                 {
-                    DocumentNumber = $"PXK-DUTRUC-{DateTime.UtcNow.Ticks}",
+                    DocumentNumber = $"PXK-{DateTime.UtcNow.Ticks}",
                     DocumentDate = DateTime.UtcNow,
                     ExportDate = DateTime.UtcNow,
                     ExportType = "AvailableExport",
@@ -280,7 +280,7 @@ namespace Services.Service
 
             var transferReceipt = new ExportWarehouseReceipt
             {
-                DocumentNumber = $"PXK-DIEUPHOI-{DateTime.UtcNow.Ticks}",
+                DocumentNumber = $"PXK-{DateTime.UtcNow.Ticks}",
                 DocumentDate = DateTime.UtcNow,
                 ExportDate = DateTime.UtcNow,
                 ExportType = "PendingTransfer",
