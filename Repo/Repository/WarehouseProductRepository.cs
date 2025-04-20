@@ -22,14 +22,16 @@ namespace Repo.Repository
         public async Task<List<WarehouseProduct>> GetAvailableWarehouseProductsAsync(long productId)
         {
             return await _context.WarehouseProduct
+                .Include(wp => wp.Batch) // ✅ Thêm dòng này
                 .Where(wp => wp.ProductId == productId
                              && wp.Quantity > 0
                              && wp.Status == "ACTIVE"
-                             && wp.ExpirationDate > DateTime.UtcNow) // chỉ lấy hàng còn hạn
-                .OrderBy(wp => wp.ExpirationDate) // ví dụ ưu tiên lô hết hạn sớm
-                .ThenBy(wp => wp.WarehouseId)     // rồi mới đến ID kho
+                             && wp.ExpirationDate > DateTime.UtcNow)
+                .OrderBy(wp => wp.ExpirationDate)
+                .ThenBy(wp => wp.WarehouseId)
                 .ToListAsync();
         }
+
 
 
         public async Task UpdateAsync(WarehouseProduct entity)
