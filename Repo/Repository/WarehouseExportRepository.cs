@@ -63,6 +63,13 @@ namespace Repo.Repository
                 .Include(r => r.ExportWarehouseReceiptDetails) // load chi tiết sản phẩm
                 .FirstOrDefaultAsync(r => r.ExportWarehouseReceiptId == id);
         }
+
+        public async Task<ExportWarehouseReceipt?> GetByOrderIdAsync(Guid orderId)
+        {
+            return await _context.ExportWarehouseReceipts
+                .Include(e => e.ExportWarehouseReceiptDetails)
+                .FirstOrDefaultAsync(e => e.RequestExport.OrderId == orderId);
+        }
     }
 
 

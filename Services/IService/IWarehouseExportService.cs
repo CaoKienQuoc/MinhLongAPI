@@ -15,7 +15,7 @@ namespace Services.IService
     {
         Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId);
 
-        
+        Task FinalizeExportSaleAsync(int exportReceiptId, Guid currentUserId);
 
         /*Task<List<ExportWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId);
 

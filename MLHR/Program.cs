@@ -153,6 +153,9 @@ builder.Services.AddScoped<IPaymentHistoryService, PaymentHistoryService>();
 builder.Services.AddScoped<IWarehouseTransferRepository, WarehouseTransferRepository>();
 builder.Services.AddScoped<IWarehouseTransferService, WarehouseTransferService>();
 
+builder.Services.AddScoped<IWarehouseReceiptRepository, WarehouseReceiptRepository>();
+builder.Services.AddScoped<IWarehouseReceiptService, WarehouseReceiptService>();
+
 builder.Services.AddScoped<IAgencyLevelRepository, AgencyLevelRepository>();
 builder.Services.AddScoped<IAgencyLevelService, AgencyLevelService>();
 

@@ -20,17 +20,20 @@ namespace Services.Service
         private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
         private readonly IBatchRepository _batchRepo;
         private readonly IWarehouseRepository _warehouseRepository;
+        private readonly IWarehouseExportRepository _warehouseExportRepository;
 
         public WarehouseReceiptService(
             IWarehouseReceiptRepository receiptRepo,
             ITemporaryWarehouseExportRepository tempExportRepo,
             IBatchRepository batchRepo,
-            IWarehouseRepository warehouseRepository)
+            IWarehouseRepository warehouseRepository,
+            IWarehouseExportRepository warehouseExportRepository)
         {
             _receiptRepo = receiptRepo;
             _tempExportRepo = tempExportRepo;
             _batchRepo = batchRepo;
             _warehouseRepository = warehouseRepository;
+            _warehouseExportRepository = warehouseExportRepository;
         }
 
         public async Task<bool> CreateReceiptAsync(WarehouseReceiptRequest request, Guid currentUserId)
@@ -81,6 +84,34 @@ namespace Services.Service
                     totalQuantity += (int)temp.Quantity;
                     totalPrice += temp.Quantity * temp.UnitPrice;
                 }
+                // ✅ Kiểm tra nếu đủ số lượng điều phối thì cập nhật ExportType
+                var exportReceipt = await _warehouseExportRepository.GetByOrderIdAsync(request.OrderId.Value);
+                if (exportReceipt != null && exportReceipt.ExportType == "PendingTransfer")
+                {
+                    var exportQuantities = exportReceipt.ExportWarehouseReceiptDetails
+                        .GroupBy(x => x.ProductId)
+                        .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
+
+                    var importQuantities = processedBatches
+                        .GroupBy(x => x.ProductId)
+                        .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
+
+                    bool isReadyToExport = exportQuantities.All(exportItem =>
+                    {
+                        var productId = exportItem.Key;
+                        var requiredQty = exportItem.Value;
+
+                        return importQuantities.ContainsKey(productId)
+                               && importQuantities[productId] >= requiredQty;
+                    });
+
+                    if (isReadyToExport)
+                    {
+                        exportReceipt.ExportType = "PendingExport";
+                        await _warehouseExportRepository.UpdateAsync(exportReceipt);
+                    }
+                }
+
             }
             else if (request.ImportType == "ImportProduction")
             {
@@ -119,11 +150,10 @@ namespace Services.Service
             };
 
             await _receiptRepo.AddAsync(warehouseReceipt);
+            await _receiptRepo.SaveChangesAsync();
             return true; // ✅ báo thêm thành công
 
         }
-
-
     }
 
 }

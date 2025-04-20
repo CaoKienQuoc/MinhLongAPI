@@ -18,6 +18,9 @@ namespace Repo.IRepository
         Task SaveChangesAsync();
 
         Task<ExportWarehouseReceipt?> GetByIdWithDetailsAsync(int id);
+
+        Task<ExportWarehouseReceipt?> GetByOrderIdAsync(Guid orderId);
+
     }
 
 }
