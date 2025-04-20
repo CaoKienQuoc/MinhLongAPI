@@ -38,9 +38,24 @@ namespace Repo.Repository
 
         public async Task UpdateAsync(WarehouseTransferRequest request)
         {
-            _context.WarehouseTransferRequests.Update(request);
-            await _context.SaveChangesAsync(); // 👈 nếu bạn muốn update tự commit ở đây
+            try
+            {
+                _context.WarehouseTransferRequests.Update(request);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                // Xem chi tiết lỗi
+                Console.WriteLine("DbUpdateException: " + ex.Message);
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine("Inner Exception: " + ex.InnerException.Message);
+                }
+
+                throw; // hoặc throw lại để đẩy lên phía trên xử lý
+            }
         }
+
     }
 }
 

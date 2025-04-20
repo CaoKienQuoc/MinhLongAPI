@@ -33,6 +33,8 @@ namespace BusinessObject.Models
         [Required, MaxLength(20)]
         public string Status { get; set; } = "Pending";        // ✅ Cần – Pending, Approved, Completed
 
+        public long WarehouseProductId { get; set; } // ✅ Cần – để tracking lại
+
         // Danh sách sản phẩm cần chuyển
         public ICollection<WarehouseTransferProduct> TransferProducts { get; set; } = new List<WarehouseTransferProduct>();
     }
