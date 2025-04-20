@@ -259,6 +259,7 @@ namespace Services.Service
                         {
                             SourceWarehouseId = item.WarehouseId,
                             DestinationWarehouseId = mainWarehouseId,
+                            RequestExportId = requestExportId,
                             Status = "Pending",
                             RequestDate = DateTime.UtcNow,
                             Notes = $"Transfer for order {order.OrderCode}",
