@@ -77,7 +77,8 @@ namespace Services.Service
                     TotalProductAmount = (productInfo?.Price ?? 0) * product.Quantity,
                     BatchId = product.BatchId.Value,
                     ExpiryDate = tempExport.ExpiryDate, // ✅ Lấy ngày hết hạn từ bảng tạm
-                    BatchNumber = tempExport.BatchNumber
+                    BatchNumber = tempExport.BatchNumber,
+                    WarehouseProductId = tempExport.WarehouseProductId, // ✅ Lấy ID lô hàng từ bảng tạm
                 });
             }
 
