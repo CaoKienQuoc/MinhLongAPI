@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BusinessObject.Models;
+using BusinessObject.DTO.Warehouse;
 
 namespace Services.IService
 {
@@ -16,6 +17,10 @@ namespace Services.IService
         Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId);
 
         Task FinalizeExportSaleAsync(int exportReceiptId, Guid currentUserId);
+
+        Task<List<ExportWarehouseReceiptDTO>> GetAllExportsByUserAsync(Guid userId);
+        Task<ExportWarehouseReceiptDTO?> GetExportByIdAsync(int exportReceiptId, Guid userId);
+
 
         /*Task<List<ExportWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId);
 

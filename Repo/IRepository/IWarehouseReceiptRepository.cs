@@ -11,5 +11,8 @@ namespace Repo.IRepository
     {
         Task AddAsync(WarehouseReceipt receipt);
         Task SaveChangesAsync();
+        Task<List<WarehouseReceipt>> GetAllByUserIdAsync(Guid userId);
+        Task<WarehouseReceipt?> GetByIdAndUserIdAsync(long receiptId, Guid userId);
+
     }
 }

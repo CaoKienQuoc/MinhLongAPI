@@ -13,6 +13,7 @@ namespace BusinessObject.DTO.Warehouse
         public string DocumentNumber { get; set; }
         public DateTime DocumentDate { get; set; }
         public long WarehouseId { get; set; }
+        public string WarehouseName { get; set; }
         public string ImportType { get; set; }
         public string Supplier { get; set; }
         public DateTime DateImport { get; set; }

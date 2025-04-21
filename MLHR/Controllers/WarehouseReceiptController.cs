@@ -80,5 +80,40 @@ namespace MLHR.Controllers
 
 
         }*/
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var receipts = await _service.GetAllReceiptsByUserAsync(userId);
+                return Ok(new { success = true, data = receipts });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // ✅ Lấy chi tiết phiếu nhập theo ID
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(long id)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var receipt = await _service.GetReceiptByIdAsync(id, userId);
+
+                if (receipt == null)
+                    return NotFound(new { success = false, message = "Không tìm thấy phiếu nhập hoặc bạn không có quyền truy cập." });
+
+                return Ok(new { success = true, data = receipt });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
     }
 }

@@ -70,6 +70,33 @@ namespace Repo.Repository
                 .Include(e => e.ExportWarehouseReceiptDetails)
                 .FirstOrDefaultAsync(e => e.RequestExport.OrderId == orderId);
         }
+
+        public async Task<List<ExportWarehouseReceipt>> GetAllByUserIdAsync(Guid userId)
+        {
+            return await _context.ExportWarehouseReceipts
+                .Include(e => e.Warehouse)
+                .Include(e => e.ExportWarehouseReceiptDetails)
+                .ThenInclude(d => d.Product)
+                .Include(r => r.RequestExport)
+                    .ThenInclude(req => req.Order)
+                        .ThenInclude(o => o.RequestProduct)
+                        .ThenInclude(x => x.AgencyAccount)
+                .Where(e => e.Warehouse.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<ExportWarehouseReceipt?> GetByIdAndUserIdAsync(int receiptId, Guid userId)
+        {
+            return await _context.ExportWarehouseReceipts
+                 .Include(e => e.Warehouse)
+                .Include(e => e.ExportWarehouseReceiptDetails)
+                .ThenInclude(d => d.Product)
+                .Include(r => r.RequestExport)
+                    .ThenInclude(req => req.Order)
+                        .ThenInclude(o => o.RequestProduct)
+                        .ThenInclude(x => x.AgencyAccount)
+                .FirstOrDefaultAsync(e => e.ExportWarehouseReceiptId == receiptId && e.Warehouse.UserId == userId);
+        }
     }
 
 

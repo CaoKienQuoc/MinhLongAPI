@@ -14,7 +14,10 @@ namespace Repo.IRepository
         Task<AgencyAccount?> GetByUsernameAsync(string username);
         Task<AgencyAccount?> GetByUserIdWithLevelsAsync(Guid userId);
 
+        Task<int> CountManagedAgenciesAsync(long employeeId);
+        Task UpdateAsync(AgencyAccount agencyAccount);
 
+        Task<List<AgencyAccount>> GetAgenciesManagedByEmployeeIdAsync(long employeeId);
     }
 
 }

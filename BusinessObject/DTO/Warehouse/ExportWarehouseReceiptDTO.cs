@@ -14,7 +14,7 @@ namespace BusinessObject.DTO.Warehouse
         public string ExportType { get; set; }
         public int TotalQuantity { get; set; }
         public decimal TotalAmount { get; set; }
-        public string Status { get; set; } = "Pending";
+        public string Status { get; set; }
         public long WarehouseId { get; set; }
 
         public int RequestExportId { get; set; }

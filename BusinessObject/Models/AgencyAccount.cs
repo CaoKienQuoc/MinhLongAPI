@@ -31,6 +31,11 @@ namespace BusinessObject.Models
         [ForeignKey("LocationId")]
         public Location Location { get; set; }*/
 
+        public long? ManagedByEmployeeId { get; set; }
+
+        [ForeignKey("ManagedByEmployeeId")]
+        public Employee ManagedByEmployee { get; set; }
+
         public ICollection<AgencyAccountLevel> AgencyAccountLevels { get; set; }
 
     }

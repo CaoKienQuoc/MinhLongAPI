@@ -21,22 +21,19 @@ namespace Services.Service
         private readonly IBatchRepository _batchRepo;
         private readonly IWarehouseRepository _warehouseRepository;
         private readonly IWarehouseExportRepository _warehouseExportRepository;
-        private readonly IProductRepository _productRepository;
 
         public WarehouseReceiptService(
             IWarehouseReceiptRepository receiptRepo,
             ITemporaryWarehouseExportRepository tempExportRepo,
             IBatchRepository batchRepo,
             IWarehouseRepository warehouseRepository,
-            IWarehouseExportRepository warehouseExportRepository,
-            IProductRepository productRepository)
+            IWarehouseExportRepository warehouseExportRepository)
         {
             _receiptRepo = receiptRepo;
             _tempExportRepo = tempExportRepo;
             _batchRepo = batchRepo;
             _warehouseRepository = warehouseRepository;
             _warehouseExportRepository = warehouseExportRepository;
-            _productRepository = productRepository;
         }
 
         public async Task<bool> CreateReceiptAsync(WarehouseReceiptRequest request, Guid currentUserId)
@@ -59,8 +56,6 @@ namespace Services.Service
             int totalQuantity = 0;
             decimal totalPrice = 0;
 
-           
-
             if (request.ImportType == "ImportCoordination")
             {
                 // ✅ Cần OrderId để truy xuất dữ liệu điều phối từ TemporaryStockExport
@@ -74,9 +69,6 @@ namespace Services.Service
 
                 foreach (var temp in tempExports)
                 {
-                    var status = temp.ExpiryDate < DateTime.Now
-                         ? "EXPIRED"
-                            : (temp.ExpiryDate < DateTime.Now.AddMonths(6) ? "EXPIRING_SOON" : "ACTIVE");
                     processedBatches.Add(new BatchResponseDto
                     {
                         BatchCode = temp.BatchNumber,
@@ -86,8 +78,7 @@ namespace Services.Service
                         UnitCost = temp.UnitPrice,
                         TotalAmount = temp.Quantity * temp.UnitPrice,
                         Status = "PENDING",
-                        DateOfManufacture = temp.Batch?.DateOfManufacture ?? DateTime.Now,
-                        ExpiryDate = temp.ExpiryDate
+                        DateOfManufacture = temp.Batch?.DateOfManufacture ?? DateTime.Now
                     });
 
                     totalQuantity += (int)temp.Quantity;
@@ -126,13 +117,6 @@ namespace Services.Service
             {
                 foreach (var b in request.Batches)
                 {
-                    var product = await _productRepository.GetProductByIdAsync(b.ProductId);
-                    var expiryDate = b.DateOfManufacture.AddDays(product.DefaultExpiration ?? 0);
-
-                    var status = expiryDate < DateTime.Now
-                        ? "EXPIRED"
-                        : (expiryDate < DateTime.Now.AddMonths(6) ? "EXPIRING_SOON" : "ACTIVE");
-
                     processedBatches.Add(new BatchResponseDto
                     {
                         BatchCode = batchCode,
@@ -141,15 +125,13 @@ namespace Services.Service
                         Quantity = b.Quantity,
                         UnitCost = b.UnitCost,
                         TotalAmount = b.Quantity * b.UnitCost,
-                        Status = status,
-                        DateOfManufacture = b.DateOfManufacture,
-                        ExpiryDate = expiryDate
+                        Status = "PENDING",
+                        DateOfManufacture = b.DateOfManufacture
                     });
 
                     totalQuantity += b.Quantity;
                     totalPrice += b.Quantity * b.UnitCost;
                 }
-
             }
 
             string batchesJson = JsonConvert.SerializeObject(processedBatches, Formatting.Indented);
@@ -172,6 +154,74 @@ namespace Services.Service
             return true; // ✅ báo thêm thành công
 
         }
+
+        public async Task<List<WarehouseReceiptDTO>> GetAllReceiptsByUserAsync(Guid userId)
+        {
+            var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
+            var result = new List<WarehouseReceiptDTO>();
+
+            foreach (var receipt in receipts)
+            {
+                var warehouse = receipt.Warehouse ?? await _warehouseRepository.GetByIdAsync(receipt.WarehouseId);
+
+                var batches = new List<BatchResponseDto>();
+                if (!string.IsNullOrEmpty(receipt.BatchesJson))
+                {
+                    batches = JsonConvert.DeserializeObject<List<BatchResponseDto>>(receipt.BatchesJson) ?? new();
+                }
+
+                result.Add(new WarehouseReceiptDTO
+                {
+                    WarehouseReceiptId = receipt.WarehouseReceiptId,
+                    DocumentNumber = receipt.DocumentNumber,
+                    DocumentDate = receipt.DocumentDate,
+                    WarehouseId = receipt.WarehouseId,
+                    WarehouseName = warehouse?.WarehouseName ?? "",
+                    ImportType = receipt.ImportType,
+                    Supplier = receipt.Supplier,
+                    DateImport = receipt.DateImport,
+                    TotalQuantity = receipt.TotalQuantity,
+                    TotalPrice = receipt.TotalPrice,
+                    Batches = batches,
+                    IsApproved = receipt.IsApproved
+                });
+            }
+
+            return result;
+        }
+
+
+        public async Task<WarehouseReceiptDTO?> GetReceiptByIdAsync(long id, Guid userId)
+        {
+            var receipt = await _receiptRepo.GetByIdAndUserIdAsync(id, userId);
+            if (receipt == null) return null;
+
+            var warehouse = receipt.Warehouse ?? await _warehouseRepository.GetByIdAsync(receipt.WarehouseId);
+
+            var batches = new List<BatchResponseDto>();
+            if (!string.IsNullOrEmpty(receipt.BatchesJson))
+            {
+                batches = JsonConvert.DeserializeObject<List<BatchResponseDto>>(receipt.BatchesJson) ?? new();
+            }
+
+            return new WarehouseReceiptDTO
+            {
+                WarehouseReceiptId = receipt.WarehouseReceiptId,
+                DocumentNumber = receipt.DocumentNumber,
+                DocumentDate = receipt.DocumentDate,
+                WarehouseId = receipt.WarehouseId,
+                WarehouseName = warehouse?.WarehouseName ?? "",
+                ImportType = receipt.ImportType,
+                Supplier = receipt.Supplier,
+                DateImport = receipt.DateImport,
+                TotalQuantity = receipt.TotalQuantity,
+                TotalPrice = receipt.TotalPrice,
+                Batches = batches,
+                IsApproved = receipt.IsApproved
+            };
+        }
+
+
     }
 
 }

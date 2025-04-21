@@ -46,6 +46,26 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(a => a.UserId == userId);
         }
 
+        public async Task<int> CountManagedAgenciesAsync(long employeeId)
+        {
+            return await _context.AgencyAccounts
+                .CountAsync(a => a.ManagedByEmployeeId == employeeId);
+        }
+
+        public async Task UpdateAsync(AgencyAccount agencyAccount)
+        {
+            _context.AgencyAccounts.Update(agencyAccount);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<AgencyAccount>> GetAgenciesManagedByEmployeeIdAsync(long employeeId)
+        {
+            return await _context.AgencyAccounts
+                .Where(a => a.ManagedByEmployeeId == employeeId)
+                .ToListAsync();
+        }
+
+
     }
 
 }

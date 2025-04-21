@@ -737,6 +737,12 @@ namespace DataAccessLayer
                 .HasForeignKey(t => t.OrderId)
                 .OnDelete(DeleteBehavior.Cascade); // có thể để Cascade nếu muốn xóa Order thì xóa luôn tạm
 
+            modelBuilder.Entity<AgencyAccount>()
+                .HasOne(a => a.ManagedByEmployee)
+                .WithMany(e => e.ManagedAgencies)
+                .HasForeignKey(a => a.ManagedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 

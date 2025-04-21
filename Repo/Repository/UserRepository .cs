@@ -368,13 +368,13 @@ namespace Repo.Repository
 
         public async Task<OTPEmail> AddOTPEmail(OTPEmail otpemail)
         {
-             _context.OTPEmails.Add(otpemail);
+            _context.OTPEmails.Add(otpemail);
             await _context.SaveChangesAsync();
             return otpemail;
         }
         public async Task<OTPEmail> GetOTPEmailByEmail(string email)
         {
-            var otpEmail =  await _context.OTPEmails.FirstOrDefaultAsync(a => a.Email == email);
+            var otpEmail = await _context.OTPEmails.FirstOrDefaultAsync(a => a.Email == email);
             return otpEmail;
         }
 
@@ -404,6 +404,22 @@ namespace Repo.Repository
                 .OrderByDescending(a => a.ChangeDate)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<List<Employee>> GetEmployeesByRoleAsync(string roleName)
+        {
+            return await _context.Employees
+                .Where(e => e.User.UserRoles.Any(ur => ur.Role.RoleName.ToUpper() == roleName.ToUpper()))
+                .ToListAsync();
+        }
+
+        public async Task<Employee> GetByUserIdAsync(Guid userId)
+        {
+            return await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == userId);
+        }
+
+
+
 
 
     }

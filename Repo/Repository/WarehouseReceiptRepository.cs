@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.Models;
 using DataAccessLayer;
+using Microsoft.EntityFrameworkCore;
 using Repo.IRepository;
 
 namespace Repo.Repository
@@ -27,5 +28,19 @@ namespace Repo.Repository
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<WarehouseReceipt>> GetAllByUserIdAsync(Guid userId)
+        {
+            return await _context.WarehouseReceipts
+                .Where(wr => wr.Warehouse.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<WarehouseReceipt?> GetByIdAndUserIdAsync(long receiptId, Guid userId)
+        {
+            return await _context.WarehouseReceipts
+                .FirstOrDefaultAsync(wr => wr.WarehouseReceiptId == receiptId && wr.Warehouse.UserId == userId);
+        }
+
     }
 }

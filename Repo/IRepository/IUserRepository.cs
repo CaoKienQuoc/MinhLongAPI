@@ -53,6 +53,11 @@ namespace Repo.IRepository
 
         Task<AgencyAccountLevel?> GetLatestLevelByAgencyIdAsync(long agencyId);
 
+        Task<List<Employee>> GetEmployeesByRoleAsync(string role);
+
+        Task<Employee> GetByUserIdAsync(Guid userId);
+
+
     }
 
 }

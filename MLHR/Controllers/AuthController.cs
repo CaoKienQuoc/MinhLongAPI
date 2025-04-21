@@ -188,16 +188,16 @@ namespace MLHR.Controllers
 
 
 
-     /*   [HttpGet("user/{userId}")]
-        public async Task<ActionResult<UserDto>> GetProduct(Guid userId)
-        {
-            var user = await _userService.GetUserByIdAsync(userId);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return Ok(user);
-        }*/
+        /*   [HttpGet("user/{userId}")]
+           public async Task<ActionResult<UserDto>> GetProduct(Guid userId)
+           {
+               var user = await _userService.GetUserByIdAsync(userId);
+               if (user == null)
+               {
+                   return NotFound();
+               }
+               return Ok(user);
+           }*/
 
         [HttpPut("{userId}/UnActive")]
         public async Task<IActionResult> UnActiveUser(Guid userId)
@@ -209,7 +209,7 @@ namespace MLHR.Controllers
                 return NotFound(new { success = false, message = result.Message });
             }
 
-            return Ok(new {message = result.Message });
+            return Ok(new { message = result.Message });
         }
 
         [HttpPost("send-otp-email")]
@@ -245,6 +245,23 @@ namespace MLHR.Controllers
             catch (Exception ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+        }
+
+        [Authorize(Roles = "4")]
+        [HttpGet("manage-agency")]
+        public async Task<IActionResult> GetManagedAgencies()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+
+            try
+            {
+                var agencyDtos = await _userService.GetAgenciesManagedByUserIdAsync(userId);
+                return Ok(agencyDtos);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

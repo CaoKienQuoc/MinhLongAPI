@@ -13,5 +13,9 @@ namespace Repo.IRepository
         Task AddRangeAsync(IEnumerable<WarehouseTransferRequest> requests);
         Task<WarehouseTransferRequest?> GetByIdAsync(int id);
         Task UpdateAsync(WarehouseTransferRequest request);
+
+        Task<List<WarehouseTransferRequest>> GetAllByUserIdAsync(Guid userId);
+        Task<WarehouseTransferRequest?> GetByIdAndUserIdAsync(long id, Guid userId);
+
     }
 }

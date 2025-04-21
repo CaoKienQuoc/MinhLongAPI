@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
 using Repo.IRepository;
@@ -103,5 +104,42 @@ namespace Services.Service
 
             return exportReceipt;
         }
+
+        public async Task<List<WarehouseTransferRequestDetailDto>> GetAllTransferRequestsByUserAsync(Guid userId)
+        {
+            var entities = await _transferRepo.GetAllByUserIdAsync(userId);
+            return entities.Select(ToDto).ToList();
+        }
+
+        public async Task<WarehouseTransferRequestDetailDto?> GetTransferRequestByIdAsync(long id, Guid userId)
+        {
+            var entity = await _transferRepo.GetByIdAndUserIdAsync(id, userId);
+            return entity != null ? ToDto(entity) : null;
+        }
+
+        // Mapping helper
+        private WarehouseTransferRequestDetailDto ToDto(WarehouseTransferRequest r)
+        {
+            return new WarehouseTransferRequestDetailDto
+            {
+                Id = r.Id,
+                SourceWarehouseId = r.SourceWarehouseId,
+                SourceWarehouseName = r.SourceWarehouse?.WarehouseName ?? "",
+                DestinationWarehouseId = r.DestinationWarehouseId,
+                DestinationWarehouseName = r.DestinationWarehouse?.WarehouseName ?? "",
+                RequestExportId = r.RequestExportId,
+                RequestDate = r.RequestDate,
+                Notes = r.Notes,
+                Status = r.Status,
+                Products = r.TransferProducts.Select(p => new WarehouseTransferProductDto
+                {
+                    ProductId = p.ProductId,
+                    ProductName = p.Product?.ProductName ?? "",
+                    Quantity = p.Quantity,
+                    BatchNumber = p.Batch?.BatchCode
+                }).ToList()
+            };
+        }
+
     }
 }

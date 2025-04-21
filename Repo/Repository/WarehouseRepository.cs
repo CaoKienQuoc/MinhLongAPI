@@ -216,5 +216,12 @@ namespace Repo.Repository
                 .OrderBy(w => w.WarehouseId) // 👈 Hoặc bạn có thể dùng field khác nếu có cột "Priority"
                 .ToListAsync();
         }
+
+        public async Task<Warehouse?> GetByIdAsync(long warehouseId)
+        {
+            return await _context.Warehouses
+                .FirstOrDefaultAsync(w => w.WarehouseId == warehouseId);
+        }
+
     }
 }

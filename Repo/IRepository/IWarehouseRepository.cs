@@ -34,5 +34,8 @@ namespace Repo.IRepository
         Task<List<Product>> GetProductsByIdsAsync(List<long> productIds);
 
         Task<List<Warehouse>> GetAllOrderedAsync(); // theo thứ tự ưu tiên
+
+        Task<Warehouse?> GetByIdAsync(long warehouseId);
+
     }
 }

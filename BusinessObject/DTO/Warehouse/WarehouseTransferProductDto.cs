@@ -9,8 +9,8 @@ namespace BusinessObject.DTO.Warehouse
     public class WarehouseTransferProductDto
     {
         public long ProductId { get; set; }
+        public string ProductName { get; set; }
         public int Quantity { get; set; }
-        public string? Unit { get; set; }
-        public string? Notes { get; set; }
+        public string? BatchNumber { get; set; }
     }
 }

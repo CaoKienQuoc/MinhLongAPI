@@ -21,6 +21,10 @@ namespace Repo.IRepository
 
         Task<ExportWarehouseReceipt?> GetByOrderIdAsync(Guid orderId);
 
+        Task<List<ExportWarehouseReceipt>> GetAllByUserIdAsync(Guid userId);
+        Task<ExportWarehouseReceipt?> GetByIdAndUserIdAsync(int receiptId, Guid userId);
+
+
     }
 
 }

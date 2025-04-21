@@ -13,5 +13,9 @@ namespace Services.IService
         //Task<WarehouseReceipt> CreateWarehouseReceiptFromCoordinationAsync(long warehouseId);
 
         Task<bool> CreateReceiptAsync(WarehouseReceiptRequest request, Guid currentUserId);
+
+        Task<List<WarehouseReceiptDTO>> GetAllReceiptsByUserAsync(Guid userId);
+
+        Task<WarehouseReceiptDTO?> GetReceiptByIdAsync(long id, Guid userId);
     }
 }

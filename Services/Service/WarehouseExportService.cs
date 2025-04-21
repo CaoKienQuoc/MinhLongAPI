@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
 using Repo.IRepository;
@@ -370,6 +371,78 @@ namespace Services.Service
                 payload = receipt.ExportWarehouseReceiptId
             });
         }
+
+        public async Task<List<ExportWarehouseReceiptDTO>> GetAllExportsByUserAsync(Guid userId)
+        {
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+            var result = new List<ExportWarehouseReceiptDTO>();
+
+            foreach (var r in receipts)
+            {
+                var dto = new ExportWarehouseReceiptDTO
+                {
+                    DocumentNumber = r.DocumentNumber,
+                    DocumentDate = r.DocumentDate,
+                    ExportDate = r.ExportDate,
+                    ExportType = r.ExportType,
+                    TotalQuantity = r.TotalQuantity,
+                    TotalAmount = r.TotalAmount,
+                    Status = r.Status,
+                    WarehouseId = r.WarehouseId,
+                    RequestExportId = r.RequestExportId,
+                    OrderCode = r.RequestExport.Order.OrderCode,
+                    AgencyName = r.RequestExport.Order.RequestProduct.AgencyAccount.AgencyName,
+                    Details = r.ExportWarehouseReceiptDetails.Select(d => new ExportWarehouseReceiptDetailDTO
+                    {
+                        WarehouseProductId = d.WarehouseProductId,
+                        ProductId = d.ProductId,
+                        ProductName = d.Product?.ProductName ?? "",
+                        BatchNumber = d.BatchNumber,
+                        Quantity = d.Quantity,
+                        UnitPrice = d.UnitPrice,
+                        TotalProductAmount = d.Quantity * d.UnitPrice,
+                        ExpiryDate = d.ExpiryDate
+                    }).ToList()
+                };
+
+                result.Add(dto);
+            }
+
+            return result;
+        }
+
+        public async Task<ExportWarehouseReceiptDTO?> GetExportByIdAsync(int exportReceiptId, Guid userId)
+        {
+            var r = await _exportReceiptRepo.GetByIdAndUserIdAsync(exportReceiptId, userId);
+            if (r == null) return null;
+
+            return new ExportWarehouseReceiptDTO
+            {
+                DocumentNumber = r.DocumentNumber,
+                DocumentDate = r.DocumentDate,
+                ExportDate = r.ExportDate,
+                ExportType = r.ExportType,
+                TotalQuantity = r.TotalQuantity,
+                TotalAmount = r.TotalAmount,
+                Status = r.Status,
+                WarehouseId = r.WarehouseId,
+                RequestExportId = r.RequestExportId,
+                OrderCode = r.RequestExport.Order.OrderCode,
+                AgencyName = r.RequestExport.Order.RequestProduct.AgencyAccount.AgencyName,
+                Details = r.ExportWarehouseReceiptDetails.Select(d => new ExportWarehouseReceiptDetailDTO
+                {
+                    WarehouseProductId = d.WarehouseProductId,
+                    ProductId = d.ProductId,
+                    ProductName = d.Product?.ProductName ?? "",
+                    BatchNumber = d.BatchNumber,
+                    Quantity = d.Quantity,
+                    UnitPrice = d.UnitPrice,
+                    TotalProductAmount = d.Quantity * d.UnitPrice,
+                    ExpiryDate = d.ExpiryDate
+                }).ToList()
+            };
+        }
+
 
     }
 

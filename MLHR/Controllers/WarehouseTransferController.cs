@@ -5,10 +5,11 @@ using System;
 using System.Threading.Tasks;
 using BusinessObject.Models;
 using Services.IService;
+using System.Security.Claims;
 
 namespace MLHR.Controllers
 {
-    
+
 
     [ApiController]
     [Route("api/warehouse-transfer")]
@@ -43,6 +44,38 @@ namespace MLHR.Controllers
                 return StatusCode(500, new { success = false, message = "Lỗi server", detail = ex.Message });
             }
         }
-    }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var data = await _exportService.GetAllTransferRequestsByUserAsync(userId);
+                return Ok(new { success = true, data });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(long id)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var result = await _exportService.GetTransferRequestByIdAsync(id, userId);
+                if (result == null)
+                    return NotFound(new { success = false, message = "Không tìm thấy yêu cầu điều phối." });
+
+                return Ok(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+    }
 }

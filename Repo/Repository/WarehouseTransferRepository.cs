@@ -56,6 +56,32 @@ namespace Repo.Repository
             }
         }
 
+        public async Task<List<WarehouseTransferRequest>> GetAllByUserIdAsync(Guid userId)
+        {
+            return await _context.WarehouseTransferRequests
+                .Include(r => r.SourceWarehouse)
+                .Include(r => r.DestinationWarehouse)
+                .Include(r => r.TransferProducts)
+                .ThenInclude(p => p.Product)
+                .Include(r => r.TransferProducts)
+                .ThenInclude(p => p.Batch)
+                .Where(r => r.SourceWarehouse.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<WarehouseTransferRequest?> GetByIdAndUserIdAsync(long id, Guid userId)
+        {
+            return await _context.WarehouseTransferRequests
+                .Include(r => r.SourceWarehouse)
+                .Include(r => r.DestinationWarehouse)
+                .Include(r => r.TransferProducts)
+                .ThenInclude(p => p.Product)
+                .Include(r => r.TransferProducts)
+                .ThenInclude(p => p.Batch)
+                .FirstOrDefaultAsync(r => r.Id == id && r.SourceWarehouse.UserId == userId);
+        }
+
+
     }
 }
 

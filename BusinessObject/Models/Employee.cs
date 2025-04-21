@@ -26,5 +26,7 @@ namespace BusinessObject.Models
         [ForeignKey("AddressId")]
         public Address Address { get; set; }
 
+        public ICollection<AgencyAccount> ManagedAgencies { get; set; }
+
     }
 }

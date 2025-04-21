@@ -32,6 +32,7 @@ namespace Services.IService
         Task<User> GetUserByIdAsync(Guid userId);
 
         Task<UserDetailDto> GetAgencyUserByIdAsync(Guid userId);
+        Task<List<AgencyAccountDto>> GetAgenciesManagedByUserIdAsync(Guid userId);
     }
 
 

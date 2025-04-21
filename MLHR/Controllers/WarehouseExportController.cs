@@ -41,6 +41,38 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var exports = await _exportService.GetAllExportsByUserAsync(userId);
+                return Ok(new { success = true, data = exports });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var export = await _exportService.GetExportByIdAsync(id, userId);
+                if (export == null)
+                    return NotFound(new { success = false, message = "Không tìm thấy phiếu xuất hoặc bạn không có quyền truy cập." });
+
+                return Ok(new { success = true, data = export });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
 
         private Guid? GetLoggedInUserId()
         {

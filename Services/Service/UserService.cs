@@ -294,6 +294,29 @@ namespace Services.Service
                 if (agencyAccount == null)
                     throw new Exception($"AgencyAccount not found for Username: {registerUser.Username}");
 
+                // 💡 Tìm nhân viên SALES MANAGER có thể quản lý
+                var salesManagers = await _userRepository.GetEmployeesByRoleAsync("SALES MANAGER");
+
+                Employee assignedManager = null;
+
+                foreach (var manager in salesManagers)
+                {
+                    var count = await _agencyAccountRepository.CountManagedAgenciesAsync(manager.EmployeeId);
+                    if (count < 20)
+                    {
+                        assignedManager = manager;
+                        break;
+                    }
+                }
+
+                if (assignedManager == null)
+                    throw new Exception("No SALES MANAGER available to manage the agency.");
+
+                agencyAccount.ManagedByEmployeeId = assignedManager.EmployeeId;
+                await _agencyAccountRepository.UpdateAsync(agencyAccount);
+
+
+                // Gán level mặc định
                 var defaultLevel = await _agencyLevelRepository.GetByIdAsync(3);
                 if (defaultLevel == null)
                     throw new Exception("Default Agency Level (LevelId = 3) not found.");
@@ -340,6 +363,7 @@ namespace Services.Service
 
             return true;
         }
+
 
         //Logout
         public async Task<bool> LogoutAsync(string email)
@@ -610,7 +634,7 @@ namespace Services.Service
         public async Task<object> LoginAsync(LoginRequest request)
         {
             var user = await _userRepository.GetUserByUsernameAsync(request.userName);
-            if(user == null)
+            if (user == null)
             {
                 throw new ArgumentException("Your Account Need To Active");
             }
@@ -691,7 +715,26 @@ namespace Services.Service
             return (true, message);
         }
 
-        
+        public async Task<List<AgencyAccountDto>> GetAgenciesManagedByUserIdAsync(Guid userId)
+        {
+            var employee = await _userRepository.GetByUserIdAsync(userId);
+            if (employee == null)
+            {
+                throw new Exception("Employee not found for the given user.");
+            }
+
+            var agencies = await _agencyAccountRepository.GetAgenciesManagedByEmployeeIdAsync(employee.EmployeeId);
+
+            var dtoList = agencies.Select(a => new AgencyAccountDto
+            {
+                AgencyId = a.AgencyId,
+                AgencyName = a.AgencyName,
+                CreatedAt = a.CreatedAt
+            }).ToList();
+
+            return dtoList;
+        }
+
     }
 
 }
