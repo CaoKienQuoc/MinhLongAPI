@@ -201,6 +201,7 @@ namespace Services.Service
 
                 // ✅ Cập nhật trạng thái đơn hàng
                 order.Status = "Paid";
+                requestProduct.RequestStatus = "Paid";
                 await _orderRepository.UpdateOrderAsync(order);
                 await _orderRepository.SaveChangesAsync();
 
