@@ -111,18 +111,22 @@ namespace Services.Service
 
             if (requestExport == null)
             {
-                return null; // hoặc throw exception nếu cần
+                return null;
             }
+
+            // ✅ Lấy dữ liệu TemporaryStockExport theo OrderId
+            var tempExports = await _temporaryWarehouseRepository.GetByOrderIdAsync(requestExport.OrderId);
 
             return new RequestExportDto
             {
                 RequestExportId = requestExport.RequestExportId,
                 OrderId = requestExport.OrderId,
-                AgencyName = requestExport.RequestedByAgency?.AgencyName ?? "Unknown", // 👈 Gán tên đại lý
+                AgencyName = requestExport.RequestedByAgency?.AgencyName ?? "Unknown",
                 RequestDate = requestExport.RequestDate,
                 Status = requestExport.Status,
                 Note = requestExport.Note,
                 RequestExportCode = requestExport.RequestExportCode,
+
                 RequestExportDetails = requestExport.RequestExportDetails != null
                     ? requestExport.RequestExportDetails.Select(red => new RequestExportDetailDto
                     {
@@ -130,13 +134,22 @@ namespace Services.Service
                         ProductId = red.ProductId,
                         ProductName = red.Product?.ProductName ?? "N/A",
                         Unit = red.Product?.Unit ?? "N/A",
-                        Price = red.Product?.Price ?? 0, // hoặc giá khác nếu có
+                        Price = red.Product?.Price ?? 0,
                         RequestedQuantity = red.RequestedQuantity
                     }).ToList()
-                    : new List<RequestExportDetailDto>() // Trả về list rỗng nếu null
+                    : new List<RequestExportDetailDto>(),
+
+                TemporaryStockExportDetails = tempExports != null && tempExports.Any()
+                    ? tempExports.Select(tse => new TemporaryStockExportDto
+                    {
+                        WarehouseId = tse.WarehouseId,
+                        ProductId = tse.ProductId,
+                        BatchId = tse.BatchId,
+                        Quantity = tse.Quantity
+                    }).ToList()
+                    : new List<TemporaryStockExportDto>()
             };
         }
-
 
     }
 }

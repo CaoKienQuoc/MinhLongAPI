@@ -21,19 +21,22 @@ namespace Services.Service
         private readonly IBatchRepository _batchRepo;
         private readonly IWarehouseRepository _warehouseRepository;
         private readonly IWarehouseExportRepository _warehouseExportRepository;
+        private readonly IProductRepository _productRepository;
 
         public WarehouseReceiptService(
             IWarehouseReceiptRepository receiptRepo,
             ITemporaryWarehouseExportRepository tempExportRepo,
             IBatchRepository batchRepo,
             IWarehouseRepository warehouseRepository,
-            IWarehouseExportRepository warehouseExportRepository)
+            IWarehouseExportRepository warehouseExportRepository,
+            IProductRepository productRepository)
         {
             _receiptRepo = receiptRepo;
             _tempExportRepo = tempExportRepo;
             _batchRepo = batchRepo;
             _warehouseRepository = warehouseRepository;
             _warehouseExportRepository = warehouseExportRepository;
+            _productRepository = productRepository;
         }
 
         public async Task<bool> CreateReceiptAsync(WarehouseReceiptRequest request, Guid currentUserId)
@@ -56,6 +59,8 @@ namespace Services.Service
             int totalQuantity = 0;
             decimal totalPrice = 0;
 
+           
+
             if (request.ImportType == "ImportCoordination")
             {
                 // ✅ Cần OrderId để truy xuất dữ liệu điều phối từ TemporaryStockExport
@@ -69,6 +74,9 @@ namespace Services.Service
 
                 foreach (var temp in tempExports)
                 {
+                    var status = temp.ExpiryDate < DateTime.Now
+                         ? "EXPIRED"
+                            : (temp.ExpiryDate < DateTime.Now.AddMonths(6) ? "EXPIRING_SOON" : "ACTIVE");
                     processedBatches.Add(new BatchResponseDto
                     {
                         BatchCode = temp.BatchNumber,
@@ -78,7 +86,8 @@ namespace Services.Service
                         UnitCost = temp.UnitPrice,
                         TotalAmount = temp.Quantity * temp.UnitPrice,
                         Status = "PENDING",
-                        DateOfManufacture = temp.Batch?.DateOfManufacture ?? DateTime.Now
+                        DateOfManufacture = temp.Batch?.DateOfManufacture ?? DateTime.Now,
+                        ExpiryDate = temp.ExpiryDate
                     });
 
                     totalQuantity += (int)temp.Quantity;
@@ -117,6 +126,13 @@ namespace Services.Service
             {
                 foreach (var b in request.Batches)
                 {
+                    var product = await _productRepository.GetProductByIdAsync(b.ProductId);
+                    var expiryDate = b.DateOfManufacture.AddDays(product.DefaultExpiration ?? 0);
+
+                    var status = expiryDate < DateTime.Now
+                        ? "EXPIRED"
+                        : (expiryDate < DateTime.Now.AddMonths(6) ? "EXPIRING_SOON" : "ACTIVE");
+
                     processedBatches.Add(new BatchResponseDto
                     {
                         BatchCode = batchCode,
@@ -125,13 +141,15 @@ namespace Services.Service
                         Quantity = b.Quantity,
                         UnitCost = b.UnitCost,
                         TotalAmount = b.Quantity * b.UnitCost,
-                        Status = "PENDING",
-                        DateOfManufacture = b.DateOfManufacture
+                        Status = status,
+                        DateOfManufacture = b.DateOfManufacture,
+                        ExpiryDate = expiryDate
                     });
 
                     totalQuantity += b.Quantity;
                     totalPrice += b.Quantity * b.UnitCost;
                 }
+
             }
 
             string batchesJson = JsonConvert.SerializeObject(processedBatches, Formatting.Indented);
