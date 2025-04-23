@@ -118,6 +118,7 @@ namespace Services.Service
             return batches.Select(b => new BatchDisplayDto
             {
                 ProductId = b.ProductId,
+                ProductName = b.Product.ProductName,
                 BatchCode = b.BatchCode,
                 UnitCost = b.UnitCost,
                 Quantity = b.Quantity,
@@ -129,7 +130,5 @@ namespace Services.Service
                 Status = b.Status
             }).ToList();
         }
-
-
     }
 }

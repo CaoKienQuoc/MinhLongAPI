@@ -138,10 +138,13 @@ namespace Repo.Repository
         public async Task<List<Batch>> GetBatchesByWarehouseIdAsync(long warehouseId)
         {
             return await _context.Batches
-                .Include(b => b.ImportTransactionDetail)
-                .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId)
-                .ToListAsync();
+                    .Include(b => b.ImportTransactionDetail)
+                    .Include(b => b.Product) // ✅ CHỈ THÊM DÒNG NÀY
+                    .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId)
+                    .ToListAsync();
+
         }
+
 
 
     }
