@@ -381,6 +381,7 @@ namespace Services.Service
             {
                 var dto = new ExportWarehouseReceiptDTO
                 {
+                    ExportWarehouseReceiptId = r.ExportWarehouseReceiptId,
                     DocumentNumber = r.DocumentNumber,
                     DocumentDate = r.DocumentDate,
                     ExportDate = r.ExportDate,
@@ -418,6 +419,7 @@ namespace Services.Service
 
             return new ExportWarehouseReceiptDTO
             {
+                ExportWarehouseReceiptId = r.ExportWarehouseReceiptId,
                 DocumentNumber = r.DocumentNumber,
                 DocumentDate = r.DocumentDate,
                 ExportDate = r.ExportDate,
