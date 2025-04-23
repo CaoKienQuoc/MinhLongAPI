@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BusinessObject.DTO.Product;
 using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Repo.IRepository;
 using Repo.Repository;
@@ -162,7 +163,7 @@ namespace Services.Service
                 DateImport = warehouseReceipt.DateImport
             };
 
-            await _receiptRepo.AddAsync(importTransaction);
+            await _receiptRepo.AddImportTransactionAsync(importTransaction);
             await _receiptRepo.SaveChangesAsync();
 
             // ✅ Bước 3: Lưu vào ImportTransactionDetail và Batch
@@ -175,7 +176,7 @@ namespace Services.Service
                     TotalPrice = batch.TotalAmount,
                     Note = $"SP#{batch.ProductId} - Batch: {batch.BatchCode}"
                 };
-                await _receiptRepo.AddAsync(detail);
+                await _receiptRepo.AddImportTransactionDetailAsync(detail);
 
                 var batchEntity = new Batch
                 {
@@ -335,7 +336,7 @@ namespace Services.Service
                     DateImport = warehouseReceipt.DateImport
                 };
 
-                await _receiptRepo.AddAsync(importTransaction);
+                await _receiptRepo.AddImportTransactionAsync(importTransaction);
                 await _receiptRepo.SaveChangesAsync();
 
                 // ✅ Bước 3: Lưu ImportTransactionDetail + Batch
@@ -348,7 +349,8 @@ namespace Services.Service
                         TotalPrice = b.TotalAmount,
                         Note = $"SP #{b.ProductId} - Batch: {b.BatchCode}"
                     };
-                    await _receiptRepo.AddAsync(detail);
+                    await _receiptRepo.AddImportTransactionDetailAsync(detail);
+                    await _receiptRepo.SaveChangesAsync();
 
                     var batchEntity = new Batch
                     {
@@ -361,12 +363,11 @@ namespace Services.Service
                         Unit = b.Unit,
                         DateOfManufacture = b.DateOfManufacture,
                         ExpiryDate = b.ExpiryDate,
-                        Status = b.Status
+                        Status = b.Status,
+                        ImportTransactionDetailId = detail.ImportTransactionDetailId
                     };
                     await _batchRepo.AddAsync(batchEntity);
                 }
-
-                await _receiptRepo.SaveChangesAsync();
                 await _batchRepo.SaveChangesAsync();
             }
 
