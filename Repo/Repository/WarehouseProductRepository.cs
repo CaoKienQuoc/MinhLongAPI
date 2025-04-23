@@ -60,5 +60,15 @@ namespace Repo.Repository
 
         }
 
+        public async Task<WarehouseProduct?> GetByProductAndBatchAsync(long productId, long batchId)
+        {
+            return await _context.WarehouseProduct
+                .FirstOrDefaultAsync(x => x.ProductId == productId && x.BatchId == batchId);
+        }
+
+        public async Task AddAsync(WarehouseProduct entity)
+        {
+            await _context.WarehouseProduct.AddAsync(entity);
+        }
     }
 }

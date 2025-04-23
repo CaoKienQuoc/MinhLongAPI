@@ -21,6 +21,8 @@ namespace Repo.IRepository
         Task AddAsync(Batch batch);
 
         Task SaveChangesAsync();
+        Task<long> GetWarehouseIdByBatchIdAsync(long batchId);
+
     }
 
 }

@@ -71,14 +71,14 @@ namespace Services.Service
 
                     processedBatches.Add(new BatchResponseDto
                     {
-                        BatchCode = temp.BatchNumber,
+                        BatchCode = temp.Batch.BatchCode,
                         ProductId = temp.ProductId,
-                        Unit = temp.Batch?.Unit ?? "unit",
+                        Unit = temp.Batch?.Unit,
                         Quantity = (int)temp.Quantity,
-                        UnitCost = temp.UnitPrice,
-                        TotalAmount = temp.Quantity * temp.UnitPrice,
-                        SellingPrice = 0, // giả định giá bán = nhập * 1.1
-                        Status = "PENDING",
+                        UnitCost = temp.Batch.UnitCost,
+                        TotalAmount = temp.Quantity * temp.Batch.UnitCost,
+                        SellingPrice = temp.Batch.SellingPrice ?? 0, // giả định giá bán = nhập * 1.1
+                        Status = temp.Batch.Status,
                         DateOfManufacture = temp.Batch?.DateOfManufacture ?? DateTime.Now,
                         ExpiryDate = temp.Batch.ExpiryDate
                     });
@@ -106,7 +106,8 @@ namespace Services.Service
                         Quantity = b.Quantity,
                         UnitCost = b.UnitCost,
                         TotalAmount = b.Quantity * b.UnitCost,
-                        Status = "PENDING",
+                        SellingPrice = 0,
+                        Status = "CALCULATING_PRICE",
                         DateOfManufacture = b.DateOfManufacture,
                         ExpiryDate = expiryDate
                     });
@@ -177,6 +178,7 @@ namespace Services.Service
                     Note = $"SP#{batch.ProductId} - Batch: {batch.BatchCode}"
                 };
                 await _receiptRepo.AddImportTransactionDetailAsync(detail);
+                await _receiptRepo.SaveChangesAsync();
 
                 var batchEntity = new Batch
                 {
@@ -189,12 +191,12 @@ namespace Services.Service
                     Unit = batch.Unit,
                     DateOfManufacture = batch.DateOfManufacture,
                     ExpiryDate = batch.ExpiryDate,
-                    Status = batch.Status
+                    Status = batch.Status,
+                    ImportTransactionDetailId = detail.ImportTransactionDetailId
                 };
                 await _batchRepo.AddAsync(batchEntity);
             }
 
-            await _receiptRepo.SaveChangesAsync();
             await _batchRepo.SaveChangesAsync();
 
             return true;

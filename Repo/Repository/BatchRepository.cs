@@ -84,7 +84,7 @@ namespace Repo.Repository
 
             if (warehouseReceipt != null && !string.IsNullOrEmpty(warehouseReceipt.BatchesJson))
             {
-                var batchList = JsonConvert.DeserializeObject<List<BatchRequest>>(warehouseReceipt.BatchesJson);
+                var batchList = JsonConvert.DeserializeObject<List<BatchResponseDto>>(warehouseReceipt.BatchesJson);
 
                 // ✅ Cập nhật tất cả các batch có cùng BatchCode
                 foreach (var b in batchList.Where(b => b.BatchCode == batch.BatchCode))
@@ -120,6 +120,19 @@ namespace Repo.Repository
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<long> GetWarehouseIdByBatchIdAsync(long batchId)
+        {
+            var batch = await _context.Batches
+                .Include(b => b.ImportTransactionDetail)
+                    .ThenInclude(d => d.ImportTransaction)
+                .FirstOrDefaultAsync(b => b.BatchId == batchId);
+
+            if (batch?.ImportTransactionDetail?.ImportTransaction == null)
+                throw new Exception("Không thể truy xuất WarehouseId từ Batch.");
+
+            return batch.ImportTransactionDetail.ImportTransaction.WarehouseId;
         }
 
     }

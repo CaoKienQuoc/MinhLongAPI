@@ -17,8 +17,9 @@ namespace Repo.IRepository
 
         Task<long> GetTotalAvailableStockByProductIdAsync(long productId);
 
+        Task<WarehouseProduct?> GetByProductAndBatchAsync(long productId, long batchId);
 
-
+        Task AddAsync(WarehouseProduct entity);
     }
 
 }

@@ -11,11 +11,6 @@ namespace BusinessObject.DTO.Warehouse
 {
     public class WarehouseReceiptRequest
     {
-        [Required]
-        public string DocumentNumber { get; set; } // Số chứng từ
-
-        [JsonIgnore]
-        public DateTime DocumentDate { get; set; } // Ngày chứng từ
 
         [Required]
         public long WarehouseId { get; set; } // Kho nhập

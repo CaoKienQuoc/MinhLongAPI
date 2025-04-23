@@ -13,10 +13,12 @@ namespace Services.Service
     public class BatchService : IBatchService
     {
         private readonly IBatchRepository _batchRepository;
+        private readonly IWarehouseProductRepository _warehouseProductRepo;
 
-        public BatchService(IBatchRepository batchRepository)
+        public BatchService(IBatchRepository batchRepository, IWarehouseProductRepository warehouseProductRepo)
         {
             _batchRepository = batchRepository;
+            _warehouseProductRepo = warehouseProductRepo;
         }
 
         public async Task<Batch> GetBatchByIdAsync(long batchId)
@@ -51,15 +53,38 @@ namespace Services.Service
             if (batch.Status != "CALCULATING_PRICE")
                 return (false, "Cannot update profit margin. Batch is not in 'CALCULATING_PRICE' state.", null);
 
+            // ✅ Tính lại giá và cập nhật trạng thái
             batch.ProfitMarginPercent = profitMarginPercent;
             batch.SellingPrice = batch.UnitCost * (1 + (profitMarginPercent / 100));
             batch.Status = "ACTIVE";
 
-            // ✅ Gọi repo xử lý update + đồng bộ
+            // ✅ Cập nhật Batch trước
             bool updated = await _batchRepository.UpdateBatchAndRelatedDataAsync(batch);
-
             if (!updated)
                 return (false, "Failed to update batch and related data.", null);
+
+            // ✅ Đồng bộ vào WarehouseProduct
+            var warehouseProduct = await _warehouseProductRepo.GetByProductAndBatchAsync(batch.ProductId, batch.BatchId);
+            if (warehouseProduct != null)
+            {
+                warehouseProduct.Quantity += batch.Quantity; // ✅ Cộng thêm số lượng từ batch
+                await _warehouseProductRepo.SaveChangesAsync();
+            }
+            else
+            {
+                // ✅ Nếu chưa có, tạo mới
+                var newWarehouseProduct = new WarehouseProduct
+                {
+                    ProductId = batch.ProductId,
+                    BatchId = batch.BatchId,
+                    Quantity = batch.Quantity,
+                    Status = "ACTIVE",
+                    ExpirationDate = batch.ExpiryDate,
+                    WarehouseId = await _batchRepository.GetWarehouseIdByBatchIdAsync(batch.BatchId) // bạn cần biết kho
+                };
+                await _warehouseProductRepo.AddAsync(newWarehouseProduct);
+                await _warehouseProductRepo.SaveChangesAsync();
+            }
 
             return (true, "Success", new
             {
@@ -71,6 +96,7 @@ namespace Services.Service
                 Status = batch.Status
             });
         }
+
 
         public async Task<ProductInfoByBatchDto?> GetProductInfoByBatchIdAsync(long batchId)
         {
