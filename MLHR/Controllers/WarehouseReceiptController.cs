@@ -11,25 +11,49 @@ namespace MLHR.Controllers
     public class WarehouseReceiptController : ControllerBase
     {
         private readonly IWarehouseReceiptService _service;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public WarehouseReceiptController(IWarehouseReceiptService service)
+        public WarehouseReceiptController(IWarehouseReceiptService service, IHttpContextAccessor httpContextAccessor)
         {
             _service = service;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        /*[HttpPost("import-coordination/{warehouseId}")]
-        public async Task<IActionResult> ImportCoordination(long warehouseId)
+        [HttpPost("import-transfer-approved/{warehouseId}")]
+        public async Task<IActionResult> ImportApprovedTransfer(long warehouseId)
         {
+            var currentUserId = GetLoggedInUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized(new { message = "Không xác định được người dùng đang đăng nhập." });
+            }
+
             try
             {
-                var result = await _service.CreateWarehouseReceiptFromCoordinationAsync(warehouseId);
-                return Ok(new { success = true, data = result });
+                await _service.ImportApprovedTransfersAsync(warehouseId, currentUserId.Value);
+                return Ok("Nhập kho điều phối thành công.");
             }
             catch (Exception ex)
             {
-                return BadRequest(new { success = false, message = ex.Message });
+                return BadRequest(new { message = ex.Message });
             }
-        }*/
+        }
+
+
+        private Guid? GetLoggedInUserId()
+        {
+            var claimsIdentity = _httpContextAccessor.HttpContext?.User.Identity as ClaimsIdentity;
+            if (claimsIdentity != null)
+            {
+                var userIdClaim = claimsIdentity.FindFirst("userId");
+                if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return userId;
+                }
+            }
+            return null;
+        }
+
 
 
         [HttpPost("create")]

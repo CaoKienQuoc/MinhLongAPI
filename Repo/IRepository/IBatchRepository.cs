@@ -17,8 +17,10 @@ namespace Repo.IRepository
         Task<int> CountBatchesByDateAsync(DateTime date);
         Task<bool> UpdateBatchAndRelatedDataAsync(Batch batch);
         Task<Product?> GetProductByIdAsync(long productId);
-        
 
+        Task AddAsync(Batch batch);
+
+        Task SaveChangesAsync();
     }
 
 }

@@ -21,5 +21,6 @@ namespace Repo.IRepository
 
         Task<List<WarehouseTransferRequest>> GetByDestinationWarehouseAsync(long destinationWarehouseId);
 
+        Task<List<WarehouseTransferRequest>> GetApprovedTransfersByDestinationAsync(long destinationWarehouseId);
     }
 }

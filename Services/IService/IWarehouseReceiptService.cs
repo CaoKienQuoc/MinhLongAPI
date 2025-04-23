@@ -17,5 +17,7 @@ namespace Services.IService
         Task<List<WarehouseReceiptDTO>> GetAllReceiptsByUserAsync(Guid userId);
 
         Task<WarehouseReceiptDTO?> GetReceiptByIdAsync(long id, Guid userId);
+
+        Task<bool> ImportApprovedTransfersAsync(long destinationWarehouseId, Guid currentUserId);
     }
 }

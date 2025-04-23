@@ -40,9 +40,11 @@ namespace Repo.Repository
         public async Task<List<TemporaryStockExport>> GetByOrderIdAsync(Guid orderId)
         {
             return await _context.TemporaryStockExports
-                                 .Where(t => t.OrderId == orderId)
+                                 .Include(t => t.Batch) // ✅ Include bảng Batch
+                                 .Where(t => t.OrderId == orderId && !t.IsReverted)
                                  .ToListAsync();
         }
+
 
         public async Task DeleteByOrderIdAsync(Guid orderId)
         {

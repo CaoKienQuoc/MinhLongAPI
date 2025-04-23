@@ -112,7 +112,15 @@ namespace Repo.Repository
             return await _context.Products.FindAsync(productId);
         }
 
-        
+        public async Task AddAsync(Batch entity)
+        {
+            await _context.Batches.AddAsync(entity);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
 
     }
 

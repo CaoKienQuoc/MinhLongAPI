@@ -21,36 +21,36 @@ namespace Services.Service
         private readonly IBatchRepository _batchRepo;
         private readonly IWarehouseRepository _warehouseRepository;
         private readonly IWarehouseExportRepository _warehouseExportRepository;
+        private readonly IWarehouseTransferRepository _transferRepo;
+        private readonly IProductRepository _productRepo;
 
         public WarehouseReceiptService(
             IWarehouseReceiptRepository receiptRepo,
             ITemporaryWarehouseExportRepository tempExportRepo,
             IBatchRepository batchRepo,
             IWarehouseRepository warehouseRepository,
-            IWarehouseExportRepository warehouseExportRepository)
+            IWarehouseExportRepository warehouseExportRepository,
+            IWarehouseTransferRepository transferRepo
+            ,IProductRepository productRepo)
         {
             _receiptRepo = receiptRepo;
             _tempExportRepo = tempExportRepo;
             _batchRepo = batchRepo;
             _warehouseRepository = warehouseRepository;
             _warehouseExportRepository = warehouseExportRepository;
+            _transferRepo = transferRepo;
+            _productRepo = productRepo;
         }
 
         public async Task<bool> CreateReceiptAsync(WarehouseReceiptRequest request, Guid currentUserId)
         {
-                var allowedTypes = new HashSet<string> { "ImportCoordination", "ImportProduction" };
-
+            var allowedTypes = new HashSet<string> { "ImportCoordination", "ImportProduction" };
             if (!allowedTypes.Contains(request.ImportType))
                 throw new Exception("ImportType is invalid! Only accepted: ImportCoordination, ImportProduction");
 
-            // ✅ Kiểm tra quyền sở hữu kho
             var warehouseUserId = await _warehouseRepository.GetUserIdByWarehouseIdAsync(request.WarehouseId);
             if (warehouseUserId != currentUserId)
-                throw new BadRequestException("Kho này không phải kho của bạn! Bạn không có quyền gì ở kho này.");
-
-            string datePart = DateTime.Now.ToString("yyyyMMdd");
-            int batchCountToday = await _batchRepo.CountBatchesByDateAsync(DateTime.Now);
-            string batchCode = $"BA{datePart}-{(batchCountToday + 1):D3}";
+                throw new UnauthorizedAccessException("Bạn không có quyền với kho này.");
 
             List<BatchResponseDto> processedBatches = new();
             int totalQuantity = 0;
@@ -58,17 +58,16 @@ namespace Services.Service
 
             if (request.ImportType == "ImportCoordination")
             {
-                // ✅ Cần OrderId để truy xuất dữ liệu điều phối từ TemporaryStockExport
                 if (request.OrderId == null || request.OrderId == Guid.Empty)
                     throw new Exception("OrderId is required for ImportCoordination.");
 
                 var tempExports = await _tempExportRepo.GetByOrderIdAsync(request.OrderId.Value);
-
                 if (tempExports == null || !tempExports.Any())
-                    throw new Exception("Không tìm thấy dữ liệu tạm xuất từ OrderId.");
+                    throw new Exception("Không có dữ liệu điều phối.");
 
                 foreach (var temp in tempExports)
                 {
+
                     processedBatches.Add(new BatchResponseDto
                     {
                         BatchCode = temp.BatchNumber,
@@ -77,56 +76,38 @@ namespace Services.Service
                         Quantity = (int)temp.Quantity,
                         UnitCost = temp.UnitPrice,
                         TotalAmount = temp.Quantity * temp.UnitPrice,
+                        SellingPrice = 0, // giả định giá bán = nhập * 1.1
                         Status = "PENDING",
-                        DateOfManufacture = temp.Batch?.DateOfManufacture ?? DateTime.Now
+                        DateOfManufacture = temp.Batch?.DateOfManufacture ?? DateTime.Now,
+                        ExpiryDate = temp.Batch.ExpiryDate
                     });
 
                     totalQuantity += (int)temp.Quantity;
                     totalPrice += temp.Quantity * temp.UnitPrice;
                 }
-                // ✅ Kiểm tra nếu đủ số lượng điều phối thì cập nhật ExportType
-                var exportReceipt = await _warehouseExportRepository.GetByOrderIdAsync(request.OrderId.Value);
-                if (exportReceipt != null && exportReceipt.ExportType == "PendingTransfer")
-                {
-                    var exportQuantities = exportReceipt.ExportWarehouseReceiptDetails
-                        .GroupBy(x => x.ProductId)
-                        .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
-
-                    var importQuantities = processedBatches
-                        .GroupBy(x => x.ProductId)
-                        .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
-
-                    bool isReadyToExport = exportQuantities.All(exportItem =>
-                    {
-                        var productId = exportItem.Key;
-                        var requiredQty = exportItem.Value;
-
-                        return importQuantities.ContainsKey(productId)
-                               && importQuantities[productId] >= requiredQty;
-                    });
-
-                    if (isReadyToExport)
-                    {
-                        exportReceipt.ExportType = "PendingExport";
-                        await _warehouseExportRepository.UpdateAsync(exportReceipt);
-                    }
-                }
-
             }
-            else if (request.ImportType == "ImportProduction")
+            else // ImportProduction
             {
                 foreach (var b in request.Batches)
                 {
+                    var product = await _productRepo.GetByIdAsync(b.ProductId);
+                    if (product == null)
+                        throw new Exception($"Không tìm thấy sản phẩm (ProductId: {b.ProductId})");
+
+                    int defaultExpirationDays = product.DefaultExpiration ?? 720; // fallback nếu null
+                    DateTime manufactureDate = b.DateOfManufacture;
+                    DateTime expiryDate = manufactureDate.AddDays(defaultExpirationDays);
                     processedBatches.Add(new BatchResponseDto
                     {
-                        BatchCode = batchCode,
+                        BatchCode = $"BA{DateTime.Now:yyyyMMddHHmmss}",
                         ProductId = b.ProductId,
                         Unit = b.Unit,
                         Quantity = b.Quantity,
                         UnitCost = b.UnitCost,
                         TotalAmount = b.Quantity * b.UnitCost,
                         Status = "PENDING",
-                        DateOfManufacture = b.DateOfManufacture
+                        DateOfManufacture = b.DateOfManufacture,
+                        ExpiryDate = expiryDate
                     });
 
                     totalQuantity += b.Quantity;
@@ -135,10 +116,25 @@ namespace Services.Service
             }
 
             string batchesJson = JsonConvert.SerializeObject(processedBatches, Formatting.Indented);
+            // ✅ Format mã chứng từ theo loại nhập
+            string documentNumber;
+            if (request.ImportType == "ImportCoordination")
+            {
+                documentNumber = $"IMP-TF-{DateTime.Now:yyyyMMddHHmmss}";
+            }
+            else if (request.ImportType == "ImportProduction")
+            {
+                documentNumber = $"IMP-NEW-{DateTime.Now:yyyyMMddHHmmss}";
+            }
+            else
+            {
+                throw new Exception("ImportType không hợp lệ. Chỉ chấp nhận ImportCoordination hoặc ImportProduction.");
+            }
 
+            // ✅ Bước 1: Lưu vào WarehouseReceipt
             var warehouseReceipt = new WarehouseReceipt
             {
-                DocumentNumber = request.DocumentNumber,
+                DocumentNumber = documentNumber,
                 DocumentDate = DateTime.Now,
                 WarehouseId = request.WarehouseId,
                 ImportType = request.ImportType,
@@ -146,14 +142,63 @@ namespace Services.Service
                 DateImport = DateTime.Now,
                 TotalQuantity = totalQuantity,
                 TotalPrice = totalPrice,
-                BatchesJson = batchesJson
+                BatchesJson = batchesJson,
+                IsApproved = true
             };
 
-            await _receiptRepo.AddAsync(warehouseReceipt);
-            await _receiptRepo.SaveChangesAsync();
-            return true; // ✅ báo thêm thành công
 
+            await _receiptRepo.AddAsync(warehouseReceipt);
+            await _receiptRepo.SaveChangesAsync(); // Sau đó mới dùng dữ liệu receipt để lưu xuống ImportTransaction
+
+            // ✅ Bước 2: Lưu vào ImportTransaction
+            var importTransaction = new ImportTransaction
+            {
+                DocumentNumber = warehouseReceipt.DocumentNumber,
+                DocumentDate = warehouseReceipt.DocumentDate,
+                TypeImport = warehouseReceipt.ImportType,
+                Note = $"Phiếu nhập từ WarehouseReceipt #{warehouseReceipt.WarehouseReceiptId}",
+                WarehouseId = warehouseReceipt.WarehouseId,
+                Supplier = warehouseReceipt.Supplier,
+                DateImport = warehouseReceipt.DateImport
+            };
+
+            await _receiptRepo.AddAsync(importTransaction);
+            await _receiptRepo.SaveChangesAsync();
+
+            // ✅ Bước 3: Lưu vào ImportTransactionDetail và Batch
+            foreach (var batch in processedBatches)
+            {
+                var detail = new ImportTransactionDetail
+                {
+                    ImportTransactionId = importTransaction.ImportTransactionId,
+                    TotalQuantity = batch.Quantity,
+                    TotalPrice = batch.TotalAmount,
+                    Note = $"SP#{batch.ProductId} - Batch: {batch.BatchCode}"
+                };
+                await _receiptRepo.AddAsync(detail);
+
+                var batchEntity = new Batch
+                {
+                    BatchCode = batch.BatchCode,
+                    ProductId = batch.ProductId,
+                    Quantity = batch.Quantity,
+                    UnitCost = batch.UnitCost,
+                    TotalAmount = batch.TotalAmount,
+                    SellingPrice = batch.SellingPrice,
+                    Unit = batch.Unit,
+                    DateOfManufacture = batch.DateOfManufacture,
+                    ExpiryDate = batch.ExpiryDate,
+                    Status = batch.Status
+                };
+                await _batchRepo.AddAsync(batchEntity);
+            }
+
+            await _receiptRepo.SaveChangesAsync();
+            await _batchRepo.SaveChangesAsync();
+
+            return true;
         }
+
 
         public async Task<List<WarehouseReceiptDTO>> GetAllReceiptsByUserAsync(Guid userId)
         {
@@ -219,6 +264,113 @@ namespace Services.Service
                 Batches = batches,
                 IsApproved = receipt.IsApproved
             };
+        }
+
+        public async Task<bool> ImportApprovedTransfersAsync(long destinationWarehouseId, Guid currentUserId)
+        {
+            var transferRequests = await _transferRepo.GetApprovedTransfersByDestinationAsync(destinationWarehouseId);
+
+            if (transferRequests == null || !transferRequests.Any())
+                throw new Exception("Không có điều phối nào ở trạng thái Approved cho kho này.");
+
+            foreach (var request in transferRequests)
+            {
+                var userId = await _warehouseRepository.GetUserIdByWarehouseIdAsync(request.DestinationWarehouseId);
+                if (userId != currentUserId)
+                    throw new UnauthorizedAccessException("Không có quyền thao tác với kho này.");
+
+                // ✅ Lấy batches từ transfer
+                var batches = request.TransferProducts.Select(tp =>
+                {
+                    if (tp.Batch == null)
+                        throw new Exception($"Không tìm thấy batch cho sản phẩm {tp.ProductId}");
+
+                    decimal totalAmount = tp.Quantity * tp.Batch.UnitCost;
+
+                    return new BatchResponseDto
+                    {
+                        BatchCode = tp.Batch.BatchCode,
+                        ProductId = tp.ProductId,
+                        Unit = tp.Batch.Unit,
+                        Quantity = tp.Quantity,
+                        UnitCost = tp.Batch.UnitCost,
+                        TotalAmount = totalAmount,
+                        SellingPrice = tp.Batch.SellingPrice ?? 0,
+                        Status = tp.Batch.Status,
+                        DateOfManufacture = tp.Batch.DateOfManufacture,
+                        ExpiryDate = tp.Batch.ExpiryDate
+                    };
+                }).ToList();
+
+                decimal totalPrice = batches.Sum(x => x.TotalAmount);
+                int totalQuantity = batches.Sum(x => x.Quantity);
+
+                // ✅ Bước 1: Lưu vào WarehouseReceipt
+                var warehouseReceipt = new WarehouseReceipt
+                {
+                    DocumentNumber = $"IMP-TF-{DateTime.Now:yyyyMMddHHmmss}",
+                    DocumentDate = DateTime.Now,
+                    WarehouseId = request.DestinationWarehouseId,
+                    ImportType = "ImportCoordination",
+                    Supplier = $"Kho #{request.SourceWarehouseId}",
+                    DateImport = DateTime.Now,
+                    TotalQuantity = totalQuantity,
+                    TotalPrice = totalPrice,
+                    IsApproved = true,
+                    BatchesJson = JsonConvert.SerializeObject(batches, Formatting.Indented)
+                };
+
+                await _receiptRepo.AddAsync(warehouseReceipt);
+                await _receiptRepo.SaveChangesAsync(); // Lấy xong receipt mới tạo giao dịch
+
+                // ✅ Bước 2: Lưu ImportTransaction
+                var importTransaction = new ImportTransaction
+                {
+                    DocumentNumber = warehouseReceipt.DocumentNumber,
+                    DocumentDate = warehouseReceipt.DocumentDate,
+                    TypeImport = warehouseReceipt.ImportType,
+                    Note = $"Tạo từ phiếu điều phối #{request.Id}",
+                    Supplier = warehouseReceipt.Supplier,
+                    WarehouseId = warehouseReceipt.WarehouseId,
+                    DateImport = warehouseReceipt.DateImport
+                };
+
+                await _receiptRepo.AddAsync(importTransaction);
+                await _receiptRepo.SaveChangesAsync();
+
+                // ✅ Bước 3: Lưu ImportTransactionDetail + Batch
+                foreach (var b in batches)
+                {
+                    var detail = new ImportTransactionDetail
+                    {
+                        ImportTransactionId = importTransaction.ImportTransactionId,
+                        TotalQuantity = b.Quantity,
+                        TotalPrice = b.TotalAmount,
+                        Note = $"SP #{b.ProductId} - Batch: {b.BatchCode}"
+                    };
+                    await _receiptRepo.AddAsync(detail);
+
+                    var batchEntity = new Batch
+                    {
+                        ProductId = b.ProductId,
+                        BatchCode = b.BatchCode,
+                        Quantity = b.Quantity,
+                        UnitCost = b.UnitCost,
+                        TotalAmount = b.TotalAmount,
+                        SellingPrice = b.SellingPrice,
+                        Unit = b.Unit,
+                        DateOfManufacture = b.DateOfManufacture,
+                        ExpiryDate = b.ExpiryDate,
+                        Status = b.Status
+                    };
+                    await _batchRepo.AddAsync(batchEntity);
+                }
+
+                await _receiptRepo.SaveChangesAsync();
+                await _batchRepo.SaveChangesAsync();
+            }
+
+            return true;
         }
 
 

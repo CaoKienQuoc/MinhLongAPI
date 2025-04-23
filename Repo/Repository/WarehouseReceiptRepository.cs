@@ -42,5 +42,14 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(wr => wr.WarehouseReceiptId == receiptId && wr.Warehouse.UserId == userId);
         }
 
+        public async Task AddAsync(ImportTransaction importTransaction)
+        {
+            await _context.ImportTransactions.AddAsync(importTransaction);
+        }
+
+        public async Task AddAsync(ImportTransactionDetail importTransactionDetail)
+        {
+            await _context.ImportTransactionDetails.AddAsync(importTransactionDetail);
+        }
     }
 }
