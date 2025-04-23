@@ -38,7 +38,7 @@ namespace Services.Service
 
         public async Task<bool> CreateReceiptAsync(WarehouseReceiptRequest request, Guid currentUserId)
         {
-            var allowedTypes = new HashSet<string> { "ImportCoordination", "ImportProduction" };
+                var allowedTypes = new HashSet<string> { "ImportCoordination", "ImportProduction" };
 
             if (!allowedTypes.Contains(request.ImportType))
                 throw new Exception("ImportType is invalid! Only accepted: ImportCoordination, ImportProduction");

@@ -17,5 +17,9 @@ namespace Repo.IRepository
         Task<List<WarehouseTransferRequest>> GetAllByUserIdAsync(Guid userId);
         Task<WarehouseTransferRequest?> GetByIdAndUserIdAsync(long id, Guid userId);
 
+        Task<List<WarehouseTransferRequest>> GetBySourceWarehouseAsync(long sourceWarehouseId);
+
+        Task<List<WarehouseTransferRequest>> GetByDestinationWarehouseAsync(long destinationWarehouseId);
+
     }
 }

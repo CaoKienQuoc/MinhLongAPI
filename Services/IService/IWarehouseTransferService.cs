@@ -15,5 +15,8 @@ namespace Services.IService
         Task<List<WarehouseTransferRequestDetailDto>> GetAllTransferRequestsByUserAsync(Guid userId);
         Task<WarehouseTransferRequestDetailDto?> GetTransferRequestByIdAsync(long id, Guid userId);
 
+        Task<List<WarehouseTransferRequestDetailDto>> GetBySourceWarehouseAsync(long sourceWarehouseId);
+        Task<List<WarehouseTransferRequestDetailDto>> GetByDestinationWarehouseAsync(long destinationWarehouseId);
+
     }
 }

@@ -141,5 +141,17 @@ namespace Services.Service
             };
         }
 
+        public async Task<List<WarehouseTransferRequestDetailDto>> GetBySourceWarehouseAsync(long sourceWarehouseId)
+        {
+            var list = await _transferRepo.GetBySourceWarehouseAsync(sourceWarehouseId);
+            return list.Select(ToDto).ToList();
+        }
+
+        public async Task<List<WarehouseTransferRequestDetailDto>> GetByDestinationWarehouseAsync(long destinationWarehouseId)
+        {
+            var list = await _transferRepo.GetByDestinationWarehouseAsync(destinationWarehouseId);
+            return list.Select(ToDto).ToList();
+        }
+
     }
 }
