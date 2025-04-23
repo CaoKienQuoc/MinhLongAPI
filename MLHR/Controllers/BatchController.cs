@@ -51,5 +51,23 @@ namespace MLHR.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("batches/warehouse/{warehouseId}")]
+        public async Task<IActionResult> GetBatchesByWarehouse(long warehouseId)
+        {
+            try
+            {
+                var batches = await _batchService.GetBatchesByWarehouseIdAsync(warehouseId);
+                if (!batches.Any())
+                    return NotFound("Không tìm thấy batch nào cho kho này.");
+
+                return Ok(batches);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
     }
 }

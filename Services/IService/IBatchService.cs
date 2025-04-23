@@ -18,5 +18,8 @@ namespace Services.IService
         Task<(bool Success, string Message, object? Data)> UpdateProfitMarginAsync(long batchId, decimal profitMarginPercent);
         Task<ProductInfoByBatchDto?> GetProductInfoByBatchIdAsync(long batchId);
 
+        Task<List<BatchDisplayDto>> GetBatchesByWarehouseIdAsync(long warehouseId);
+
+
     }
 }

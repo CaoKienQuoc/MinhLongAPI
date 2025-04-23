@@ -111,5 +111,25 @@ namespace Services.Service
                 UnitCost = batch.UnitCost
             };
         }
+
+        public async Task<List<BatchDisplayDto>> GetBatchesByWarehouseIdAsync(long warehouseId)
+        {
+            var batches = await _batchRepository.GetBatchesByWarehouseIdAsync(warehouseId);
+            return batches.Select(b => new BatchDisplayDto
+            {
+                ProductId = b.ProductId,
+                BatchCode = b.BatchCode,
+                UnitCost = b.UnitCost,
+                Quantity = b.Quantity,
+                DateOfManufacture = b.DateOfManufacture,
+                ExpiryDate = b.ExpiryDate,
+                TotalAmount = b.TotalAmount,
+                SellingPrice = b.SellingPrice ?? 0,
+                ProfitMarginPercent = b.ProfitMarginPercent,
+                Status = b.Status
+            }).ToList();
+        }
+
+
     }
 }
