@@ -24,7 +24,17 @@ namespace Repo.IRepository
         Task<List<ExportWarehouseReceipt>> GetAllByUserIdAsync(Guid userId);
         Task<ExportWarehouseReceipt?> GetByIdAndUserIdAsync(int receiptId, Guid userId);
 
+        Task<List<ExportWarehouseReceiptDetail>> GetDetailsByReceiptIdAsync(long receiptId);
 
+        Task UpdateDetailAsync(ExportWarehouseReceiptDetail detail);
+
+        Task AddDetailAsync(ExportWarehouseReceiptDetail detail);
+
+        Task UpdateReceiptAsync(ExportWarehouseReceipt receipt);
+
+        Task<Batch?> FindSourceBatchAsync(long sourceWarehouseId, long productId, string batchCode);
+
+        Task<WarehouseTransferRequest?> GetWarehouseTransferByRequestExportIdAsync(int requestExportId);
     }
 
 }

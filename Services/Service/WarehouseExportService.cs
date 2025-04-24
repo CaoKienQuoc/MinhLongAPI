@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO.Product;
 using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
@@ -445,6 +446,63 @@ namespace Services.Service
             };
         }
 
+        public async Task UpdateExportFromCoordinationImportAsync(int requestExportId, List<BatchResponseDto> importedBatches)
+        {
+            var transferRequest = await _exportReceiptRepo.GetWarehouseTransferByRequestExportIdAsync(requestExportId);
+            if (transferRequest == null)
+                throw new Exception($"Không tìm thấy thông tin điều phối từ RequestExportId {requestExportId}");
+
+            var mainExportReceipts = await _exportReceiptRepo.GetByRequestExportIdAsync(requestExportId);
+
+            if (mainExportReceipts == null || !mainExportReceipts.Any())
+                return;
+
+            foreach (var exportReceipt in mainExportReceipts)
+            {
+                if (exportReceipt.ExportType != "PendingTransfer")
+                    continue;
+
+                var exportDetails = await _exportReceiptRepo.GetDetailsByReceiptIdAsync(exportReceipt.ExportWarehouseReceiptId);
+
+                foreach (var batch in importedBatches)
+                {
+                    var matchingDetail = exportDetails.FirstOrDefault(x => x.ProductId == batch.ProductId);
+
+                    if (matchingDetail != null)
+                    {
+                        matchingDetail.Quantity += batch.Quantity;
+                        matchingDetail.TotalProductAmount = matchingDetail.Quantity * matchingDetail.UnitPrice;
+
+                        await _exportReceiptRepo.UpdateDetailAsync(matchingDetail);
+                    }
+                    /*else
+                    {
+                        var newDetail = new ExportWarehouseReceiptDetail
+                        {
+                            ExportWarehouseReceiptId = exportReceipt.ExportWarehouseReceiptId,
+                            ProductId = batch.ProductId,
+                            ProductName = "",
+                            BatchNumber = batch.BatchCode,
+                            Quantity = batch.Quantity,
+                            UnitPrice = batch.UnitCost,
+                            TotalProductAmount = batch.TotalAmount,
+                            ExpiryDate = batch.ExpiryDate,
+                            BatchId = batch.BatchId ?? 0
+                        };
+
+                        await _exportReceiptRepo.AddDetailAsync(newDetail);
+                    }*/
+                }
+
+                exportReceipt.TotalQuantity = exportDetails.Sum(x => x.Quantity);
+                exportReceipt.TotalAmount = exportDetails.Sum(x => x.TotalProductAmount);
+                exportReceipt.ExportType = "AvailableExport";
+
+                await _exportReceiptRepo.UpdateReceiptAsync(exportReceipt);
+            }
+
+            await _exportReceiptRepo.SaveChangesAsync();
+        }
 
     }
 

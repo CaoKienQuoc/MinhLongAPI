@@ -97,6 +97,50 @@ namespace Repo.Repository
                         .ThenInclude(x => x.AgencyAccount)
                 .FirstOrDefaultAsync(e => e.ExportWarehouseReceiptId == receiptId && e.Warehouse.UserId == userId);
         }
+
+        public async Task<List<ExportWarehouseReceiptDetail>> GetDetailsByReceiptIdAsync(long receiptId)
+        {
+            return await _context.ExportWarehouseReceiptDetail
+                                 .Where(x => x.ExportWarehouseReceiptId == receiptId)
+                                 .ToListAsync();
+        }
+
+        public async Task UpdateDetailAsync(ExportWarehouseReceiptDetail detail)
+        {
+            _context.ExportWarehouseReceiptDetail.Update(detail);
+            await Task.CompletedTask;
+        }
+
+        public async Task AddDetailAsync(ExportWarehouseReceiptDetail detail)
+        {
+            await _context.ExportWarehouseReceiptDetail.AddAsync(detail);
+        }
+
+        public async Task UpdateReceiptAsync(ExportWarehouseReceipt receipt)
+        {
+            _context.ExportWarehouseReceipts.Update(receipt);
+            await Task.CompletedTask;
+        }
+
+        public async Task<Batch?> FindSourceBatchAsync(long sourceWarehouseId, long productId, string batchCode)
+        {
+            return await _context.Batches
+                .Include(b => b.ImportTransactionDetail)
+                .ThenInclude(d => d.ImportTransaction)
+                .Where(b =>
+                    b.ProductId == productId &&
+                    b.BatchCode == batchCode &&
+                    b.ImportTransactionDetail != null &&
+                    b.ImportTransactionDetail.ImportTransaction.WarehouseId == sourceWarehouseId
+                )
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<WarehouseTransferRequest?> GetWarehouseTransferByRequestExportIdAsync(int requestExportId)
+        {
+            return await _context.WarehouseTransferRequests
+                .FirstOrDefaultAsync(x => x.RequestExportId == requestExportId);
+        }
     }
 
 

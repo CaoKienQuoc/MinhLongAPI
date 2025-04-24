@@ -9,6 +9,8 @@ namespace BusinessObject.DTO.Product
 {
     public class BatchResponseDto
     {
+
+        public long? BatchId { get; set; } // ✅ Bổ sung dòng này
         public string BatchCode { get; set; }   // Mã batch
         public long ProductId { get; set; }     // ID sản phẩm
         public string ProductName { get; set; } // Tên sản phẩm

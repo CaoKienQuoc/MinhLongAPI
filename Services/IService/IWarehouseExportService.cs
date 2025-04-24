@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BusinessObject.Models;
 using BusinessObject.DTO.Warehouse;
+using BusinessObject.DTO.Product;
 
 namespace Services.IService
 {
@@ -21,14 +22,7 @@ namespace Services.IService
         Task<List<ExportWarehouseReceiptDTO>> GetAllExportsByUserAsync(Guid userId);
         Task<ExportWarehouseReceiptDTO?> GetExportByIdAsync(int exportReceiptId, Guid userId);
 
-
-        /*Task<List<ExportWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId);
-
-        Task<List<ExportWarehouseReceipt>> GetInternalTransfersByWarehouseAsync(long warehouseId);
-
-        Task<bool> CompleteInternalTransferAsync(long receiptId);
-
-        Task<ExportWarehouseReceipt?> GetMainWarehouseReceiptAsync(int requestExportId);*/
+        Task UpdateExportFromCoordinationImportAsync(int requestExportId, List<BatchResponseDto> importedBatches);
     }
 
 }
