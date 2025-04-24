@@ -392,6 +392,7 @@ namespace Services.Service
 
             if (transferRequests == null || !transferRequests.Any())
                 throw new Exception("Không có điều phối nào ở trạng thái Approved cho kho này.");
+            
 
             foreach (var request in transferRequests)
             {

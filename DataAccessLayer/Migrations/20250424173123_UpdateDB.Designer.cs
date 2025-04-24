@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250420165231_UpdateDB")]
+    [Migration("20250424173123_UpdateDB")]
     partial class UpdateDB
     {
         /// <inheritdoc />
@@ -75,12 +75,17 @@ namespace DataAccessLayer.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<long?>("ManagedByEmployeeId")
+                        .HasColumnType("bigint");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("AgencyId");
 
                     b.HasIndex("AddressId");
+
+                    b.HasIndex("ManagedByEmployeeId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -1624,6 +1629,11 @@ namespace DataAccessLayer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BusinessObject.Models.Employee", "ManagedByEmployee")
+                        .WithMany("ManagedAgencies")
+                        .HasForeignKey("ManagedByEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BusinessObject.Models.User", "User")
                         .WithOne("AgencyAccount")
                         .HasForeignKey("BusinessObject.Models.AgencyAccount", "UserId")
@@ -1631,6 +1641,8 @@ namespace DataAccessLayer.Migrations
                         .IsRequired();
 
                     b.Navigation("Address");
+
+                    b.Navigation("ManagedByEmployee");
 
                     b.Navigation("User");
                 });
@@ -2274,6 +2286,11 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Addresses");
 
                     b.Navigation("Wards");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.Employee", b =>
+                {
+                    b.Navigation("ManagedAgencies");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.ExportTransaction", b =>

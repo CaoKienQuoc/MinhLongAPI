@@ -379,34 +379,6 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AgencyAccount",
-                columns: table => new
-                {
-                    AgencyId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AgencyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AddressId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AgencyAccount", x => x.AgencyId);
-                    table.ForeignKey(
-                        name: "FK_AgencyAccount_Address_AddressId",
-                        column: x => x.AddressId,
-                        principalTable: "Address",
-                        principalColumn: "AddressId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_AgencyAccount_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Employee",
                 columns: table => new
                 {
@@ -464,55 +436,38 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AgencyAccountLevel",
+                name: "AgencyAccount",
                 columns: table => new
                 {
-                    AgencyLevelId = table.Column<long>(type: "bigint", nullable: false)
+                    AgencyId = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TotalDebtValue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    OrderDiscount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    MonthlyRevenue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    OrderRevenue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ChangeDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    AgencyId = table.Column<long>(type: "bigint", nullable: false),
-                    LevelId = table.Column<long>(type: "bigint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AgencyAccountLevel", x => x.AgencyLevelId);
-                    table.ForeignKey(
-                        name: "FK_AgencyAccountLevel_AgencyAccount_AgencyId",
-                        column: x => x.AgencyId,
-                        principalTable: "AgencyAccount",
-                        principalColumn: "AgencyId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_AgencyAccountLevel_AgencyLevel_LevelId",
-                        column: x => x.LevelId,
-                        principalTable: "AgencyLevel",
-                        principalColumn: "LevelId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RequestProduct",
-                columns: table => new
-                {
-                    RequestProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RequestCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AgencyId = table.Column<long>(type: "bigint", nullable: false),
+                    AgencyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    RequestStatus = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AddressId = table.Column<int>(type: "int", nullable: false),
+                    ManagedByEmployeeId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_RequestProduct", x => x.RequestProductId);
+                    table.PrimaryKey("PK_AgencyAccount", x => x.AgencyId);
                     table.ForeignKey(
-                        name: "FK_RequestProduct_AgencyAccount_AgencyId",
-                        column: x => x.AgencyId,
-                        principalTable: "AgencyAccount",
-                        principalColumn: "AgencyId");
+                        name: "FK_AgencyAccount_Address_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Address",
+                        principalColumn: "AddressId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AgencyAccount_Employee_ManagedByEmployeeId",
+                        column: x => x.ManagedByEmployeeId,
+                        principalTable: "Employee",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AgencyAccount_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -601,6 +556,80 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AgencyAccountLevel",
+                columns: table => new
+                {
+                    AgencyLevelId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TotalDebtValue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    OrderDiscount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    MonthlyRevenue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    OrderRevenue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ChangeDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AgencyId = table.Column<long>(type: "bigint", nullable: false),
+                    LevelId = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AgencyAccountLevel", x => x.AgencyLevelId);
+                    table.ForeignKey(
+                        name: "FK_AgencyAccountLevel_AgencyAccount_AgencyId",
+                        column: x => x.AgencyId,
+                        principalTable: "AgencyAccount",
+                        principalColumn: "AgencyId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AgencyAccountLevel_AgencyLevel_LevelId",
+                        column: x => x.LevelId,
+                        principalTable: "AgencyLevel",
+                        principalColumn: "LevelId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RequestProduct",
+                columns: table => new
+                {
+                    RequestProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RequestCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AgencyId = table.Column<long>(type: "bigint", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    RequestStatus = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RequestProduct", x => x.RequestProductId);
+                    table.ForeignKey(
+                        name: "FK_RequestProduct_AgencyAccount_AgencyId",
+                        column: x => x.AgencyId,
+                        principalTable: "AgencyAccount",
+                        principalColumn: "AgencyId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ImportTransactionDetail",
+                columns: table => new
+                {
+                    ImportTransactionDetailId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TotalQuantity = table.Column<int>(type: "int", nullable: false),
+                    ImportTransactionId = table.Column<long>(type: "bigint", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ImportTransactionDetail", x => x.ImportTransactionDetailId);
+                    table.ForeignKey(
+                        name: "FK_ImportTransactionDetail_ImportTransaction_ImportTransactionId",
+                        column: x => x.ImportTransactionId,
+                        principalTable: "ImportTransaction",
+                        principalColumn: "ImportTransactionId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Order",
                 columns: table => new
                 {
@@ -653,24 +682,38 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ImportTransactionDetail",
+                name: "Batch",
                 columns: table => new
                 {
-                    ImportTransactionDetailId = table.Column<long>(type: "bigint", nullable: false)
+                    BatchId = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TotalQuantity = table.Column<int>(type: "int", nullable: false),
-                    ImportTransactionId = table.Column<long>(type: "bigint", nullable: false),
-                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    ImportTransactionDetailId = table.Column<long>(type: "bigint", nullable: false),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false),
+                    BatchCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UnitCost = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    DateOfManufacture = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Unit = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    SellingPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    ProfitMarginPercent = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ImportTransactionDetail", x => x.ImportTransactionDetailId);
+                    table.PrimaryKey("PK_Batch", x => x.BatchId);
                     table.ForeignKey(
-                        name: "FK_ImportTransactionDetail_ImportTransaction_ImportTransactionId",
-                        column: x => x.ImportTransactionId,
-                        principalTable: "ImportTransaction",
-                        principalColumn: "ImportTransactionId",
+                        name: "FK_Batch_ImportTransactionDetail_ImportTransactionDetailId",
+                        column: x => x.ImportTransactionDetailId,
+                        principalTable: "ImportTransactionDetail",
+                        principalColumn: "ImportTransactionDetailId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Batch_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -774,38 +817,117 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Batch",
+                name: "TemporaryStockExport",
                 columns: table => new
                 {
-                    BatchId = table.Column<long>(type: "bigint", nullable: false)
+                    TemporaryStockExportId = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    ImportTransactionDetailId = table.Column<long>(type: "bigint", nullable: false),
                     ProductId = table.Column<long>(type: "bigint", nullable: false),
-                    BatchCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UnitCost = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    DateOfManufacture = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
+                    BatchId = table.Column<long>(type: "bigint", nullable: false),
+                    BatchNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
                     ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Unit = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TotalAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    SellingPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
-                    ProfitMarginPercent = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    WarehouseProductId = table.Column<long>(type: "bigint", nullable: false),
+                    Quantity = table.Column<long>(type: "bigint", nullable: false),
+                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsReverted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TemporaryStockExport", x => x.TemporaryStockExportId);
+                    table.ForeignKey(
+                        name: "FK_TemporaryStockExport_Batch_BatchId",
+                        column: x => x.BatchId,
+                        principalTable: "Batch",
+                        principalColumn: "BatchId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TemporaryStockExport_Order_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Order",
+                        principalColumn: "OrderId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TemporaryStockExport_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TemporaryStockExport_Warehouse_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouse",
+                        principalColumn: "WarehouseId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WarehouseProduct",
+                columns: table => new
+                {
+                    WarehouseProductId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false),
+                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
+                    BatchId = table.Column<long>(type: "bigint", nullable: false),
+                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Batch", x => x.BatchId);
+                    table.PrimaryKey("PK_WarehouseProduct", x => x.WarehouseProductId);
                     table.ForeignKey(
-                        name: "FK_Batch_ImportTransactionDetail_ImportTransactionDetailId",
-                        column: x => x.ImportTransactionDetailId,
-                        principalTable: "ImportTransactionDetail",
-                        principalColumn: "ImportTransactionDetailId",
+                        name: "FK_WarehouseProduct_Batch_BatchId",
+                        column: x => x.BatchId,
+                        principalTable: "Batch",
+                        principalColumn: "BatchId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Batch_Product_ProductId",
+                        name: "FK_WarehouseProduct_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId");
+                    table.ForeignKey(
+                        name: "FK_WarehouseProduct_Warehouse_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouse",
+                        principalColumn: "WarehouseId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WarehouseTransferProduct",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WarehouseTransferRequestId = table.Column<long>(type: "bigint", nullable: false),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false),
+                    BatchId = table.Column<long>(type: "bigint", nullable: true),
+                    Quantity = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WarehouseTransferProduct", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WarehouseTransferProduct_Batch_BatchId",
+                        column: x => x.BatchId,
+                        principalTable: "Batch",
+                        principalColumn: "BatchId");
+                    table.ForeignKey(
+                        name: "FK_WarehouseTransferProduct_Product_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Product",
                         principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WarehouseTransferProduct_WarehouseTransferRequest_WarehouseTransferRequestId",
+                        column: x => x.WarehouseTransferRequestId,
+                        principalTable: "WarehouseTransferRequest",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -937,118 +1059,40 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TemporaryStockExport",
+                name: "ExportTransactionDetail",
                 columns: table => new
                 {
-                    TemporaryStockExportId = table.Column<long>(type: "bigint", nullable: false)
+                    ExportTransactionDetailId = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    ProductId = table.Column<long>(type: "bigint", nullable: false),
-                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
-                    BatchId = table.Column<long>(type: "bigint", nullable: false),
-                    BatchNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExportTransactionId = table.Column<long>(type: "bigint", nullable: false),
                     WarehouseProductId = table.Column<long>(type: "bigint", nullable: false),
-                    Quantity = table.Column<long>(type: "bigint", nullable: false),
-                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsReverted = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TemporaryStockExport", x => x.TemporaryStockExportId);
-                    table.ForeignKey(
-                        name: "FK_TemporaryStockExport_Batch_BatchId",
-                        column: x => x.BatchId,
-                        principalTable: "Batch",
-                        principalColumn: "BatchId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TemporaryStockExport_Order_OrderId",
-                        column: x => x.OrderId,
-                        principalTable: "Order",
-                        principalColumn: "OrderId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TemporaryStockExport_Product_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Product",
-                        principalColumn: "ProductId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_TemporaryStockExport_Warehouse_WarehouseId",
-                        column: x => x.WarehouseId,
-                        principalTable: "Warehouse",
-                        principalColumn: "WarehouseId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "WarehouseProduct",
-                columns: table => new
-                {
-                    WarehouseProductId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ProductId = table.Column<long>(type: "bigint", nullable: false),
-                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
-                    BatchId = table.Column<long>(type: "bigint", nullable: false),
-                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    UnitPrice = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    TotalProductAmount = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_WarehouseProduct", x => x.WarehouseProductId);
+                    table.PrimaryKey("PK_ExportTransactionDetail", x => x.ExportTransactionDetailId);
                     table.ForeignKey(
-                        name: "FK_WarehouseProduct_Batch_BatchId",
-                        column: x => x.BatchId,
-                        principalTable: "Batch",
-                        principalColumn: "BatchId",
+                        name: "FK_ExportTransactionDetail_ExportTransaction_ExportTransactionId",
+                        column: x => x.ExportTransactionId,
+                        principalTable: "ExportTransaction",
+                        principalColumn: "ExportTransactionId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_WarehouseProduct_Product_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Product",
-                        principalColumn: "ProductId");
-                    table.ForeignKey(
-                        name: "FK_WarehouseProduct_Warehouse_WarehouseId",
-                        column: x => x.WarehouseId,
-                        principalTable: "Warehouse",
-                        principalColumn: "WarehouseId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "WarehouseTransferProduct",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    WarehouseTransferRequestId = table.Column<long>(type: "bigint", nullable: false),
-                    ProductId = table.Column<long>(type: "bigint", nullable: false),
-                    BatchId = table.Column<long>(type: "bigint", nullable: true),
-                    Quantity = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_WarehouseTransferProduct", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_WarehouseTransferProduct_Batch_BatchId",
-                        column: x => x.BatchId,
-                        principalTable: "Batch",
-                        principalColumn: "BatchId");
-                    table.ForeignKey(
-                        name: "FK_WarehouseTransferProduct_Product_ProductId",
+                        name: "FK_ExportTransactionDetail_Product_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Product",
                         principalColumn: "ProductId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_WarehouseTransferProduct_WarehouseTransferRequest_WarehouseTransferRequestId",
-                        column: x => x.WarehouseTransferRequestId,
-                        principalTable: "WarehouseTransferRequest",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_ExportTransactionDetail_WarehouseProduct_WarehouseProductId",
+                        column: x => x.WarehouseProductId,
+                        principalTable: "WarehouseProduct",
+                        principalColumn: "WarehouseProductId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1087,43 +1131,6 @@ namespace DataAccessLayer.Migrations
                         column: x => x.WarehouseId,
                         principalTable: "Warehouse",
                         principalColumn: "WarehouseId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExportTransactionDetail",
-                columns: table => new
-                {
-                    ExportTransactionDetailId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ExportTransactionId = table.Column<long>(type: "bigint", nullable: false),
-                    WarehouseProductId = table.Column<long>(type: "bigint", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
-                    TotalProductAmount = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ProductId = table.Column<long>(type: "bigint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExportTransactionDetail", x => x.ExportTransactionDetailId);
-                    table.ForeignKey(
-                        name: "FK_ExportTransactionDetail_ExportTransaction_ExportTransactionId",
-                        column: x => x.ExportTransactionId,
-                        principalTable: "ExportTransaction",
-                        principalColumn: "ExportTransactionId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ExportTransactionDetail_Product_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Product",
-                        principalColumn: "ProductId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ExportTransactionDetail_WarehouseProduct_WarehouseProductId",
-                        column: x => x.WarehouseProductId,
-                        principalTable: "WarehouseProduct",
-                        principalColumn: "WarehouseProductId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -1192,6 +1199,11 @@ namespace DataAccessLayer.Migrations
                 name: "IX_AgencyAccount_AddressId",
                 table: "AgencyAccount",
                 column: "AddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AgencyAccount_ManagedByEmployeeId",
+                table: "AgencyAccount",
+                column: "ManagedByEmployeeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AgencyAccount_UserId",
@@ -1548,9 +1560,6 @@ namespace DataAccessLayer.Migrations
                 name: "AgencyAccountLevel");
 
             migrationBuilder.DropTable(
-                name: "Employee");
-
-            migrationBuilder.DropTable(
                 name: "ExportTransactionDetail");
 
             migrationBuilder.DropTable(
@@ -1651,6 +1660,9 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "AgencyAccount");
+
+            migrationBuilder.DropTable(
+                name: "Employee");
 
             migrationBuilder.DropTable(
                 name: "Address");

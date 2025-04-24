@@ -354,23 +354,7 @@ namespace DataAccessLayer
                 .HasForeignKey(r => r.AgencyId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            /*modelBuilder.Entity<RequestProduct>()
-                .HasOne(r => r.ApprovedByEmployee)
-                .WithMany()
-                .HasForeignKey(r => r.ApprovedBy)
-                .OnDelete(DeleteBehavior.Cascade);*/
-
-
-            /*modelBuilder.Entity<RequestProductDetail>()
-               .HasIndex(d => d.ProductId)
-               .IsUnique();
-
-            modelBuilder.Entity<RequestProductDetail>()
-                .HasOne(r => r.Product)
-                .WithMany()
-                .HasForeignKey(r => r.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);*/
-
+            
             // Cấu hình quan hệ 1-N giữa Product và ProductDetail
             modelBuilder.Entity<RequestProductDetail>()
                 .HasOne(pd => pd.Product)
