@@ -19,8 +19,8 @@ namespace MLHR.Controllers
             _httpContextAccessor = httpContextAccessor;
         }
 
-        [HttpPost("import-transfer-approved/{warehouseId}")]
-        public async Task<IActionResult> ImportApprovedTransfer(long warehouseId)
+        [HttpPost("import-transfer-approved/{DestinationWarehouseId}")]
+        public async Task<IActionResult> ImportApprovedTransfer(long DestinationWarehouseId)
         {
             var currentUserId = GetLoggedInUserId();
             if (currentUserId == null)
@@ -30,7 +30,7 @@ namespace MLHR.Controllers
 
             try
             {
-                await _service.ImportApprovedTransfersAsync(warehouseId, currentUserId.Value);
+                await _service.ImportApprovedTransfersAsync(DestinationWarehouseId, currentUserId.Value);
                 return Ok("Nhập kho điều phối thành công.");
             }
             catch (Exception ex)

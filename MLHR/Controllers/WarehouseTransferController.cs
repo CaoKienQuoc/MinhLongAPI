@@ -23,12 +23,12 @@ namespace MLHR.Controllers
             _exportService = exportService;
         }
 
-        [HttpPost("approve/{id}")]
-        public async Task<IActionResult> ApproveTransferRequest(int id)
+        [HttpPost("approve/{TransferRequesid}")]
+        public async Task<IActionResult> ApproveTransferRequest(int TransferRequesid)
         {
             try
             {
-                var receipt = await _exportService.ApproveTransferRequestAndCreateReceiptAsync(id);
+                var receipt = await _exportService.ApproveTransferRequestAndCreateReceiptAsync(TransferRequesid);
                 return Ok(new
                 {
                     success = true,
