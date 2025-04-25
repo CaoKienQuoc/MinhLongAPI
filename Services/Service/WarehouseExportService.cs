@@ -501,6 +501,7 @@ namespace Services.Service
                 exportReceipt.TotalQuantity = exportDetails.Sum(x => x.Quantity);
                 exportReceipt.TotalAmount = exportDetails.Sum(x => x.TotalProductAmount);
                 exportReceipt.ExportType = "AvailableExport";
+                transferRequest.Status = "Completed";
 
                 await _exportReceiptRepo.UpdateReceiptAsync(exportReceipt);
             }
