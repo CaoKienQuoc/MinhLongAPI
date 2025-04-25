@@ -83,9 +83,9 @@ namespace DataAccessLayer
         public DbSet<WarehouseTransferRequest> WarehouseTransferRequests { get; set; }
         public DbSet<WarehouseTransferProduct> WarehouseTransferProducts { get; set; }
         public DbSet<TemporaryStockExport> TemporaryStockExports { get; set; }
-        public DbSet<ReturnOrder> ReturnOrders { get; set; }
+        /*public DbSet<ReturnOrder> ReturnOrders { get; set; }
         public DbSet<ReturnOrderDetail> ReturnOrderDetails { get; set; }
-        public DbSet<ReturnOrderImage> ReturnOrderImages { get; set; }
+        public DbSet<ReturnOrderImage> ReturnOrderImages { get; set; }*/
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // 🏷️ **Định danh bảng**
@@ -128,9 +128,9 @@ namespace DataAccessLayer
             modelBuilder.Entity<WarehouseTransferRequest>().ToTable("WarehouseTransferRequest");
             modelBuilder.Entity<WarehouseTransferProduct>().ToTable("WarehouseTransferProduct");
             modelBuilder.Entity<TemporaryStockExport>().ToTable("TemporaryStockExport");
-            modelBuilder.Entity<ReturnOrder>().ToTable("ReturnOrder");
+            /*modelBuilder.Entity<ReturnOrder>().ToTable("ReturnOrder");
             modelBuilder.Entity<ReturnOrderDetail>().ToTable("ReturnOrderDetail");
-            modelBuilder.Entity<ReturnOrderImage>().ToTable("ReturnOrderImage");
+            modelBuilder.Entity<ReturnOrderImage>().ToTable("ReturnOrderImage");*/
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
