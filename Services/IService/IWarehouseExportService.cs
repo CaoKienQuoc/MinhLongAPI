@@ -23,6 +23,14 @@ namespace Services.IService
         Task<ExportWarehouseReceiptDTO?> GetExportByIdAsync(int exportReceiptId, Guid userId);
 
         Task UpdateExportFromCoordinationImportAsync(int requestExportId, List<BatchResponseDto> importedBatches);
+
+        Task<int> GetTodayExportCountAsync(Guid userId);
+        Task<int> GetThisMonthExportCountAsync(Guid userId);
+        Task<int> GetTodayExportQuantityAsync(Guid userId);
+        Task<int> GetThisMonthExportQuantityAsync(Guid userId);
+        Task<decimal> GetTodayExportValueAsync(Guid userId);
+        Task<decimal> GetThisMonthExportValueAsync(Guid userId);
+
     }
 
 }

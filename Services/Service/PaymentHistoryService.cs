@@ -179,5 +179,20 @@ namespace Services.Service
             }
         }
 
+        public Task<decimal> GetTotalPaidAsync(Guid userId) =>
+        _repository.GetTotalPaymentAmountByUserIdAsync(userId);
+
+        public Task<decimal> GetTodayPaidAsync(Guid userId) =>
+            _repository.GetPaymentAmountByDateAsync(userId, DateTime.Today);
+
+        public Task<decimal> GetMonthPaidAsync(Guid userId)
+        {
+            var now = DateTime.Now;
+            return _repository.GetPaymentAmountByMonthAsync(userId, now.Year, now.Month);
+        }
+
+        public Task<decimal> GetRemainingDebtAsync(Guid userId) =>
+            _repository.GetRemainingDebtByUserIdAsync(userId);
+
     }
 }

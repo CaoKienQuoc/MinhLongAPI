@@ -504,6 +504,54 @@ namespace Services.Service
             await _exportReceiptRepo.SaveChangesAsync();
         }
 
+
+        public async Task<int> GetTodayExportCountAsync(Guid userId)
+        {
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+            return receipts.Count(r => r.DocumentDate.Date == DateTime.Today);
+        }
+
+        public async Task<int> GetThisMonthExportCountAsync(Guid userId)
+        {
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+            var now = DateTime.Now;
+            return receipts.Count(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year);
+        }
+
+        public async Task<int> GetTodayExportQuantityAsync(Guid userId)
+        {
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+            return receipts
+                .Where(r => r.DocumentDate.Date == DateTime.Today)
+                .Sum(r => r.TotalQuantity);
+        }
+
+        public async Task<int> GetThisMonthExportQuantityAsync(Guid userId)
+        {
+            var now = DateTime.Now;
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+            return receipts
+                .Where(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year)
+                .Sum(r => r.TotalQuantity);
+        }
+
+        public async Task<decimal> GetTodayExportValueAsync(Guid userId)
+        {
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+            return receipts
+                .Where(r => r.DocumentDate.Date == DateTime.Today)
+                .Sum(r => r.TotalAmount);
+        }
+
+        public async Task<decimal> GetThisMonthExportValueAsync(Guid userId)
+        {
+            var now = DateTime.Now;
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+            return receipts
+                .Where(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year)
+                .Sum(r => r.TotalAmount);
+        }
+
     }
 
 }

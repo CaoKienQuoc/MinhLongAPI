@@ -31,9 +31,9 @@ namespace Repo.Repository
         {
             return await _context.Orders
                 .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
-                .Include(o => o.RequestProduct)
                 .ToListAsync();
         }
 

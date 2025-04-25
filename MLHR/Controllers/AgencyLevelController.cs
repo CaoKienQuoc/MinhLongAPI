@@ -74,5 +74,14 @@ namespace MLHR.Controllers
             return Ok(result);
         }
 
+
+        [HttpGet("dashboard/count-by-level")]
+        public async Task<IActionResult> GetAgencyCountByLevel()
+        {
+            var result = await _service.GetAgencyCountByLevelAsync();
+            return Ok(result);
+        }
+
+
     }
 }

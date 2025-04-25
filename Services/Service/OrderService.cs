@@ -298,6 +298,131 @@ namespace Services.Service
         }
 
 
+        public async Task<List<object>> GetOrderStatusCountsAsync()
+        {
+            var orders = await _orderRepository.GetAllOrdersAsync();
+            return orders.GroupBy(o => o.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .Cast<object>()
+                .ToList();
+        }
+
+        public async Task<List<object>> GetDailyRevenueAsync()
+        {
+            var payments = await _paymentHistoryRepository.GetAllAsync();
+
+            return payments
+                .Where(p => (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID") &&
+                            p.PaymentDate >= DateTime.Now.AddDays(-7))
+                .GroupBy(p => p.PaymentDate.Date)
+                .Select(g => new {
+                    Date = g.Key,
+                    TotalRevenue = g.Sum(p => p.PaymentAmount)
+                })
+                .OrderBy(x => x.Date)
+                .Cast<object>()
+                .ToList();
+        }
+
+
+        public async Task<List<object>> GetTopSellingProductsAsync()
+        {
+            var orders = await _orderRepository.GetAllOrdersAsync();
+
+            return orders
+                .Where(o => o.Status == "Paid" || o.Status == "WaitingDelivery")
+                .SelectMany(o => o.OrderDetails)
+                .GroupBy(od => new { od.ProductId, od.Product.ProductName })
+                .Select(g => new { g.Key.ProductId, g.Key.ProductName, TotalSold = g.Sum(od => od.Quantity) })
+                .OrderByDescending(p => p.TotalSold)
+                .Take(5)
+                .Cast<object>()
+                .ToList();
+        }
+
+        public async Task<decimal> GetTotalRevenueAsync()
+        {
+            var payments = await _paymentHistoryRepository.GetAllAsync();
+
+            return payments
+                .Where(p => p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID")
+                .Sum(p => p.PaymentAmount);
+        }
+
+
+        public async Task<List<object>> GetMonthlyOrderStatsAsync()
+        {
+            var orders = await _orderRepository.GetAllOrdersAsync();
+            var payments = await _paymentHistoryRepository.GetAllAsync();
+            var currentYear = DateTime.Now.Year;
+
+            return orders
+                .Where(o => o.OrderDate.Year == currentYear &&
+                            (o.Status == "Paid" || o.Status == "WaitingDelivery"))
+                .GroupBy(o => o.OrderDate.Month)
+                .Select(g => new {
+                    Month = g.Key,
+                    TotalOrders = g.Count(),
+                    TotalRevenue = payments
+                        .Where(p => g.Select(o => o.OrderId).Contains(p.OrderId) &&
+                                    (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID"))
+                        .Sum(p => p.PaymentAmount)
+                })
+                .Cast<object>()
+                .ToList();
+        }
+
+
+        public async Task<int> GetTodayOrderCountAsync()
+        {
+            var today = DateTime.Today;
+            var orders = await _orderRepository.GetAllOrdersAsync();
+            return orders.Count(o => o.OrderDate.Date == today && (o.Status == "Paid" || o.Status == "WaitingDelivery"));
+        }
+
+        public async Task<int> GetThisMonthOrderCountAsync()
+        {
+            var now = DateTime.Now;
+            var orders = await _orderRepository.GetAllOrdersAsync();
+            return orders.Count(o => o.OrderDate.Month == now.Month && o.OrderDate.Year == now.Year && (o.Status == "Paid" || o.Status == "WaitingDelivery"));
+        }
+
+        public async Task<decimal> GetTodayRevenueByUserIdAsync(Guid userId)
+        {
+            var payments = await _paymentHistoryRepository.GetAllAsync();
+            var today = DateTime.Today;
+
+            return payments
+                .Where(p => p.UserId == userId &&
+                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID") &&
+                            p.PaymentDate.Date == today)
+                .Sum(p => p.PaymentAmount);
+        }
+
+        public async Task<decimal> GetThisMonthRevenueByUserIdAsync(Guid userId)
+        {
+            var payments = await _paymentHistoryRepository.GetAllAsync();
+            var now = DateTime.Now;
+
+            return payments
+                .Where(p => p.UserId == userId &&
+                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID") &&
+                            p.PaymentDate.Month == now.Month &&
+                            p.PaymentDate.Year == now.Year)
+                .Sum(p => p.PaymentAmount);
+        }
+
+        public async Task<decimal> GetTotalRevenueByUserIdAsync(Guid userId)
+        {
+            var payments = await _paymentHistoryRepository.GetAllAsync();
+
+            return payments
+                .Where(p => p.UserId == userId &&
+                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID"))
+                .Sum(p => p.PaymentAmount);
+        }
+
+
 
     }
 

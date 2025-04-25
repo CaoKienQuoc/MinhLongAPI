@@ -139,5 +139,55 @@ namespace MLHR.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+
+
+        [HttpGet("dashboard/receipt-count-today")]
+        public async Task<IActionResult> GetTodayReceiptCount()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var count = await _service.GetTodayReceiptCountAsync(userId);
+            return Ok(new { Date = DateTime.Today.ToString("yyyy-MM-dd"), ReceiptCount = count });
+        }
+
+        [HttpGet("dashboard/receipt-count-this-month")]
+        public async Task<IActionResult> GetThisMonthReceiptCount()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var count = await _service.GetThisMonthReceiptCountAsync(userId);
+            return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, ReceiptCount = count });
+        }
+
+        [HttpGet("dashboard/receipt-total-quantity-today")]
+        public async Task<IActionResult> GetTodayTotalQuantity()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var quantity = await _service.GetTodayTotalQuantityAsync(userId);
+            return Ok(new { Date = DateTime.Today.ToString("yyyy-MM-dd"), TotalQuantity = quantity });
+        }
+
+        [HttpGet("dashboard/receipt-total-quantity-this-month")]
+        public async Task<IActionResult> GetThisMonthTotalQuantity()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var quantity = await _service.GetThisMonthTotalQuantityAsync(userId);
+            return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalQuantity = quantity });
+        }
+
+        [HttpGet("dashboard/receipt-total-price-today")]
+        public async Task<IActionResult> GetTodayTotalPrice()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var totalPrice = await _service.GetTodayTotalPriceAsync(userId);
+            return Ok(new { Date = DateTime.Today.ToString("yyyy-MM-dd"), TotalPrice = totalPrice });
+        }
+
+        [HttpGet("dashboard/receipt-total-price-this-month")]
+        public async Task<IActionResult> GetThisMonthTotalPrice()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var totalPrice = await _service.GetThisMonthTotalPriceAsync(userId);
+            return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalPrice = totalPrice });
+        }
+
     }
 }

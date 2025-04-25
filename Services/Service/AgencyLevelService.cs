@@ -85,6 +85,18 @@ namespace Services.Service
                 DiscountPercentage = latestLevel.Level.DiscountPercentage
             };
         }
+
+        public async Task<IEnumerable<object>> GetAgencyCountByLevelAsync()
+        {
+            var allLevels = await _repo.GetAllAsync();
+
+            return allLevels.Select(l => new
+            {
+                LevelName = l.LevelName,
+                AgencyCount = l.AgencyAccountLevels?.Count ?? 0
+            });
+        }
+
     }
 
 
