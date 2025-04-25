@@ -93,5 +93,33 @@ namespace Repo.Repository
         }
 
 
+        public async Task<decimal> GetTotalPaymentAmountByUserIdAsync(Guid userId)
+        {
+            return await _context.PaymentHistories
+                .Where(p => p.UserId == userId)
+                .SumAsync(p => p.PaymentAmount);
+        }
+
+        public async Task<decimal> GetPaymentAmountByDateAsync(Guid userId, DateTime date)
+        {
+            return await _context.PaymentHistories
+                .Where(p => p.UserId == userId && p.PaymentDate.Date == date.Date)
+                .SumAsync(p => p.PaymentAmount);
+        }
+
+        public async Task<decimal> GetPaymentAmountByMonthAsync(Guid userId, int year, int month)
+        {
+            return await _context.PaymentHistories
+                .Where(p => p.UserId == userId && p.PaymentDate.Year == year && p.PaymentDate.Month == month)
+                .SumAsync(p => p.PaymentAmount);
+        }
+
+        public async Task<decimal> GetRemainingDebtByUserIdAsync(Guid userId)
+        {
+            return await _context.PaymentHistories
+                .Where(p => p.UserId == userId)
+                .SumAsync(p => p.RemainingDebtAmount);
+        }
+
     }
 }

@@ -24,5 +24,25 @@ namespace Services.IService
 
         Task<Order> GetOrderByOrderCodeAsync(string orderCode);
 
+
+        Task<List<object>> GetOrderStatusCountsAsync();
+        Task<List<object>> GetDailyRevenueAsync();
+        Task<List<object>> GetTopSellingProductsAsync();
+        Task<decimal> GetTotalRevenueAsync();
+        Task<List<object>> GetMonthlyOrderStatsAsync();
+        Task<int> GetTodayOrderCountAsync();
+        Task<int> GetThisMonthOrderCountAsync();
+
+        Task<int> GetOrderCountManagedBySalesAsync(Guid salesUserId);
+        Task<decimal> GetTotalRevenueManagedBySalesAsync(Guid salesUserId);
+
+
+
+
+        Task<decimal> GetTodayRevenueByUserIdAsync(Guid userId);
+        Task<decimal> GetThisMonthRevenueByUserIdAsync(Guid userId);
+        Task<decimal> GetTotalRevenueByUserIdAsync(Guid userId);
+
+
     }
 }

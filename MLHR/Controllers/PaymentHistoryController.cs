@@ -62,6 +62,52 @@ namespace MLHR.Controllers
             await _service.SendDebtRemindersAsync();
             return Ok("Gửi nhắc hạn xong!");
         }
+
+
+        [HttpGet("dashboard/total-paid")]
+        [Authorize]
+        public async Task<IActionResult> GetTotalPaid()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            if (userId == null) return Unauthorized();
+
+            var total = await _service.GetTotalPaidAsync(userId);
+            return Ok(new { TotalPaid = total });
+        }
+
+        [HttpGet("dashboard/today-paid")]
+        [Authorize]
+        public async Task<IActionResult> GetTodayPaid()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            if (userId == null) return Unauthorized();
+
+            var total = await _service.GetTodayPaidAsync(userId);
+            return Ok(new { Date = DateTime.Today, TotalPaid = total });
+        }
+
+        [HttpGet("dashboard/month-paid")]
+        [Authorize]
+        public async Task<IActionResult> GetMonthPaid()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            if (userId == null) return Unauthorized();
+
+            var total = await _service.GetMonthPaidAsync(userId);
+            return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalPaid = total });
+        }
+
+        [HttpGet("dashboard/total-debt")]
+        [Authorize]
+        public async Task<IActionResult> GetRemainingDebt()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            if (userId == null) return Unauthorized();
+
+            var total = await _service.GetRemainingDebtAsync(userId);
+            return Ok(new { RemainingDebt = total });
+        }
+
     }
 
 }

@@ -61,8 +61,15 @@ namespace Repo.Repository
         public async Task<List<AgencyAccount>> GetAgenciesManagedByEmployeeIdAsync(long employeeId)
         {
             return await _context.AgencyAccounts
-                .Where(a => a.ManagedByEmployeeId == employeeId)
-                .ToListAsync();
+        .Where(a => a.ManagedByEmployeeId == employeeId)
+        .Include(a => a.User)
+        .Include(a => a.Address)
+            .ThenInclude(addr => addr.Ward)
+        .Include(a => a.Address)
+            .ThenInclude(addr => addr.District)
+        .Include(a => a.Address)
+            .ThenInclude(addr => addr.Province)
+        .ToListAsync();
         }
 
 

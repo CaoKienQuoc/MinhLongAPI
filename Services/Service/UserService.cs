@@ -729,7 +729,10 @@ namespace Services.Service
             {
                 AgencyId = a.AgencyId,
                 AgencyName = a.AgencyName,
-                CreatedAt = a.CreatedAt
+                CreatedAt = a.CreatedAt,
+                Email = a.User?.Email,
+                Phone = a.User?.Phone,
+                Address = $"{a.Address?.Street}, {a.Address?.Ward?.WardName}, {a.Address?.District?.DistrictName}, {a.Address?.Province?.ProvinceName}"
             }).ToList();
 
             return dtoList;

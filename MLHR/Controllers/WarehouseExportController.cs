@@ -88,6 +88,55 @@ namespace MLHR.Controllers
             return null;
         }
 
+        [HttpGet("dashboard/export-count-today")]
+        public async Task<IActionResult> GetExportCountToday()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var count = await _exportService.GetTodayExportCountAsync(userId);
+            return Ok(new { Date = DateTime.Today, ExportCount = count });
+        }
+
+        [HttpGet("dashboard/export-count-this-month")]
+        public async Task<IActionResult> GetExportCountThisMonth()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var count = await _exportService.GetThisMonthExportCountAsync(userId);
+            return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, ExportCount = count });
+        }
+
+        [HttpGet("dashboard/export-total-quantity-today")]
+        public async Task<IActionResult> GetExportQuantityToday()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var qty = await _exportService.GetTodayExportQuantityAsync(userId);
+            return Ok(new { Date = DateTime.Today, TotalQuantity = qty });
+        }
+
+        [HttpGet("dashboard/export-total-quantity-this-month")]
+        public async Task<IActionResult> GetExportQuantityThisMonth()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var qty = await _exportService.GetThisMonthExportQuantityAsync(userId);
+            return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalQuantity = qty });
+        }
+
+        [HttpGet("dashboard/export-total-price-today")]
+        public async Task<IActionResult> GetExportValueToday()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var value = await _exportService.GetTodayExportValueAsync(userId);
+            return Ok(new { Date = DateTime.Today, TotalAmount = value });
+        }
+
+        [HttpGet("dashboard/export-total-price-this-month")]
+        public async Task<IActionResult> GetExportValueThisMonth()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var value = await _exportService.GetThisMonthExportValueAsync(userId);
+            return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalAmount = value });
+        }
+
+
     }
 
 }

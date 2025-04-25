@@ -31,9 +31,9 @@ namespace Repo.Repository
         {
             return await _context.Orders
                 .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
-                .Include(o => o.RequestProduct)
                 .ToListAsync();
         }
 
@@ -178,6 +178,30 @@ namespace Repo.Repository
                 .Select(aal => aal.Level.PaymentTerm)
                 .FirstOrDefaultAsync();
         }
+
+
+        public async Task<int> GetOrderCountManagedBySalesAsync(Guid salesUserId)
+        {
+            return await _context.Orders
+                .Include(o => o.RequestProduct)
+                    .ThenInclude(rp => rp.AgencyAccount)
+                        .ThenInclude(aa => aa.ManagedByEmployee)
+                .Where(o => o.RequestProduct.AgencyAccount.ManagedByEmployee.User.UserId == salesUserId
+                            && (o.Status == "Paid" || o.Status == "WaitingDelivery"))
+                .CountAsync();
+        }
+
+        public async Task<decimal> GetTotalPaymentAmountManagedBySalesAsync(Guid salesUserId)
+        {
+            return await _context.PaymentHistories
+                .Include(ph => ph.Order)
+                    .ThenInclude(o => o.RequestProduct)
+                        .ThenInclude(rp => rp.AgencyAccount)
+                            .ThenInclude(a => a.ManagedByEmployee)
+                .Where(ph => ph.Order.RequestProduct.AgencyAccount.ManagedByEmployee.User.UserId == salesUserId)
+                .SumAsync(ph => ph.PaymentAmount);
+        }
+
 
     }
 }

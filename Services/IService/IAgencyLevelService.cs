@@ -17,6 +17,8 @@ namespace Services.IService
         Task DeleteLevelAsync(long id);
 
         Task<CurrentAgencyLevelDto?> GetCurrentLevelByUserIdAsync(Guid userId);
+
+        Task<IEnumerable<object>> GetAgencyCountByLevelAsync();
     }
 
 }

@@ -507,6 +507,58 @@ namespace Services.Service
             return true;
         }
 
+
+        public async Task<int> GetTodayReceiptCountAsync(Guid userId)
+        {
+            var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
+            var today = DateTime.Today;
+            return receipts.Count(r => r.DocumentDate.Date == today);
+        }
+
+        public async Task<int> GetThisMonthReceiptCountAsync(Guid userId)
+        {
+            var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
+            var now = DateTime.Now;
+            return receipts.Count(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year);
+        }
+
+        public async Task<int> GetTodayTotalQuantityAsync(Guid userId)
+        {
+            var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
+            var today = DateTime.Today;
+            return receipts
+                .Where(r => r.DocumentDate.Date == today)
+                .Sum(r => r.TotalQuantity);
+        }
+
+        public async Task<int> GetThisMonthTotalQuantityAsync(Guid userId)
+        {
+            var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
+            var now = DateTime.Now;
+            return receipts
+                .Where(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year)
+                .Sum(r => r.TotalQuantity);
+        }
+
+        public async Task<decimal> GetTodayTotalPriceAsync(Guid userId)
+        {
+            var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
+            var today = DateTime.Today;
+            return receipts
+                .Where(r => r.DocumentDate.Date == today)
+                .Sum(r => r.TotalPrice);
+        }
+
+        public async Task<decimal> GetThisMonthTotalPriceAsync(Guid userId)
+        {
+            var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
+            var now = DateTime.Now;
+            return receipts
+                .Where(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year)
+                .Sum(r => r.TotalPrice);
+        }
+
+
     }
 
 }

@@ -11,5 +11,9 @@ namespace BusinessObject.DTO
         public long AgencyId { get; set; }
         public string AgencyName { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string Email { get; set; }             // from User
+        public string Phone { get; set; }             // from User
+        public string Address { get; set; }           // from Address (full address)
     }
+
 }

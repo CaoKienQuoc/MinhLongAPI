@@ -137,5 +137,81 @@ namespace MLHR.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
+        [HttpGet("dashboard/order-status-count")]
+        public async Task<IActionResult> GetOrderStatusCounts()
+     => Ok(await _orderService.GetOrderStatusCountsAsync());
+
+        [HttpGet("dashboard/daily-revenue")]
+        public async Task<IActionResult> GetDailyRevenue()
+            => Ok(await _orderService.GetDailyRevenueAsync());
+
+        [HttpGet("dashboard/top-products")]
+        public async Task<IActionResult> GetTopSellingProducts()
+            => Ok(await _orderService.GetTopSellingProductsAsync());
+
+        [HttpGet("dashboard/total-revenue")]
+        public async Task<IActionResult> GetTotalRevenue()
+            => Ok(new { TotalRevenue = await _orderService.GetTotalRevenueAsync() });
+
+        [HttpGet("dashboard/monthly-orders")]
+        public async Task<IActionResult> GetMonthlyOrderStats()
+            => Ok(await _orderService.GetMonthlyOrderStatsAsync());
+
+        [HttpGet("dashboard/order-count-today")]
+        public async Task<IActionResult> GetTodayOrderCount()
+            => Ok(new { Date = DateTime.Today.ToString("yyyy-MM-dd"), TotalOrders = await _orderService.GetTodayOrderCountAsync() });
+
+        [HttpGet("dashboard/order-count-this-month")]
+        public async Task<IActionResult> GetThisMonthOrderCount()
+        {
+            var now = DateTime.Now;
+            var count = await _orderService.GetThisMonthOrderCountAsync();
+            return Ok(new { Month = now.Month, Year = now.Year, TotalOrders = count });
+        }
+
+        [HttpGet("dashboard/my-revenue-today")]
+        public async Task<IActionResult> GetTodayRevenue()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var revenue = await _orderService.GetTodayRevenueByUserIdAsync(userId);
+            return Ok(new { Date = DateTime.Today.ToString("yyyy-MM-dd"), Revenue = revenue });
+        }
+
+
+        [HttpGet("dashboard/my-revenue-this-month")]
+        public async Task<IActionResult> GetThisMonthRevenue()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var revenue = await _orderService.GetThisMonthRevenueByUserIdAsync(userId);
+            return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, Revenue = revenue });
+        }
+
+        [HttpGet("dashboard/my-total-revenue")]
+        public async Task<IActionResult> GetTotalAgencyRevenue()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var revenue = await _orderService.GetTotalRevenueByUserIdAsync(userId);
+            return Ok(new { TotalRevenue = revenue });
+        }
+
+
+        [HttpGet("dashboard/sales-order-count")]
+        public async Task<IActionResult> GetSalesOrderCount()
+        {
+            var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var count = await _orderService.GetOrderCountManagedBySalesAsync(salesUserId);
+            return Ok(new { orderCount = count });
+        }
+
+        [HttpGet("dashboard/sales-real-revenue")]
+        public async Task<IActionResult> GetSalesRealRevenue()
+        {
+            var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var revenue = await _orderService.GetTotalRevenueManagedBySalesAsync(salesUserId);
+            return Ok(new { realRevenue = revenue });
+        }
+
     }
 }
