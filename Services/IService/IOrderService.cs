@@ -33,6 +33,11 @@ namespace Services.IService
         Task<int> GetTodayOrderCountAsync();
         Task<int> GetThisMonthOrderCountAsync();
 
+        Task<int> GetOrderCountManagedBySalesAsync(Guid salesUserId);
+        Task<decimal> GetTotalRevenueManagedBySalesAsync(Guid salesUserId);
+
+
+
 
         Task<decimal> GetTodayRevenueByUserIdAsync(Guid userId);
         Task<decimal> GetThisMonthRevenueByUserIdAsync(Guid userId);

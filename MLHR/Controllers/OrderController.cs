@@ -196,5 +196,22 @@ namespace MLHR.Controllers
             return Ok(new { TotalRevenue = revenue });
         }
 
+
+        [HttpGet("dashboard/sales-order-count")]
+        public async Task<IActionResult> GetSalesOrderCount()
+        {
+            var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var count = await _orderService.GetOrderCountManagedBySalesAsync(salesUserId);
+            return Ok(new { orderCount = count });
+        }
+
+        [HttpGet("dashboard/sales-real-revenue")]
+        public async Task<IActionResult> GetSalesRealRevenue()
+        {
+            var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var revenue = await _orderService.GetTotalRevenueManagedBySalesAsync(salesUserId);
+            return Ok(new { realRevenue = revenue });
+        }
+
     }
 }

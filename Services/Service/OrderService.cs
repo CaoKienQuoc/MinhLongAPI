@@ -423,6 +423,18 @@ namespace Services.Service
         }
 
 
+        public async Task<int> GetOrderCountManagedBySalesAsync(Guid salesUserId)
+        {
+            return await _orderRepository.GetOrderCountManagedBySalesAsync(salesUserId);
+        }
+
+        public async Task<decimal> GetTotalRevenueManagedBySalesAsync(Guid salesUserId)
+        {
+            return await _orderRepository.GetTotalPaymentAmountManagedBySalesAsync(salesUserId);
+        }
+
+
+
 
     }
 

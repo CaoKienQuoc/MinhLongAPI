@@ -38,7 +38,10 @@ namespace Repo.IRepository
         Task UpdateOrderDetailAsync(OrderDetail detail);
         Task<string> GenerateRequestExportCodeAsync();
 
-       
+        Task<int> GetOrderCountManagedBySalesAsync(Guid salesUserId);
+        Task<decimal> GetTotalPaymentAmountManagedBySalesAsync(Guid salesUserId);
+
+
 
 
     }
