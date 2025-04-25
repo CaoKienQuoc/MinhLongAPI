@@ -54,5 +54,19 @@ namespace Repo.Repository
             _context.Images.RemoveRange(images);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<ReturnRequestImage> AddAsync(ReturnRequestImage image)
+        {
+            _context.ReturnRequestImages.Add(image);
+            await _context.SaveChangesAsync();
+            return image;
+        }
+
+        public async Task<List<ReturnRequestImage>> AddRangeAsync(List<ReturnRequestImage> images)
+        {
+            _context.ReturnRequestImages.AddRange(images);
+            await _context.SaveChangesAsync();
+            return images;
+        }
     }
 }

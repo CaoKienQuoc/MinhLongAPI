@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateDB : Migration
+    public partial class UpdateDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -471,6 +471,35 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DamagedStock",
+                columns: table => new
+                {
+                    DamagedStockId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false),
+                    BatchCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DamagedStock", x => x.DamagedStockId);
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_Warehouse_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouse",
+                        principalColumn: "WarehouseId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ImportTransaction",
                 columns: table => new
                 {
@@ -817,6 +846,28 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ReturnRequest",
+                columns: table => new
+                {
+                    ReturnRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReturnRequest", x => x.ReturnRequestId);
+                    table.ForeignKey(
+                        name: "FK_ReturnRequest_Order_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Order",
+                        principalColumn: "OrderId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TemporaryStockExport",
                 columns: table => new
                 {
@@ -1059,6 +1110,72 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ReturnRequestDetail",
+                columns: table => new
+                {
+                    ReturnRequestDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    ReturnRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OrderDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    QuantityReturned = table.Column<int>(type: "int", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReturnRequestDetail", x => x.ReturnRequestDetailId);
+                    table.ForeignKey(
+                        name: "FK_ReturnRequestDetail_OrderDetail_OrderDetailId",
+                        column: x => x.OrderDetailId,
+                        principalTable: "OrderDetail",
+                        principalColumn: "OrderDetailId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ReturnRequestDetail_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ReturnRequestDetail_ReturnRequest_ReturnRequestId",
+                        column: x => x.ReturnRequestId,
+                        principalTable: "ReturnRequest",
+                        principalColumn: "ReturnRequestId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReturnWarehouseReceipt",
+                columns: table => new
+                {
+                    ReturnWarehouseReceiptId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReceiptCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ReceiptDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReturnRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReturnWarehouseReceipt", x => x.ReturnWarehouseReceiptId);
+                    table.ForeignKey(
+                        name: "FK_ReturnWarehouseReceipt_ReturnRequest_ReturnRequestId",
+                        column: x => x.ReturnRequestId,
+                        principalTable: "ReturnRequest",
+                        principalColumn: "ReturnRequestId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ReturnWarehouseReceipt_Warehouse_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouse",
+                        principalColumn: "WarehouseId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ExportTransactionDetail",
                 columns: table => new
                 {
@@ -1180,6 +1297,61 @@ namespace DataAccessLayer.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "ReturnRequestImage",
+                columns: table => new
+                {
+                    ReturnRequestImageId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReturnRequestDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReturnRequestImage", x => x.ReturnRequestImageId);
+                    table.ForeignKey(
+                        name: "FK_ReturnRequestImage_ReturnRequestDetail_ReturnRequestDetailId",
+                        column: x => x.ReturnRequestDetailId,
+                        principalTable: "ReturnRequestDetail",
+                        principalColumn: "ReturnRequestDetailId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReturnWarehouseReceiptDetail",
+                columns: table => new
+                {
+                    ReturnWarehouseReceiptDetailId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReturnWarehouseReceiptId = table.Column<long>(type: "bigint", nullable: false),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    BatchId = table.Column<long>(type: "bigint", nullable: true),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReturnWarehouseReceiptDetail", x => x.ReturnWarehouseReceiptDetailId);
+                    table.ForeignKey(
+                        name: "FK_ReturnWarehouseReceiptDetail_Batch_BatchId",
+                        column: x => x.BatchId,
+                        principalTable: "Batch",
+                        principalColumn: "BatchId");
+                    table.ForeignKey(
+                        name: "FK_ReturnWarehouseReceiptDetail_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ReturnWarehouseReceiptDetail_ReturnWarehouseReceipt_ReturnWarehouseReceiptId",
+                        column: x => x.ReturnWarehouseReceiptId,
+                        principalTable: "ReturnWarehouseReceipt",
+                        principalColumn: "ReturnWarehouseReceiptId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Address_DistrictId",
                 table: "Address",
@@ -1230,6 +1402,16 @@ namespace DataAccessLayer.Migrations
                 name: "IX_Batch_ProductId",
                 table: "Batch",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DamagedStock_ProductId",
+                table: "DamagedStock",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DamagedStock_WarehouseId",
+                table: "DamagedStock",
+                column: "WarehouseId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_District_ProvinceId",
@@ -1436,6 +1618,56 @@ namespace DataAccessLayer.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReturnRequest_OrderId",
+                table: "ReturnRequest",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnRequestDetail_OrderDetailId",
+                table: "ReturnRequestDetail",
+                column: "OrderDetailId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnRequestDetail_ProductId",
+                table: "ReturnRequestDetail",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnRequestDetail_ReturnRequestId",
+                table: "ReturnRequestDetail",
+                column: "ReturnRequestId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnRequestImage_ReturnRequestDetailId",
+                table: "ReturnRequestImage",
+                column: "ReturnRequestDetailId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnWarehouseReceipt_ReturnRequestId",
+                table: "ReturnWarehouseReceipt",
+                column: "ReturnRequestId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnWarehouseReceipt_WarehouseId",
+                table: "ReturnWarehouseReceipt",
+                column: "WarehouseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnWarehouseReceiptDetail_BatchId",
+                table: "ReturnWarehouseReceiptDetail",
+                column: "BatchId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnWarehouseReceiptDetail_ProductId",
+                table: "ReturnWarehouseReceiptDetail",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnWarehouseReceiptDetail_ReturnWarehouseReceiptId",
+                table: "ReturnWarehouseReceiptDetail",
+                column: "ReturnWarehouseReceiptId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RolePermission_PermissionId",
                 table: "RolePermission",
                 column: "PermissionId");
@@ -1560,6 +1792,9 @@ namespace DataAccessLayer.Migrations
                 name: "AgencyAccountLevel");
 
             migrationBuilder.DropTable(
+                name: "DamagedStock");
+
+            migrationBuilder.DropTable(
                 name: "ExportTransactionDetail");
 
             migrationBuilder.DropTable(
@@ -1567,9 +1802,6 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "Image");
-
-            migrationBuilder.DropTable(
-                name: "OrderDetail");
 
             migrationBuilder.DropTable(
                 name: "OTPEmails");
@@ -1585,6 +1817,12 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "RequestProductDetail");
+
+            migrationBuilder.DropTable(
+                name: "ReturnRequestImage");
+
+            migrationBuilder.DropTable(
+                name: "ReturnWarehouseReceiptDetail");
 
             migrationBuilder.DropTable(
                 name: "RolePermission");
@@ -1617,6 +1855,12 @@ namespace DataAccessLayer.Migrations
                 name: "PaymentHistory");
 
             migrationBuilder.DropTable(
+                name: "ReturnRequestDetail");
+
+            migrationBuilder.DropTable(
+                name: "ReturnWarehouseReceipt");
+
+            migrationBuilder.DropTable(
                 name: "Permission");
 
             migrationBuilder.DropTable(
@@ -1627,6 +1871,12 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "Batch");
+
+            migrationBuilder.DropTable(
+                name: "OrderDetail");
+
+            migrationBuilder.DropTable(
+                name: "ReturnRequest");
 
             migrationBuilder.DropTable(
                 name: "RequestExport");

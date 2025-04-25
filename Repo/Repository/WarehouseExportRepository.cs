@@ -147,6 +147,40 @@ namespace Repo.Repository
             return await _context.WarehouseTransferRequests
                 .FirstOrDefaultAsync(x => x.RequestExportId == requestExportId);
         }
+
+        public async Task<ExportWarehouseReceipt> GetExportSaleByOrderIdAsync(Guid orderId)
+        {
+            var requestExportId = await _context.RequestExports
+                .Where(x => x.OrderId == orderId)
+                .Select(x => x.RequestExportId)
+                .FirstOrDefaultAsync();
+
+            if (requestExportId == 0)
+                return null;
+
+            var exportReceipt = await _context.ExportWarehouseReceipts
+                .Where(x => x.RequestExportId == requestExportId && x.ExportType == "ExportSale")
+                .Include(x => x.ExportWarehouseReceiptDetails)
+                .FirstOrDefaultAsync();
+
+            return exportReceipt;
+        }
+
+        public async Task<long> GetWarehouseIdFromOrderAsync(Guid orderId)
+        {
+            // 1. Lấy RequestExportId từ OrderId
+            var requestExportId = await _context.RequestExports
+                .Where(x => x.OrderId == orderId)
+                .Select(x => x.RequestExportId)
+                .FirstOrDefaultAsync();
+
+            // 2. Tìm ExportWarehouseReceipt có ExportType = 'ExportSale'
+            var exportReceipt = await _context.ExportWarehouseReceipts
+                .Where(x => x.RequestExportId == requestExportId && x.ExportType == "ExportSale")
+                .FirstOrDefaultAsync();
+
+            return exportReceipt.WarehouseId;
+        }
     }
 
 

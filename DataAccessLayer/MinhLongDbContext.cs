@@ -83,9 +83,12 @@ namespace DataAccessLayer
         public DbSet<WarehouseTransferRequest> WarehouseTransferRequests { get; set; }
         public DbSet<WarehouseTransferProduct> WarehouseTransferProducts { get; set; }
         public DbSet<TemporaryStockExport> TemporaryStockExports { get; set; }
-        /*public DbSet<ReturnOrder> ReturnOrders { get; set; }
-        public DbSet<ReturnOrderDetail> ReturnOrderDetails { get; set; }
-        public DbSet<ReturnOrderImage> ReturnOrderImages { get; set; }*/
+        public DbSet<ReturnRequest> ReturnRequests { get; set; }
+        public DbSet<ReturnRequestDetail> ReturnRequestDetails { get; set; }
+        public DbSet<ReturnRequestImage> ReturnRequestImages { get; set; }
+        public DbSet<ReturnWarehouseReceipt> ReturnWarehouseReceipts { get; set; }
+        public DbSet<ReturnWarehouseReceiptDetail> ReturnWarehouseReceiptDetails { get; set; }
+        public DbSet<DamagedStock> DamagedStocks { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // 🏷️ **Định danh bảng**
@@ -128,9 +131,12 @@ namespace DataAccessLayer
             modelBuilder.Entity<WarehouseTransferRequest>().ToTable("WarehouseTransferRequest");
             modelBuilder.Entity<WarehouseTransferProduct>().ToTable("WarehouseTransferProduct");
             modelBuilder.Entity<TemporaryStockExport>().ToTable("TemporaryStockExport");
-            /*modelBuilder.Entity<ReturnOrder>().ToTable("ReturnOrder");
-            modelBuilder.Entity<ReturnOrderDetail>().ToTable("ReturnOrderDetail");
-            modelBuilder.Entity<ReturnOrderImage>().ToTable("ReturnOrderImage");*/
+            modelBuilder.Entity<ReturnRequest>().ToTable("ReturnRequest");
+            modelBuilder.Entity<ReturnRequestDetail>().ToTable("ReturnRequestDetail");
+            modelBuilder.Entity<ReturnRequestImage>().ToTable("ReturnRequestImage");
+            modelBuilder.Entity<ReturnWarehouseReceipt>().ToTable("ReturnWarehouseReceipt");
+            modelBuilder.Entity<ReturnWarehouseReceiptDetail>().ToTable("ReturnWarehouseReceiptDetail");
+            modelBuilder.Entity<DamagedStock>().ToTable("DamagedStock");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -192,7 +198,12 @@ namespace DataAccessLayer
             modelBuilder.Entity<WarehouseTransferRequest>().Property(wr => wr.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<WarehouseTransferProduct>().Property(wr => wr.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<TemporaryStockExport>().Property(wr => wr.TemporaryStockExportId).ValueGeneratedOnAdd();
-
+            modelBuilder.Entity<ReturnRequest>().Property(wr => wr.ReturnRequestId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ReturnRequestDetail>().Property(wr => wr.ReturnRequestDetailId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ReturnRequestImage>().Property(wr => wr.ReturnRequestImageId).ValueGeneratedOnAdd();
+            modelBuilder.Entity<ReturnWarehouseReceipt>().Property(wr => wr.ReturnWarehouseReceiptId).ValueGeneratedOnAdd();
+            modelBuilder.Entity<ReturnWarehouseReceiptDetail>().Property(wr => wr.ReturnWarehouseReceiptDetailId).ValueGeneratedOnAdd();
+            modelBuilder.Entity<DamagedStock>().Property(wr => wr.DamagedStockId).ValueGeneratedOnAdd();
 
             // 🔥 **Cấu hình quan hệ nhiều - nhiều**
             modelBuilder.Entity<UserRole>()
@@ -732,6 +743,47 @@ namespace DataAccessLayer
                 .HasForeignKey(a => a.ManagedByEmployeeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<ReturnRequest>()
+                .HasMany(r => r.Details)
+                .WithOne(d => d.ReturnRequest)
+                .HasForeignKey(d => d.ReturnRequestId);
+
+            modelBuilder.Entity<ReturnWarehouseReceipt>()
+                .HasMany(r => r.Details)
+                .WithOne(d => d.ReturnWarehouseReceipt)
+                .HasForeignKey(d => d.ReturnWarehouseReceiptId);
+
+            modelBuilder.Entity<ReturnRequestDetail>()
+                .HasOne(d => d.ReturnRequest)
+                .WithMany(r => r.Details)
+                .HasForeignKey(d => d.ReturnRequestId)
+                .OnDelete(DeleteBehavior.Restrict); // hoặc NoAction
+
+            modelBuilder.Entity<ReturnRequestDetail>()
+                .HasOne(d => d.OrderDetail)
+                .WithMany()
+                .HasForeignKey(d => d.OrderDetailId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ReturnRequestDetail>()
+                .HasOne(d => d.Product)
+                .WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DamagedStock>()
+                .HasOne(d => d.Warehouse)
+                .WithMany() // hoặc: .WithMany(w => w.DamagedStocks) nếu bạn thêm navigation ở Warehouse
+                .HasForeignKey(d => d.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DamagedStock>()
+                .HasOne(d => d.Product)
+                .WithMany() // hoặc: .WithMany(p => p.DamagedStocks) nếu bạn thêm navigation ở Product
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            
         }
     }
 

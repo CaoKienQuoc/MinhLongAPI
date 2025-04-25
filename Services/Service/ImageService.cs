@@ -18,6 +18,7 @@ namespace Services.Service
     using BusinessObject.DTO.Product;
     using CloudinaryDotNet;
     using CloudinaryDotNet.Actions;
+    using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Repo.Repository;
     using SkiaSharp;
@@ -31,13 +32,14 @@ namespace Services.Service
     public class ImageService : IImageService
     {
         private readonly IImageRepository _repo;
+        private readonly IOrderRepository _orderRepository;
         private readonly Cloudinary _cloudinary;
         private readonly long _maxFileSize; // Kích thước tối đa (byte)
         private readonly int _maxWidth; // Chiều rộng tối đa ảnh
         private readonly int _maxHeight; // Chiều cao tối đa ảnh
         private readonly int _quality; // Chất lượng nén
 
-        public ImageService(IImageRepository repo, IConfiguration config)
+        public ImageService(IImageRepository repo, IConfiguration config, IOrderRepository orderRepository)
         {
             _repo = repo;
 
@@ -54,6 +56,7 @@ namespace Services.Service
             _maxWidth = config.GetValue<int>("Cloudinary:MaxWidth", 1024); // Mặc định 1024px
             _maxHeight = config.GetValue<int>("Cloudinary:MaxHeight", 1024); // Mặc định 1024px
             _quality = config.GetValue<int>("Cloudinary:Quality", 80); // Chất lượng ảnh nén (mặc định 80%)
+            _orderRepository = orderRepository;
         }
 
         public async Task<List<Image>> UploadImagesAsync(ImageModel imageModel, long productId)
@@ -222,6 +225,53 @@ namespace Services.Service
             {
                 await _repo.DeleteRangeAsync(images);
             }
+        }
+
+        public async Task<List<ReturnRequestImage>> UploadReturnRequestImagesAsync(Guid orderDetailId, Guid returnRequestDetailId, List<IFormFile> files)
+        {
+            if (files == null || files.Count == 0)
+                throw new Exception("Không có ảnh được tải lên.");
+
+            var orderDetail = await _orderRepository.GetOrderDetailByIdAsync(orderDetailId);
+            var productId = orderDetail.ProductId;
+
+
+            var result = new List<ReturnRequestImage>();
+
+            foreach (var file in files)
+            {
+                Stream stream;
+
+                if (file.Length > _maxFileSize)
+                {
+                    stream = ResizeAndCompressImage(file, _maxWidth, _maxHeight, _quality);
+                }
+                else
+                {
+                    stream = file.OpenReadStream();
+                }
+
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    PublicId = Guid.NewGuid().ToString(),
+                    Overwrite = true
+                };
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.StatusCode != HttpStatusCode.OK)
+                    throw new Exception($"Upload thất bại: {uploadResult.Error?.Message}");
+
+                result.Add(new ReturnRequestImage
+                {
+                    ReturnRequestDetailId = returnRequestDetailId,
+                    ImageUrl = uploadResult.SecureUrl.ToString(),
+                    UploadedAt = DateTime.UtcNow
+                });
+            }
+
+            return await _repo.AddRangeAsync(result);
         }
     }
 }

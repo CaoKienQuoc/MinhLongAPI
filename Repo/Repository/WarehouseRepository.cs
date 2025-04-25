@@ -223,5 +223,18 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(w => w.WarehouseId == warehouseId);
         }
 
+        public async Task<long> GetWarehouseIdByUserAsync(Guid userId)
+        {
+            var warehouse = await _context.Warehouses
+                .FirstOrDefaultAsync(w => w.UserId == userId);
+
+            if (warehouse == null)
+                throw new Exception("Không tìm thấy kho ứng với người dùng.");
+
+            return warehouse.WarehouseId;
+        }
+
+       
+
     }
 }

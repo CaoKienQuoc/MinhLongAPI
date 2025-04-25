@@ -41,8 +41,8 @@ namespace Repo.IRepository
         Task<int> GetOrderCountManagedBySalesAsync(Guid salesUserId);
         Task<decimal> GetTotalPaymentAmountManagedBySalesAsync(Guid salesUserId);
 
+        Task<Order> GetOrderWithDetailsAsync(Guid orderId); // ✅ đổi kiểu orderId
 
-
-
+        Task<OrderDetail> GetOrderDetailByIdAsync(Guid orderDetailId);
     }
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250424173123_UpdateDB")]
-    partial class UpdateDB
+    [Migration("20250425180148_UpdateDb")]
+    partial class UpdateDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -214,6 +214,39 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("Batch", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.DamagedStock", b =>
+                {
+                    b.Property<long>("DamagedStockId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DamagedStockId"));
+
+                    b.Property<string>("BatchCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("WarehouseId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("DamagedStockId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("DamagedStock", (string)null);
                 });
 
             modelBuilder.Entity("BusinessObject.Models.District", b =>
@@ -1125,6 +1158,174 @@ namespace DataAccessLayer.Migrations
                     b.ToTable("RequestProductDetail", (string)null);
                 });
 
+            modelBuilder.Entity("BusinessObject.Models.ReturnRequest", b =>
+                {
+                    b.Property<Guid>("ReturnRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ReturnRequestId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("ReturnRequest", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnRequestDetail", b =>
+                {
+                    b.Property<Guid>("ReturnRequestDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<Guid>("OrderDetailId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("QuantityReturned")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ReturnRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ReturnRequestDetailId");
+
+                    b.HasIndex("OrderDetailId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ReturnRequestId");
+
+                    b.ToTable("ReturnRequestDetail", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnRequestImage", b =>
+                {
+                    b.Property<long>("ReturnRequestImageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ReturnRequestImageId"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ReturnRequestDetailId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ReturnRequestImageId");
+
+                    b.HasIndex("ReturnRequestDetailId");
+
+                    b.ToTable("ReturnRequestImage", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnWarehouseReceipt", b =>
+                {
+                    b.Property<long>("ReturnWarehouseReceiptId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ReturnWarehouseReceiptId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReceiptCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ReceiptDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ReturnRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("WarehouseId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("ReturnWarehouseReceiptId");
+
+                    b.HasIndex("ReturnRequestId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("ReturnWarehouseReceipt", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnWarehouseReceiptDetail", b =>
+                {
+                    b.Property<long>("ReturnWarehouseReceiptDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ReturnWarehouseReceiptDetailId"));
+
+                    b.Property<long?>("BatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("ReturnWarehouseReceiptId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("ReturnWarehouseReceiptDetailId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ReturnWarehouseReceiptId");
+
+                    b.ToTable("ReturnWarehouseReceiptDetail", (string)null);
+                });
+
             modelBuilder.Entity("BusinessObject.Models.Role", b =>
                 {
                     b.Property<long>("RoleId")
@@ -1685,6 +1886,25 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("BusinessObject.Models.DamagedStock", b =>
+                {
+                    b.HasOne("BusinessObject.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Warehouse");
+                });
+
             modelBuilder.Entity("BusinessObject.Models.District", b =>
                 {
                     b.HasOne("BusinessObject.Models.Province", "Province")
@@ -2051,6 +2271,99 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("RequestProduct");
                 });
 
+            modelBuilder.Entity("BusinessObject.Models.ReturnRequest", b =>
+                {
+                    b.HasOne("BusinessObject.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnRequestDetail", b =>
+                {
+                    b.HasOne("BusinessObject.Models.OrderDetail", "OrderDetail")
+                        .WithMany()
+                        .HasForeignKey("OrderDetailId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.ReturnRequest", "ReturnRequest")
+                        .WithMany("Details")
+                        .HasForeignKey("ReturnRequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OrderDetail");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("ReturnRequest");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnRequestImage", b =>
+                {
+                    b.HasOne("BusinessObject.Models.ReturnRequestDetail", "ReturnRequestDetail")
+                        .WithMany("Images")
+                        .HasForeignKey("ReturnRequestDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ReturnRequestDetail");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnWarehouseReceipt", b =>
+                {
+                    b.HasOne("BusinessObject.Models.ReturnRequest", "ReturnRequest")
+                        .WithMany()
+                        .HasForeignKey("ReturnRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ReturnRequest");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnWarehouseReceiptDetail", b =>
+                {
+                    b.HasOne("BusinessObject.Models.Batch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId");
+
+                    b.HasOne("BusinessObject.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.ReturnWarehouseReceipt", "ReturnWarehouseReceipt")
+                        .WithMany("Details")
+                        .HasForeignKey("ReturnWarehouseReceiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("ReturnWarehouseReceipt");
+                });
+
             modelBuilder.Entity("BusinessObject.Models.RolePermission", b =>
                 {
                     b.HasOne("BusinessObject.Models.Permission", "Permission")
@@ -2366,6 +2679,21 @@ namespace DataAccessLayer.Migrations
                         .IsRequired();
 
                     b.Navigation("RequestProductDetails");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnRequest", b =>
+                {
+                    b.Navigation("Details");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnRequestDetail", b =>
+                {
+                    b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ReturnWarehouseReceipt", b =>
+                {
+                    b.Navigation("Details");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.Role", b =>
