@@ -13,9 +13,24 @@ namespace BusinessObject.Models
         [Key]
         public long ReturnWarehouseReceiptId { get; set; }
 
+        // ✅ Mã phiếu nhập trả hàng (ví dụ: RR-20250426210130)
+        [Required]
+        public string ReceiptCode { get; set; }
+
+        // ✅ Ngày lập phiếu
+        [Required]
         public DateTime ReceiptDate { get; set; }
 
-        public long ReturnRequestId { get; set; }
+        // ✅ Ngày tạo bản ghi
+        [Required]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // ✅ Người tạo phiếu (userId)
+        [Required]
+        public Guid CreatedBy { get; set; }
+
+
+        public Guid ReturnRequestId { get; set; }
         [ForeignKey(nameof(ReturnRequestId))]
         public ReturnRequest ReturnRequest { get; set; }
 
@@ -24,7 +39,7 @@ namespace BusinessObject.Models
         public Warehouse Warehouse { get; set; }
 
         public string Note { get; set; }
-
+        public string Status { get; set; } // Trạng thái phiếu nhập (Pending, Completed, Cancelled)
         public ICollection<ReturnWarehouseReceiptDetail> Details { get; set; }
     }
 

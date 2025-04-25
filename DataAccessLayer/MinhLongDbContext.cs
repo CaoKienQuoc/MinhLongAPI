@@ -37,7 +37,7 @@ namespace DataAccessLayer
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                 .AddJsonFile("appsettings.json")
                 .Build();
-            optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+            optionsBuilder.UseSqlServer(configuration.GetConnectionString("ServerConnection"));
         }
 
 
@@ -198,8 +198,8 @@ namespace DataAccessLayer
             modelBuilder.Entity<WarehouseTransferRequest>().Property(wr => wr.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<WarehouseTransferProduct>().Property(wr => wr.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<TemporaryStockExport>().Property(wr => wr.TemporaryStockExportId).ValueGeneratedOnAdd();
-            modelBuilder.Entity<ReturnRequest>().Property(wr => wr.ReturnRequestId).ValueGeneratedOnAdd();
-            modelBuilder.Entity<ReturnRequestDetail>().Property(wr => wr.ReturnRequestDetailId).ValueGeneratedOnAdd();
+            modelBuilder.Entity<ReturnRequest>().Property(wr => wr.ReturnRequestId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ReturnRequestDetail>().Property(wr => wr.ReturnRequestDetailId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<ReturnRequestImage>().Property(wr => wr.ReturnRequestImageId).ValueGeneratedOnAdd();
             modelBuilder.Entity<ReturnWarehouseReceipt>().Property(wr => wr.ReturnWarehouseReceiptId).ValueGeneratedOnAdd();
             modelBuilder.Entity<ReturnWarehouseReceiptDetail>().Property(wr => wr.ReturnWarehouseReceiptDetailId).ValueGeneratedOnAdd();
@@ -754,9 +754,22 @@ namespace DataAccessLayer
                 .HasForeignKey(d => d.ReturnWarehouseReceiptId);
 
             modelBuilder.Entity<ReturnRequestDetail>()
-                .HasMany(r => r.Images)
-                .WithOne(i => i.ReturnRequestDetail)
-                .HasForeignKey(i => i.ReturnRequestDetailId);
+                .HasOne(d => d.ReturnRequest)
+                .WithMany(r => r.Details)
+                .HasForeignKey(d => d.ReturnRequestId)
+                .OnDelete(DeleteBehavior.Restrict); // hoặc NoAction
+
+            modelBuilder.Entity<ReturnRequestDetail>()
+                .HasOne(d => d.OrderDetail)
+                .WithMany()
+                .HasForeignKey(d => d.OrderDetailId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ReturnRequestDetail>()
+                .HasOne(d => d.Product)
+                .WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<DamagedStock>()
                 .HasOne(d => d.Warehouse)
@@ -770,6 +783,7 @@ namespace DataAccessLayer
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            
         }
     }
 

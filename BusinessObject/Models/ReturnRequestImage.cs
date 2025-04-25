@@ -14,7 +14,7 @@ namespace BusinessObject.Models
         public long ReturnRequestImageId { get; set; }
 
         [Required]
-        public long ReturnRequestDetailId { get; set; }
+        public Guid ReturnRequestDetailId { get; set; }
 
         [ForeignKey(nameof(ReturnRequestDetailId))]
         public ReturnRequestDetail ReturnRequestDetail { get; set; }

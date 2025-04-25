@@ -35,6 +35,10 @@ namespace Repo.IRepository
         Task<Batch?> FindSourceBatchAsync(long sourceWarehouseId, long productId, string batchCode);
 
         Task<WarehouseTransferRequest?> GetWarehouseTransferByRequestExportIdAsync(int requestExportId);
+
+        Task<ExportWarehouseReceipt> GetExportSaleByOrderIdAsync(Guid orderId);
+
+        Task<long> GetWarehouseIdFromOrderAsync(Guid orderId);
     }
 
 }

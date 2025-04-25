@@ -202,6 +202,22 @@ namespace Repo.Repository
                 .SumAsync(ph => ph.PaymentAmount);
         }
 
+        public async Task<Order> GetOrderWithDetailsAsync(Guid orderId)
+        {
+            return await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+        }
 
+        public async Task<OrderDetail> GetOrderDetailByIdAsync(Guid orderDetailId)
+        {
+            var orderDetail = await _context.OrderDetails
+                .FirstOrDefaultAsync(x => x.OrderDetailId == orderDetailId);
+
+            if (orderDetail == null)
+                throw new Exception($"Không tìm thấy OrderDetail với ID: {orderDetailId}");
+
+            return orderDetail;
+        }
     }
 }

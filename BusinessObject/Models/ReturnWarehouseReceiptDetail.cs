@@ -23,11 +23,12 @@ namespace BusinessObject.Models
 
         public int Quantity { get; set; }
 
-        public decimal UnitCost { get; set; }
+        public long? BatchId { get; set; } // ✅ Thay vì BatchCode
+        [ForeignKey(nameof(BatchId))]
+        public Batch Batch { get; set; }   // ✅ Entity Batch
 
-        public string? BatchCode { get; set; }
-
-
+        public string Reason { get; set; }
     }
+
 
 }

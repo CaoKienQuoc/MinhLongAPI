@@ -11,9 +11,9 @@ namespace BusinessObject.Models
     public class ReturnRequestDetail
     {
         [Key]
-        public long ReturnRequestDetailId { get; set; }
+        public Guid ReturnRequestDetailId { get; set; }
 
-        public long ReturnRequestId { get; set; }
+        public Guid ReturnRequestId { get; set; }
         [ForeignKey(nameof(ReturnRequestId))]
         public ReturnRequest ReturnRequest { get; set; }
 

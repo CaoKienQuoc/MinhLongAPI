@@ -95,7 +95,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 // ✅ Đọc chuỗi kết nối từ appsettings.json
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("ServerConnection");
 builder.Services.AddDbContext<MinhLongDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -161,6 +161,12 @@ builder.Services.AddScoped<IAgencyLevelService, AgencyLevelService>();
 
 builder.Services.AddScoped<IWarehouseExportRepository, WarehouseExportRepository>();
 builder.Services.AddScoped<IWarehouseExportService, WarehouseExportService>();
+
+builder.Services.AddScoped<IReturnRequestRepository, ReturnRequestRepository>();
+builder.Services.AddScoped<IReturnService, ReturnService>();
+builder.Services.AddScoped<IDamagedStockRepository, DamagedStockRepository>();
+builder.Services.AddScoped<IReturnWarehouseReceiptRepository, ReturnWarehouseReceiptRepository>();
+
 
 builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
 builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();

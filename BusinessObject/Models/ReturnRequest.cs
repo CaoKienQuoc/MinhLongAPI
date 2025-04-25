@@ -11,7 +11,7 @@ namespace BusinessObject.Models
     public class ReturnRequest
     {
         [Key]
-        public long ReturnRequestId { get; set; }
+        public Guid ReturnRequestId { get; set; }
 
         [Required]
         public Guid CreatedByUserId { get; set; } // đại lý

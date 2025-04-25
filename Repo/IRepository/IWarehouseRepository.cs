@@ -37,5 +37,9 @@ namespace Repo.IRepository
 
         Task<Warehouse?> GetByIdAsync(long warehouseId);
 
+        Task<long> GetWarehouseIdByUserAsync(Guid userId);
+
+        
+
     }
 }
