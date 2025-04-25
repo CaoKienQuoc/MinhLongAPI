@@ -34,5 +34,6 @@ namespace BusinessObject.Models
 
         // 1-n: Một Order có thể có nhiều bản ghi tạm TemporaryStockExport
         public virtual ICollection<TemporaryStockExport> TemporaryStockExports { get; set; } = new List<TemporaryStockExport>();
+
     }
 }
