@@ -50,7 +50,7 @@ namespace Services.Service
                 DocumentDate = DateTime.UtcNow,
                 ExportDate = DateTime.UtcNow,
                 ExportType = "ExportCoordination",
-                Status = "Approved",
+                Status = "Completed",
                 WarehouseId = transferRequest.SourceWarehouseId,
                 RequestExportId = transferRequest.RequestExportId, // không liên quan trực tiếp đến RequestExport
                 ExportWarehouseReceiptDetails = new List<ExportWarehouseReceiptDetail>()

@@ -323,6 +323,7 @@ namespace Services.Service
 
         public async Task FinalizeExportSaleAsync(int exportReceiptId, Guid currentUserId)
         {
+            
             // 1. Lấy phiếu xuất kho
             var receipt = await _exportReceiptRepo.GetByIdWithDetailsAsync(exportReceiptId);
             if (receipt == null)
@@ -339,7 +340,7 @@ namespace Services.Service
             {
                 throw new InvalidOperationException("Số lượng tồn kho không đủ, vui lòng điều phối hoặc nhập hàng thêm.");
             }
-
+            var requestExport = await _requestExportRepo.GetRequestExportById(receipt.RequestExportId);
             // 2. Truy vết Order từ RequestExport
             var orderId = await _requestExportRepo.GetOrderIdByRequestExportIdAsync(receipt.RequestExportId);
             if (orderId == null || orderId == Guid.Empty)
@@ -359,9 +360,12 @@ namespace Services.Service
             receipt.Status = "Completed";
             receipt.ExportType = "ExportSale";
             order.Status = "Exported";
+            requestExport.Status = "Approved";
 
+            
             await _exportReceiptRepo.UpdateAsync(receipt);
             await _orderRepo.UpdateOrderAsync(order);
+            await _requestExportRepo.UpdateExportAsync(requestExport);
             await _exportReceiptRepo.SaveChangesAsync();
 
             // 5. Gửi thông báo
