@@ -5,9 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.DTO.PaymentDTO;
 using BusinessObject.Models;
+using QuestPDF.Helpers;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace Services.Service
 {
@@ -194,5 +198,111 @@ namespace Services.Service
         public Task<decimal> GetRemainingDebtAsync(Guid userId) =>
             _repository.GetRemainingDebtByUserIdAsync(userId);
 
+
+        public async Task<byte[]> GenerateInvoicePdfAsync(PaymentHistoryDto paymentHistory)
+        {
+            var order = await _orderRepository.GetOrderByIdAsync(paymentHistory.OrderId);
+
+            if (order == null)
+                throw new Exception("Không tìm thấy đơn hàng.");
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Margin(30);
+
+                    page.Header().Text("HÓA ĐƠN BÁN HÀNG")
+                        .FontSize(24).SemiBold().FontColor(Colors.Blue.Medium)
+                        .AlignCenter();
+
+                    page.Content().Column(column =>
+                    {
+                        column.Spacing(10);
+
+                        // Thông tin đơn hàng
+                        column.Item().Text($"Tên đại lý: {paymentHistory.AgencyName}").FontSize(14);
+                        column.Item().Text($"Mã đơn hàng: {order.OrderCode}").FontSize(14);
+                        column.Item().Text($"Ngày đặt hàng: {order.OrderDate:dd/MM/yyyy}").FontSize(14);
+                        column.Item().Text($"Ngày thanh toán: {paymentHistory.PaymentDate:dd/MM/yyyy}").FontSize(14);
+                        column.Item().Text($"Mã giao dịch thanh toán: {paymentHistory.TransactionReference ?? "Không có"}").FontSize(14);
+
+                        // Đường kẻ ngang
+                        column.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+                        // Bảng sản phẩm
+                        column.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(4); // Tên sản phẩm
+                                columns.RelativeColumn(1); // Số lượng
+                                columns.RelativeColumn(2); // Đơn giá
+                                columns.RelativeColumn(2); // Thành tiền
+                            });
+
+                            // Header
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(CellStyle).Text("Tên sản phẩm").Bold();
+                                header.Cell().Element(CellStyle).AlignCenter().Text("Số lượng").Bold();
+                                header.Cell().Element(CellStyle).AlignRight().Text("Đơn giá (VNĐ)").Bold();
+                                header.Cell().Element(CellStyle).AlignRight().Text("Thành tiền (VNĐ)").Bold();
+                            });
+
+                            // Body
+                            foreach (var item in order.OrderDetails)
+                            {
+                                table.Cell().Element(CellStyle).Text(item.Product?.ProductName ?? "Sản phẩm");
+                                table.Cell().Element(CellStyle).AlignCenter().Text(item.Quantity.ToString());
+                                table.Cell().Element(CellStyle).AlignRight().Text(item.UnitPrice.ToString("N0"));
+                                table.Cell().Element(CellStyle).AlignRight().Text(item.TotalAmount.ToString("N0"));
+                            }
+                        });
+
+                        // Đường kẻ ngang
+                        column.Item().PaddingTop(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+                        // Tổng tiền
+                        column.Item().AlignRight().Text($"Tổng tiền hàng: {order.OrderDetails.Sum(x => x.TotalAmount):N0} VNĐ")
+                            .FontSize(14).SemiBold();
+
+                        column.Item().AlignRight().Text($"Giảm giá: {order.Discount:N0} VNĐ")
+                            .FontSize(14);
+
+                        column.Item().AlignRight().Text($"Thành tiền sau giảm giá: {order.FinalPrice:N0} VNĐ")
+                            .FontSize(16).Bold().FontColor(Colors.Red.Medium);
+
+                        // Thanh toán
+                        column.Item().PaddingTop(5).AlignRight().Text($"Số tiền đã thanh toán: {paymentHistory.PaymentAmount:N0} VNĐ")
+                            .FontSize(14).FontColor(Colors.Green.Darken2);
+
+                        column.Item().AlignRight().Text($"Số tiền còn nợ: {paymentHistory.RemainingDebtAmount:N0} VNĐ")
+                            .FontSize(14).FontColor(Colors.Red.Medium);
+
+                        // Ghi chú
+                        column.Item().PaddingTop(20).Text("Cảm ơn quý khách đã mua hàng!")
+                            .AlignCenter().FontSize(12).Italic();
+                    });
+
+                    page.Footer().AlignCenter().Text(txt =>
+                    {
+                        txt.Span("© 2025 Công ty XYZ - Hotline: 0123 456 789")
+                        .FontSize(10).FontColor(Colors.Grey.Medium);
+                    });
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+
+        private static IContainer CellStyle(IContainer container)
+        {
+            return container
+                .PaddingVertical(5)
+                .PaddingHorizontal(2)
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten2);
+        }
     }
 }

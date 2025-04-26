@@ -20,6 +20,7 @@ namespace Services.IService
 
         Task<bool> ImportApprovedTransfersAsync(long destinationWarehouseId, Guid currentUserId);
 
+        Task<byte[]> GenerateReceiptPdfAsync(long warehouseReceiptId, Guid userId);
         Task<int> GetTodayReceiptCountAsync(Guid userId);
         Task<int> GetThisMonthReceiptCountAsync(Guid userId);
         Task<int> GetTodayTotalQuantityAsync(Guid userId);
