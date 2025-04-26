@@ -132,6 +132,7 @@ namespace Services.Service
             var batches = await _batchRepository.GetBatchesByWarehouseIdAsync(warehouseId);
             return batches.Select(b => new BatchDisplayDto
             {
+                BatchId = b.BatchId,
                 ProductId = b.ProductId,
                 ProductName = b.Product.ProductName,
                 BatchCode = b.BatchCode,

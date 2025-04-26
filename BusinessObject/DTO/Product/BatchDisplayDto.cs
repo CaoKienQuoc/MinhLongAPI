@@ -8,6 +8,7 @@ namespace BusinessObject.DTO.Product
 {
     public class BatchDisplayDto
     {
+        public long BatchId { get; set; }
         public long ProductId { get; set; }                   // Mã sản phẩm
         public string ProductName { get; set; } = string.Empty; // Tên sản phẩm
         public string BatchCode { get; set; } = string.Empty; // Mã lô
