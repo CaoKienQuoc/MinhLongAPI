@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.Models;
 using DataAccessLayer;
+using Microsoft.EntityFrameworkCore;
 using Repo.IRepository;
 
 namespace Repo.Repository
@@ -37,6 +38,21 @@ namespace Repo.Repository
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<ReturnWarehouseReceipt>> GetAllAsync()
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Include(r => r.Details)
+                .ToListAsync();
+        }
+
+        public async Task<ReturnWarehouseReceipt> GetByIdAsync(long id)
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Include(r => r.Details)
+                .FirstOrDefaultAsync(r => r.ReturnWarehouseReceiptId == id);
+        }
+
     }
 
 }
