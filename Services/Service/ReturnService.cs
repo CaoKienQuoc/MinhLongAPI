@@ -23,6 +23,7 @@ namespace Services.Service
         private readonly IReturnWarehouseReceiptRepository _warehouseReceiptRepo;
         private readonly IWarehouseExportRepository _warehouseExportRepo;
         private readonly IReturnWarehouseReceiptRepository _returnWarehouseReceiptRepo;
+        private readonly IUserRepository _employeeRepo;
 
         public ReturnService(
             IReturnRequestRepository returnRepo,
@@ -32,7 +33,8 @@ namespace Services.Service
             IImageService imageService,
             IReturnWarehouseReceiptRepository warehouseReceiptRepo,
             IWarehouseExportRepository warehouseExportRepo,
-            IReturnWarehouseReceiptRepository returnWarehouseReceiptRepo)
+            IReturnWarehouseReceiptRepository returnWarehouseReceiptRepo,
+            IUserRepository employeeRepo)
         {
             _returnRepo = returnRepo;
             _damagedRepo = damagedRepo;
@@ -42,6 +44,7 @@ namespace Services.Service
             _warehouseReceiptRepo = warehouseReceiptRepo;
             _warehouseExportRepo = warehouseExportRepo;
             _returnWarehouseReceiptRepo = returnWarehouseReceiptRepo;
+            _employeeRepo = employeeRepo;
         }
 
         public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, string? note, Guid userId, List<IFormFile> images)
@@ -103,6 +106,9 @@ namespace Services.Service
 
         public async Task ApproveReturnRequestAsync(Guid returnRequestId, Guid userId)
         {
+            // —————— 0) Validate user là Sale (Employee) ——————
+            if (!await _employeeRepo.ExistsAsync(userId))
+                throw new UnauthorizedAccessException("Bạn không phải Sale.");
             // 🔍 Lấy dữ liệu yêu cầu trả hàng + chi tiết
             var request = await _returnRepo.GetByIdWithDetailsAsync(returnRequestId);
             if (request == null)
@@ -165,11 +171,7 @@ namespace Services.Service
             await _warehouseReceiptRepo.CreateReturnWarehouseReceiptDetailAsync(receiptDetails);
             await _warehouseReceiptRepo.SaveChangesAsync();
         }
-
-
-
         
-
 
         public async Task<List<ReturnRequest>> GetPendingReturnsAsync()
         {

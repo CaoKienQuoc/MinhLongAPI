@@ -418,10 +418,8 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(e => e.UserId == userId);
         }
 
-
-
-
-
+        public Task<bool> ExistsAsync(Guid employeeId)
+        => _context.Employees.AnyAsync(e => e.UserId == employeeId);
     }
 
 
