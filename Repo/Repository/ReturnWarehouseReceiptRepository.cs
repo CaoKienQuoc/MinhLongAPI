@@ -43,6 +43,12 @@ namespace Repo.Repository
         {
             return await _context.ReturnWarehouseReceipts
                 .Include(r => r.Details)  // ensure you have nav prop Details
+                .ThenInclude(d => d.Product)
+                .Include(r => r.ReturnRequest)
+                .ThenInclude(r => r.Order)
+                    .ThenInclude(r => r.RequestProduct)
+                    .ThenInclude(r => r.AgencyAccount)
+                    .ThenInclude(r => r.User)
                 .FirstOrDefaultAsync(r => r.ReturnWarehouseReceiptId == receiptId);
         }
 
@@ -57,6 +63,12 @@ namespace Repo.Repository
         {
             return await _context.ReturnWarehouseReceipts
                 .Include(r => r.Details)
+                .ThenInclude(d => d.Product)
+                .Include(r => r.ReturnRequest)
+                .ThenInclude(r => r.Order)
+                    .ThenInclude(r => r.RequestProduct)
+                    .ThenInclude(r => r.AgencyAccount)
+                    .ThenInclude(r => r.User)
                 .ToListAsync();
         }
 

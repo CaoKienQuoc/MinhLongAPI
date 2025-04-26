@@ -63,6 +63,21 @@ namespace MLHR.Controllers
             return Ok("Gửi nhắc hạn xong!");
         }
 
+        [HttpGet("export-invoice/{paymentHistoryId}")]
+        public async Task<IActionResult> ExportInvoicePdf(Guid paymentHistoryId)
+        {
+            // ✅ Bước 1: Lấy thông tin PaymentHistoryDto
+            var paymentHistory = await _service.GetPaymentHistoryByIdAsync(paymentHistoryId);
+            if (paymentHistory == null)
+                return NotFound("Không tìm thấy thông tin thanh toán.");
+
+            // ✅ Bước 2: Sinh file PDF
+            var pdfBytes = await _service.GenerateInvoicePdfAsync(paymentHistory);
+
+            // ✅ Bước 3: Trả file PDF cho frontend
+            return File(pdfBytes, "application/pdf", $"HoaDon-{paymentHistory.OrderCode}.pdf");
+        }
+
 
         [HttpGet("dashboard/total-paid")]
         [Authorize]

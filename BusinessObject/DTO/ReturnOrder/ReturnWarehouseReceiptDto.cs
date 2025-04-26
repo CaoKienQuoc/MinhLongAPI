@@ -12,7 +12,7 @@ namespace BusinessObject.DTO.ReturnOrder
         public string ReceiptCode { get; set; }
         public DateTime ReceiptDate { get; set; }
         public DateTime CreatedAt { get; set; }
-        public Guid CreatedBy { get; set; }
+        public string CreatedByUserName { get; set; }
         public Guid ReturnRequestId { get; set; }
         public long WarehouseId { get; set; }
         public string Note { get; set; }

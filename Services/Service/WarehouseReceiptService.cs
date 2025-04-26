@@ -8,10 +8,13 @@ using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using QuestPDF.Helpers;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.Exceptions;
 using Services.IService;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
 
 namespace Services.Service
 {
@@ -560,6 +563,102 @@ namespace Services.Service
                 .Sum(r => r.TotalPrice);
         }
 
+        public async Task<byte[]> GenerateReceiptPdfAsync(long warehouseReceiptId, Guid userId)
+        {
+            var receipt = await _receiptRepo.GetByIdAndUserIdAsync(warehouseReceiptId, userId);
+            if (receipt == null)
+                throw new Exception("Không tìm thấy phiếu nhập kho hoặc bạn không có quyền truy cập.");
+
+            var batches = new List<BusinessObject.DTO.Product.BatchResponseDto>();
+            if (!string.IsNullOrEmpty(receipt.BatchesJson))
+            {
+                batches = JsonConvert.DeserializeObject<List<BusinessObject.DTO.Product.BatchResponseDto>>(receipt.BatchesJson) ?? new();
+            }
+
+            // 🧠 Map ProductId -> ProductName
+            var productIds = batches.Select(b => b.ProductId).Distinct().ToList();
+            var products = await _productRepo.GetListByIdsAsync(productIds);
+            var productDict = products.ToDictionary(p => p.ProductId, p => p.ProductName);
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Margin(30);
+
+                    page.Header()
+                        .Text("PHIẾU NHẬP KHO")
+                        .SemiBold().FontSize(22).FontColor(Colors.Blue.Medium)
+                        .AlignCenter();
+
+                    page.Content().Column(column =>
+                    {
+                        column.Spacing(10);
+
+                        // Thông tin phiếu
+                        column.Item().Text($"Số chứng từ: {receipt.DocumentNumber}").FontSize(14);
+                        column.Item().Text($"Ngày chứng từ: {receipt.DocumentDate:dd/MM/yyyy}").FontSize(14);
+                        column.Item().Text($"Loại nhập: {receipt.ImportType}").FontSize(14);
+                        column.Item().Text($"Nhà cung cấp: {receipt.Supplier ?? "N/A"}").FontSize(14);
+
+                        column.Item().PaddingVertical(5).LineHorizontal(1);
+
+                        // Bảng sản phẩm
+                        column.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(4);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(CellStyle).Text("Tên sản phẩm").Bold();
+                                header.Cell().Element(CellStyle).AlignCenter().Text("Số lượng").Bold();
+                                header.Cell().Element(CellStyle).AlignRight().Text("Đơn giá").Bold();
+                                header.Cell().Element(CellStyle).AlignRight().Text("Tổng tiền").Bold();
+                            });
+
+                            foreach (var batch in batches)
+                            {
+                                var productName = productDict.ContainsKey(batch.ProductId)
+                                    ? productDict[batch.ProductId]
+                                    : $"SP-{batch.ProductId}";
+
+                                table.Cell().Element(CellStyle).Text(productName);
+                                table.Cell().Element(CellStyle).AlignCenter().Text(batch.Quantity.ToString());
+                                table.Cell().Element(CellStyle).AlignRight().Text(batch.UnitCost.ToString("N0"));
+                                table.Cell().Element(CellStyle).AlignRight().Text(batch.TotalAmount.ToString("N0"));
+                            }
+                        });
+
+                        column.Item().PaddingTop(5).LineHorizontal(1);
+
+                        column.Item().AlignRight().Text($"Tổng cộng: {receipt.TotalPrice:N0} VNĐ")
+                            .FontSize(16).Bold().FontColor(Colors.Red.Medium);
+                    });
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text("Cảm ơn quý khách!")
+                        .FontSize(10).FontColor(Colors.Grey.Medium);
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+
+        private static IContainer CellStyle(IContainer container)
+        {
+            return container
+                .PaddingVertical(5)
+                .PaddingHorizontal(2)
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten2);
+        }
 
     }
 

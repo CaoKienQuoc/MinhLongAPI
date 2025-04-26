@@ -88,7 +88,26 @@ namespace MLHR.Controllers
             return null;
         }
 
-        [HttpGet("dashboard/export-count-today")]
+
+        [HttpGet("print/{exportReceiptId}")]
+        public async Task<IActionResult> PrintExportReceipt(int exportReceiptId)
+        {
+            var userId = GetLoggedInUserId();
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                var pdfBytes = await _exportService.GenerateExportReceiptPdfAsync(exportReceiptId, userId.Value);
+                return File(pdfBytes, "application/pdf", $"Phieu_Xuat_Kho_{exportReceiptId}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
+        }
+
+            [HttpGet("dashboard/export-count-today")]
         public async Task<IActionResult> GetExportCountToday()
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
