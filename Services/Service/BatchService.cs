@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BusinessObject.DTO.Product;
 using BusinessObject.Models;
 using Repo.IRepository;
+using Repo.Repository;
 using Services.IService;
 
 namespace Services.Service
@@ -13,12 +14,14 @@ namespace Services.Service
     public class BatchService : IBatchService
     {
         private readonly IBatchRepository _batchRepository;
+        private readonly IProductRepository _productRepository;
         private readonly IWarehouseProductRepository _warehouseProductRepo;
 
-        public BatchService(IBatchRepository batchRepository, IWarehouseProductRepository warehouseProductRepo)
+        public BatchService(IBatchRepository batchRepository, IWarehouseProductRepository warehouseProductRepo, IProductRepository productRepository)
         {
             _batchRepository = batchRepository;
             _warehouseProductRepo = warehouseProductRepo;
+            _productRepository = productRepository;
         }
 
         public async Task<Batch> GetBatchByIdAsync(long batchId)
@@ -84,6 +87,18 @@ namespace Services.Service
                 };
                 await _warehouseProductRepo.AddAsync(newWarehouseProduct);
                 await _warehouseProductRepo.SaveChangesAsync();
+            }
+
+            // ✅ BỔ SUNG: Update giá SellingPrice vào Product
+            var product = await _productRepository.GetByIdAsync(batch.ProductId);
+            if (product != null)
+            {
+                product.Price = batch.SellingPrice;
+                await _productRepository.UpdateAsync(product);
+            }
+            else
+            {
+                return (false, "Product not found to update price.", null);
             }
 
             return (true, "Success", new

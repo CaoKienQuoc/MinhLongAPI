@@ -53,6 +53,13 @@ namespace Repo.Repository
             receipt.Status = newStatus;
             await _context.SaveChangesAsync();
         }
+        public async Task<List<ReturnWarehouseReceipt>> GetAllAsync()
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Include(r => r.Details)
+                .ToListAsync();
+        }
+
     }
 
 }

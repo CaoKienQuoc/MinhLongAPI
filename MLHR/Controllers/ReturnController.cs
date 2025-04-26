@@ -136,6 +136,64 @@ namespace MLHR.Controllers
                 data = list
             });
         }
+        // 🟢 5. Lấy danh sách tất cả yêu cầu trả hàng
+        [HttpGet]
+        public async Task<IActionResult> GetAllReturnRequests()
+        {
+            var result = await _returnService.GetAllReturnRequestsAsync();
+            return Ok(result);
+        }
+
+        // 🟢 6. Lấy chi tiết yêu cầu trả hàng theo ID
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetReturnRequestById(Guid id)
+        {
+            var result = await _returnService.GetReturnRequestByIdAsync(id);
+            if (result == null)
+                return NotFound(new { message = "Không tìm thấy yêu cầu trả hàng." });
+
+            return Ok(result);
+        }
+
+
+        // 🟢 7. Lấy danh sách yêu cầu trả hàng đã duyệt
+        [HttpGet("for-warehouse")]
+        [Authorize]
+        public async Task<IActionResult> GetApprovedReturnRequests()
+        {
+            var result = await _returnService.GetApprovedReturnRequestsAsync();
+            return Ok(result);
+        }
+
+        // 🟢 8. Lấy chi tiết yêu cầu trả hàng đã duyệt theo ID
+        [HttpGet("for-warehouse/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetApprovedReturnRequestById(Guid id)
+        {
+            var result = await _returnService.GetApprovedReturnRequestByIdAsync(id);
+            if (result == null)
+                return NotFound(new { message = "Không tìm thấy yêu cầu trả hàng đã duyệt." });
+
+            return Ok(result);
+        }
+
+        [HttpGet("return-receipts")]
+        public async Task<IActionResult> GetAllReturnWarehouseReceipts()
+        {
+            var result = await _returnService.GetAllReturnWarehouseReceiptsAsync();
+            return Ok(result);
+        }
+
+        // 🟢 2. Lấy chi tiết phiếu nhập trả hàng theo ID
+        [HttpGet("return-receipts/{id}")]
+        public async Task<IActionResult> GetReturnWarehouseReceiptById(long id)
+        {
+            var result = await _returnService.GetReturnWarehouseReceiptByIdAsync(id);
+            if (result == null)
+                return NotFound(new { message = "Không tìm thấy phiếu nhập trả hàng." });
+
+            return Ok(result);
+        }
 
     }
 }

@@ -175,6 +175,172 @@ namespace Services.Service
             return await _returnRepo.GetPendingApprovalAsync();
         }
 
+
+        public async Task<List<ReturnRequestProdductDto>> GetAllReturnRequestsAsync()
+        {
+            var requests = await _returnRepo.GetAllAsync();
+
+            return requests.Select(r => new ReturnRequestProdductDto
+            {
+                ReturnRequestId = r.ReturnRequestId,
+                OrderId = r.OrderId,
+                CreatedAt = r.CreatedAt,
+                Status = r.Status,
+                Note = r.Note,
+                Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
+                {
+                    ReturnRequestDetailId = d.ReturnRequestDetailId,
+                    OrderDetailId = d.OrderDetailId,
+                    ProductId = d.ProductId,
+                    Reason = d.Reason,
+                    QuantityReturned = d.QuantityReturned,
+                    Images = d.Images?.Select(img => new ReturnRequestImageDto
+                    {
+                        ReturnRequestImageId = img.ReturnRequestImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList()
+                }).ToList()
+            }).ToList();
+        }
+
+        public async Task<ReturnRequestProdductDto> GetReturnRequestByIdAsync(Guid id)
+        {
+            var r = await _returnRepo.GetByIdWithAllDetailsAsync(id);
+            if (r == null) return null;
+
+            return new ReturnRequestProdductDto
+            {
+                ReturnRequestId = r.ReturnRequestId,
+                OrderId = r.OrderId,
+                CreatedAt = r.CreatedAt,
+                Status = r.Status,
+                Note = r.Note,
+                Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
+                {
+                    ReturnRequestDetailId = d.ReturnRequestDetailId,
+                    OrderDetailId = d.OrderDetailId,
+                    ProductId = d.ProductId,
+                    Reason = d.Reason,
+                    QuantityReturned = d.QuantityReturned,
+                    Images = d.Images?.Select(img => new ReturnRequestImageDto
+                    {
+                        ReturnRequestImageId = img.ReturnRequestImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList()
+                }).ToList()
+            };
+        }
+
+
+        public async Task<List<ReturnRequestProdductDto>> GetApprovedReturnRequestsAsync()
+        {
+            var requests = await _returnRepo.GetApprovedAsync();
+
+            return requests.Select(r => new ReturnRequestProdductDto
+            {
+                ReturnRequestId = r.ReturnRequestId,
+                OrderId = r.OrderId,
+                CreatedAt = r.CreatedAt,
+                Status = r.Status,
+                Note = r.Note,
+                Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
+                {
+                    ReturnRequestDetailId = d.ReturnRequestDetailId,
+                    OrderDetailId = d.OrderDetailId,
+                    ProductId = d.ProductId,
+                    Reason = d.Reason,
+                    QuantityReturned = d.QuantityReturned,
+                    Images = d.Images?.Select(img => new ReturnRequestImageDto
+                    {
+                        ReturnRequestImageId = img.ReturnRequestImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList()
+                }).ToList()
+            }).ToList();
+        }
+
+        public async Task<ReturnRequestProdductDto> GetApprovedReturnRequestByIdAsync(Guid id)
+        {
+            var r = await _returnRepo.GetApprovedByIdAsync(id);
+            if (r == null) return null;
+
+            return new ReturnRequestProdductDto
+            {
+                ReturnRequestId = r.ReturnRequestId,
+                OrderId = r.OrderId,
+                CreatedAt = r.CreatedAt,
+                Status = r.Status,
+                Note = r.Note,
+                Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
+                {
+                    ReturnRequestDetailId = d.ReturnRequestDetailId,
+                    OrderDetailId = d.OrderDetailId,
+                    ProductId = d.ProductId,
+                    Reason = d.Reason,
+                    QuantityReturned = d.QuantityReturned,
+                    Images = d.Images?.Select(img => new ReturnRequestImageDto
+                    {
+                        ReturnRequestImageId = img.ReturnRequestImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList()
+                }).ToList()
+            };
+        }
+
+
+        public async Task<List<ReturnWarehouseReceiptDto>> GetAllReturnWarehouseReceiptsAsync()
+        {
+            var receipts = await _warehouseReceiptRepo.GetAllAsync();
+
+            return receipts.Select(r => new ReturnWarehouseReceiptDto
+            {
+                ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
+                ReceiptCode = r.ReceiptCode,
+                ReceiptDate = r.ReceiptDate,
+                CreatedAt = r.CreatedAt,
+                CreatedBy = r.CreatedBy,
+                ReturnRequestId = r.ReturnRequestId,
+                WarehouseId = r.WarehouseId,
+                Note = r.Note,
+                Status = r.Status,
+                Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
+                {
+                    ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
+                    ProductId = d.ProductId,
+                    Quantity = d.Quantity,
+                    BatchId = d.BatchId,
+                    Reason = d.Reason
+                }).ToList()
+            }).ToList();
+        }
+
+        public async Task<ReturnWarehouseReceiptDto> GetReturnWarehouseReceiptByIdAsync(long id)
+        {
+            var r = await _warehouseReceiptRepo.GetByIdWithDetailsAsync(id);
+            if (r == null) return null;
+
+            return new ReturnWarehouseReceiptDto
+            {
+                ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
+                ReceiptCode = r.ReceiptCode,
+                ReceiptDate = r.ReceiptDate,
+                CreatedAt = r.CreatedAt,
+                CreatedBy = r.CreatedBy,
+                ReturnRequestId = r.ReturnRequestId,
+                WarehouseId = r.WarehouseId,
+                Note = r.Note,
+                Status = r.Status,
+                Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
+                {
+                    ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
+                    ProductId = d.ProductId,
+                    Quantity = d.Quantity,
+                    BatchId = d.BatchId,
+                    Reason = d.Reason
+                }).ToList()
+            };
+        }
+
     }
 
 }
