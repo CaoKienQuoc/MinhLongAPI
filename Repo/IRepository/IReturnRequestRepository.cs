@@ -16,6 +16,8 @@ namespace Repo.IRepository
         Task UpdateStatusAsync(Guid id, string status);
 
         Task<List<ReturnRequestImage>> AddRangeAsync(List<ReturnRequestImage> images);
+
+
     }
 
 }

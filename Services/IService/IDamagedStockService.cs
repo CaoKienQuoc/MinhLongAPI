@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
 
-namespace Repo.IRepository
+namespace Services.IService
 {
-    public interface IDamagedStockRepository
+    public interface IDamagedStockService
     {
-        Task AddRangeAsync(List<DamagedStock> stocks);
         Task<IEnumerable<DamagedStockDto>> GetByWarehouseIdAsync(long warehouseId);
+        Task ImportToDamagedStockAsync(long receiptId, Guid userId); // bạn đã có
     }
-
 }

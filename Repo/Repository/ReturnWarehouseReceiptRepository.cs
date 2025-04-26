@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.Models;
 using DataAccessLayer;
+using Microsoft.EntityFrameworkCore;
 using Repo.IRepository;
 
 namespace Repo.Repository
@@ -35,6 +36,21 @@ namespace Repo.Repository
 
         public async Task SaveChangesAsync()
         {
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<ReturnWarehouseReceipt?> GetByIdWithDetailsAsync(long receiptId)
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Include(r => r.Details)  // ensure you have nav prop Details
+                .FirstOrDefaultAsync(r => r.ReturnWarehouseReceiptId == receiptId);
+        }
+
+        public async Task UpdateStatusAsync(long receiptId, string newStatus)
+        {
+            var receipt = await _context.ReturnWarehouseReceipts.FindAsync(receiptId);
+            if (receipt == null) throw new Exception("Phiếu trả hàng không tồn tại");
+            receipt.Status = newStatus;
             await _context.SaveChangesAsync();
         }
     }

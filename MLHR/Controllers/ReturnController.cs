@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Services.IService;
 using Services.Service;
+using BusinessObject.Models;
 
 namespace MLHR.Controllers
 {
@@ -12,14 +13,14 @@ namespace MLHR.Controllers
     public class ReturnController : ControllerBase
     {
         private readonly IReturnService _returnService;
-        private readonly IImageService _imageService;
+        private readonly IDamagedStockService _damagedStockService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ReturnController(IReturnService returnService, IHttpContextAccessor httpContextAccessor, IImageService imageService)
+        public ReturnController(IReturnService returnService, IHttpContextAccessor httpContextAccessor, IDamagedStockService damagedStock)
         {
             _returnService = returnService;
             _httpContextAccessor = httpContextAccessor;
-            _imageService = imageService;
+            _damagedStockService = damagedStock;
         }
 
         private Guid? GetLoggedInUserId()
@@ -79,13 +80,23 @@ namespace MLHR.Controllers
 
 
         // 🟢 3. Kho xác nhận nhập hàng trả
-        [HttpPost("import/{returnRequestId}")]
-        public async Task<IActionResult> ImportReturnToDamagedStock(Guid returnRequestId)
+        [HttpPost("{warehouseReceiptId:long}/cancel")]
+        public async Task<IActionResult> CancelAndImport(long warehouseReceiptId)
         {
-            var warehouseUserId = GetCurrentUserId();
-            await _returnService.ImportToDamagedStockAsync(returnRequestId, warehouseUserId);
-            return Ok(new { message = "Đã nhập hàng lỗi vào kho huỷ." });
+            try
+            {
+                var userId = GetCurrentUserId();
+                await _damagedStockService.ImportToDamagedStockAsync(warehouseReceiptId, userId);
+                return Ok(new { success = true, message = "Đã import vào kho huỷ." });
+            }
+            catch (Exception ex)
+            {
+                // Chỉ show message lỗi
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
+
+
 
         // 🟠 4. Xem danh sách yêu cầu trả hàng đang chờ duyệt
         [HttpGet("pending")]
@@ -103,5 +114,28 @@ namespace MLHR.Controllers
                 ? userId
                 : throw new UnauthorizedAccessException("Không xác định được người dùng.");
         }
+
+        // GET api/damagedstock/warehouse/5
+        [HttpGet("warehouse/{warehouseId:long}")]
+        public async Task<IActionResult> GetByWarehouseId(long warehouseId)
+        {
+            var list = await _damagedStockService.GetByWarehouseIdAsync(warehouseId);
+            if (!list.Any())
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = $"Không tìm thấy bản ghi nào cho kho {warehouseId}."
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                message = $"Đã tìm thấy {list.Count()} bản ghi.",
+                data = list
+            });
+        }
+
     }
 }

@@ -21,7 +21,9 @@ namespace BusinessObject.Models
         [ForeignKey(nameof(ProductId))]
         public Product Product { get; set; }
 
-        public string BatchCode { get; set; }
+        public long? BatchId { get; set; } // ✅ Thay vì BatchCode
+        [ForeignKey(nameof(BatchId))]
+        public Batch Batch { get; set; }   // ✅ Entity Batch
         public int Quantity { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

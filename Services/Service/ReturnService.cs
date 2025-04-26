@@ -22,6 +22,7 @@ namespace Services.Service
         private readonly IOrderRepository _orderRepo;
         private readonly IReturnWarehouseReceiptRepository _warehouseReceiptRepo;
         private readonly IWarehouseExportRepository _warehouseExportRepo;
+        private readonly IReturnWarehouseReceiptRepository _returnWarehouseReceiptRepo;
 
         public ReturnService(
             IReturnRequestRepository returnRepo,
@@ -30,7 +31,8 @@ namespace Services.Service
             IOrderRepository orderRepo,
             IImageService imageService,
             IReturnWarehouseReceiptRepository warehouseReceiptRepo,
-            IWarehouseExportRepository warehouseExportRepo)
+            IWarehouseExportRepository warehouseExportRepo,
+            IReturnWarehouseReceiptRepository returnWarehouseReceiptRepo)
         {
             _returnRepo = returnRepo;
             _damagedRepo = damagedRepo;
@@ -39,6 +41,7 @@ namespace Services.Service
             _imageService = imageService;
             _warehouseReceiptRepo = warehouseReceiptRepo;
             _warehouseExportRepo = warehouseExportRepo;
+            _returnWarehouseReceiptRepo = returnWarehouseReceiptRepo;
         }
 
         public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, string? note, Guid userId, List<IFormFile> images)
@@ -164,38 +167,8 @@ namespace Services.Service
 
 
 
-        public async Task ImportToDamagedStockAsync(Guid returnRequestId, Guid warehouseUserId)
-        {
-            var request = await _returnRepo.GetByIdWithDetailsAsync(returnRequestId);
-            if (request == null)
-                throw new Exception("Không tìm thấy yêu cầu trả hàng.");
+        
 
-            if (request.Status != "Approved")
-                throw new Exception("Yêu cầu chưa được duyệt.");
-
-            var warehouseId = await _warehouseRepo.GetWarehouseIdByUserAsync(warehouseUserId);
-            if (warehouseId == 0)
-                throw new Exception("Không tìm thấy kho tương ứng với người dùng.");
-
-            var damagedStocks = new List<DamagedStock>();
-
-            foreach (var item in request.Details)
-            {
-                if (item.OrderDetail == null)
-                    throw new Exception("Thiếu thông tin sản phẩm trong đơn hàng.");
-
-                damagedStocks.Add(new DamagedStock
-                {
-                    ProductId = item.OrderDetail.ProductId,
-                    WarehouseId = warehouseId,
-                    Quantity = item.QuantityReturned,
-                    BatchCode = $"DAM-{DateTime.UtcNow:yyyyMMddHHmmss}"
-                });
-            }
-
-            await _damagedRepo.AddRangeAsync(damagedStocks);
-            await _returnRepo.UpdateStatusAsync(returnRequestId, "Imported");
-        }
 
         public async Task<List<ReturnRequest>> GetPendingReturnsAsync()
         {

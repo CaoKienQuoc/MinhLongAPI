@@ -13,7 +13,6 @@ namespace Services.IService
     {
         Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, string? note, Guid userId, List<IFormFile> images);
         Task ApproveReturnRequestAsync(Guid id);
-        Task ImportToDamagedStockAsync(Guid returnRequestId, Guid warehouseUserId);
         Task<List<ReturnRequest>> GetPendingReturnsAsync();
 
     }
