@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250425180148_UpdateDb")]
-    partial class UpdateDb
+    [Migration("20250426153522_UpdateDB")]
+    partial class UpdateDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -224,9 +224,8 @@ namespace DataAccessLayer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DamagedStockId"));
 
-                    b.Property<string>("BatchCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<long?>("BatchId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -241,6 +240,8 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("DamagedStockId");
+
+                    b.HasIndex("BatchId");
 
                     b.HasIndex("ProductId");
 
@@ -1255,6 +1256,9 @@ namespace DataAccessLayer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ReturnWarehouseReceiptId"));
 
+                    b.Property<Guid>("ApprovedBy")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1888,6 +1892,10 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("BusinessObject.Models.DamagedStock", b =>
                 {
+                    b.HasOne("BusinessObject.Models.Batch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId");
+
                     b.HasOne("BusinessObject.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
@@ -1899,6 +1907,8 @@ namespace DataAccessLayer.Migrations
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Batch");
 
                     b.Navigation("Product");
 

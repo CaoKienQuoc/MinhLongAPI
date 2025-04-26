@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateDb : Migration
+    public partial class UpdateDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -471,35 +471,6 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DamagedStock",
-                columns: table => new
-                {
-                    DamagedStockId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
-                    ProductId = table.Column<long>(type: "bigint", nullable: false),
-                    BatchCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DamagedStock", x => x.DamagedStockId);
-                    table.ForeignKey(
-                        name: "FK_DamagedStock_Product_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Product",
-                        principalColumn: "ProductId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_DamagedStock_Warehouse_WarehouseId",
-                        column: x => x.WarehouseId,
-                        principalTable: "Warehouse",
-                        principalColumn: "WarehouseId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ImportTransaction",
                 columns: table => new
                 {
@@ -868,6 +839,40 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DamagedStock",
+                columns: table => new
+                {
+                    DamagedStockId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false),
+                    BatchId = table.Column<long>(type: "bigint", nullable: true),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DamagedStock", x => x.DamagedStockId);
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_Batch_BatchId",
+                        column: x => x.BatchId,
+                        principalTable: "Batch",
+                        principalColumn: "BatchId");
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_Warehouse_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouse",
+                        principalColumn: "WarehouseId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TemporaryStockExport",
                 columns: table => new
                 {
@@ -1153,6 +1158,7 @@ namespace DataAccessLayer.Migrations
                     ReceiptDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ApprovedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ReturnRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     WarehouseId = table.Column<long>(type: "bigint", nullable: false),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -1402,6 +1408,11 @@ namespace DataAccessLayer.Migrations
                 name: "IX_Batch_ProductId",
                 table: "Batch",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DamagedStock_BatchId",
+                table: "DamagedStock",
+                column: "BatchId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DamagedStock_ProductId",
