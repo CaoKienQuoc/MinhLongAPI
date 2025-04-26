@@ -185,7 +185,52 @@ namespace Services.Service
             return true;
         }
 
-        
+        public async Task<bool> SendDamagedStockNotificationEmailAsync(
+        string toEmail,
+        string warehouseName,
+        IEnumerable<DamagedStock> items)
+        {
+            // 1. Lấy template từ appsettings
+            var template = _configuration["EmailSetting:EmailDamagedStockTemplate"];
+
+            // 2. Build danh sách item
+            var itemListHtml = string.Join("",
+                items.Select(i =>
+                    $"<li>{i.Product.ProductName} – Số lượng: {i.Quantity} (Lô {i.BatchId})</li>"));
+
+            // 3. Thay placeholder
+            var body = template
+                .Replace("{WAREHOUSE}", warehouseName)
+                .Replace("{COUNT}", items.Count().ToString())
+                .Replace("{ITEMS}", itemListHtml);
+
+            // 4. Tạo email
+            var emailHost = _configuration["EmailSetting:EmailHost"];
+            var userName = _configuration["EmailSetting:EmailUsername"];
+            var password = _configuration["EmailSetting:EmailPassword"];
+
+            var email = new MimeMessage();
+            email.From.Add(MailboxAddress.Parse(emailHost));
+            email.To.Add(MailboxAddress.Parse(toEmail));
+            email.Subject = "Thông báo: Hàng lỗi đã nhập kho huỷ";
+            email.Body = new TextPart(TextFormat.Html) { Text = body };
+
+            // 5. Gửi
+            try
+            {
+                using var smtp = new SmtpClient();
+                await smtp.ConnectAsync(emailHost, 587, SecureSocketOptions.StartTls);
+                await smtp.AuthenticateAsync(userName, password);
+                await smtp.SendAsync(email);
+                await smtp.DisconnectAsync(true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Error Sending DamagedStock Email]: {ex.Message}");
+                return false;
+            }
+        }
 
     }
 }

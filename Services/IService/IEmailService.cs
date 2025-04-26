@@ -1,4 +1,5 @@
 ﻿using BusinessObject.DTO.Email;
+using BusinessObject.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,6 @@ namespace Services.IService
         Task<bool> CheckOtpEmail(CheckOtpRequest checkOtpRequest);
         Task<bool> SendEmailAsync(SendOtpEmailRequest sendEmailRequest);
         Task<bool> SendEmailDebtReminderAsync(string emailRequest, string fullName, string orderId, DateTime dueDate);
+        Task<bool> SendDamagedStockNotificationEmailAsync(string toEmail,string warehouseName,IEnumerable<DamagedStock> items);
     }
 }
