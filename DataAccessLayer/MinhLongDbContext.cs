@@ -17,27 +17,13 @@ namespace DataAccessLayer
         public MinhLongDbContext(DbContextOptions options) : base(options) { }
         public MinhLongDbContext() { }
 
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    if (!optionsBuilder.IsConfigured)
-        //    {
-        //        var configuration = new ConfigurationBuilder()
-        //            .SetBasePath(Directory.GetCurrentDirectory())
-        //            .AddJsonFile("appsettings.json")
-        //            .Build();
-
-        //        var connectionString = configuration.GetConnectionString("ServerConnection");
-        //        optionsBuilder.UseSqlServer(connectionString);
-        //    }
-        //}
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                 .AddJsonFile("appsettings.json")
                 .Build();
-            optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+            optionsBuilder.UseSqlServer(configuration.GetConnectionString("ServerConnection"));
         }
 
 

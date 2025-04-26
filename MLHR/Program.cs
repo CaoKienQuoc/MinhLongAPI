@@ -95,7 +95,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 // ✅ Đọc chuỗi kết nối từ appsettings.json
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("ServerConnection");
 builder.Services.AddDbContext<MinhLongDbContext>(options =>
     options.UseSqlServer(connectionString));
 
