@@ -185,13 +185,14 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
                 CreatedAt = r.CreatedAt,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 Status = r.Status,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
                     OrderDetailId = d.OrderDetailId,
-                    ProductId = d.ProductId,
+                    ProductName = d.Product.ProductName,
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
                     Images = d.Images?.Select(img => new ReturnRequestImageDto
@@ -213,13 +214,14 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
                 CreatedAt = r.CreatedAt,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 Status = r.Status,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
                     OrderDetailId = d.OrderDetailId,
-                    ProductId = d.ProductId,
+                    ProductName = d.Product.ProductName,
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
                     Images = d.Images?.Select(img => new ReturnRequestImageDto
@@ -241,13 +243,14 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
                 CreatedAt = r.CreatedAt,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 Status = r.Status,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
                     OrderDetailId = d.OrderDetailId,
-                    ProductId = d.ProductId,
+                    ProductName = d.Product.ProductName,
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
                     Images = d.Images?.Select(img => new ReturnRequestImageDto
@@ -269,13 +272,14 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
                 CreatedAt = r.CreatedAt,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 Status = r.Status,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
                     OrderDetailId = d.OrderDetailId,
-                    ProductId = d.ProductId,
+                    ProductName = d.Product.ProductName,
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
                     Images = d.Images?.Select(img => new ReturnRequestImageDto
@@ -298,7 +302,7 @@ namespace Services.Service
                 ReceiptCode = r.ReceiptCode,
                 ReceiptDate = r.ReceiptDate,
                 CreatedAt = r.CreatedAt,
-                CreatedBy = r.CreatedBy,
+                CreatedByUserName = r.ReturnRequest.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestId = r.ReturnRequestId,
                 WarehouseId = r.WarehouseId,
                 Note = r.Note,
@@ -306,7 +310,7 @@ namespace Services.Service
                 Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
                 {
                     ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
-                    ProductId = d.ProductId,
+                    ProductName = d.Product.ProductName,
                     Quantity = d.Quantity,
                     BatchId = d.BatchId,
                     Reason = d.Reason
@@ -325,7 +329,7 @@ namespace Services.Service
                 ReceiptCode = r.ReceiptCode,
                 ReceiptDate = r.ReceiptDate,
                 CreatedAt = r.CreatedAt,
-                CreatedBy = r.CreatedBy,
+                CreatedByUserName = r.ReturnRequest.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestId = r.ReturnRequestId,
                 WarehouseId = r.WarehouseId,
                 Note = r.Note,
@@ -333,7 +337,7 @@ namespace Services.Service
                 Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
                 {
                     ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
-                    ProductId = d.ProductId,
+                    ProductName = d.Product.ProductName,
                     Quantity = d.Quantity,
                     BatchId = d.BatchId,
                     Reason = d.Reason

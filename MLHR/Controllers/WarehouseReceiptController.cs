@@ -141,7 +141,24 @@ namespace MLHR.Controllers
         }
 
 
-        [HttpGet("dashboard/receipt-count-today")]
+        [HttpGet("print/{warehouseReceiptId}")]
+        public async Task<IActionResult> PrintReceipt(long warehouseReceiptId)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                var pdfBytes = await _service.GenerateReceiptPdfAsync(warehouseReceiptId, userId);
+                return File(pdfBytes, "application/pdf", $"Phieu_Nhap_Kho_{warehouseReceiptId}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+            [HttpGet("dashboard/receipt-count-today")]
         public async Task<IActionResult> GetTodayReceiptCount()
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());

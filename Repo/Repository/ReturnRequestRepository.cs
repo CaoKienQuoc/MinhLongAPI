@@ -65,7 +65,12 @@ namespace Repo.Repository
         {
             return await _context.ReturnRequests
                 .Include(r => r.Details)
+                .ThenInclude(d => d.Product)
                     .ThenInclude(d => d.Images)
+                    .Include(r => r.Order)
+                    .ThenInclude(r => r.RequestProduct)
+                    .ThenInclude(r => r.AgencyAccount)
+                    .ThenInclude(r => r.User)
                 .ToListAsync();
         }
 
@@ -73,7 +78,12 @@ namespace Repo.Repository
         {
             return await _context.ReturnRequests
                 .Include(r => r.Details)
+                .ThenInclude(d => d.Product)
                     .ThenInclude(d => d.Images)
+                    .Include(r => r.Order)
+                    .ThenInclude(r => r.RequestProduct)
+                    .ThenInclude(r => r.AgencyAccount)
+                    .ThenInclude(r => r.User)
                 .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
         }
 
@@ -82,7 +92,12 @@ namespace Repo.Repository
             return await _context.ReturnRequests
                 .Where(r => r.Status == "Approved")
                 .Include(r => r.Details)
+                .ThenInclude(d => d.Product)
                     .ThenInclude(d => d.Images)
+                    .Include(r => r.Order)
+                    .ThenInclude(r => r.RequestProduct)
+                    .ThenInclude(r => r.AgencyAccount)
+                    .ThenInclude(r => r.User)
                 .ToListAsync();
         }
 
@@ -91,7 +106,12 @@ namespace Repo.Repository
             return await _context.ReturnRequests
                 .Where(r => r.ReturnRequestId == id && r.Status == "Approved")
                 .Include(r => r.Details)
+                .ThenInclude(d => d.Product)
                     .ThenInclude(d => d.Images)
+                    .Include(r => r.Order)
+                    .ThenInclude(r => r.RequestProduct)
+                    .ThenInclude(r => r.AgencyAccount)
+                    .ThenInclude(r => r.User)
                 .FirstOrDefaultAsync();
         }
     }

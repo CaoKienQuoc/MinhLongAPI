@@ -9,7 +9,8 @@ namespace BusinessObject.DTO.ReturnOrder
     public class ReturnWarehouseReceiptDetailDto
     {
         public long ReturnWarehouseReceiptDetailId { get; set; }
-        public long ProductId { get; set; }
+        public string ProductName { get; set; }
+
         public int Quantity { get; set; }
         public long? BatchId { get; set; }
         public string Reason { get; set; }

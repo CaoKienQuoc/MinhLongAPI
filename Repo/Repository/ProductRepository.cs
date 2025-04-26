@@ -133,6 +133,13 @@ namespace Repo.Repository
                 availableStock, productId);
         }
 
+        public async Task<List<Product>> GetListByIdsAsync(List<long> productIds)
+        {
+            return await _context.Products
+                .Where(p => productIds.Contains(p.ProductId))
+                .ToListAsync();
+        }
+
 
     }
 }
