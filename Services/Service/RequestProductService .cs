@@ -178,7 +178,7 @@ namespace Services.Service
                 if (batch == null)
                     throw new ArgumentException($"Không tìm thấy lô hàng nào cho ProductId {newItem.ProductId}.");
 
-                decimal unitPrice = batch.SellingPrice ?? 0;
+                decimal unitPrice = product.Price ?? 0;
 
                 if (existingRequest != null)
                 {
