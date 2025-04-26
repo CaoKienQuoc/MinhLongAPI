@@ -16,6 +16,12 @@ namespace Repo.IRepository
         Task UpdateStatusAsync(Guid id, string status);
 
         Task<List<ReturnRequestImage>> AddRangeAsync(List<ReturnRequestImage> images);
+
+        Task<List<ReturnRequest>> GetAllAsync();
+        Task<ReturnRequest> GetByIdWithAllDetailsAsync(Guid id);
+
+        Task<List<ReturnRequest>> GetApprovedAsync();
+        Task<ReturnRequest> GetApprovedByIdAsync(Guid id);
     }
 
 }

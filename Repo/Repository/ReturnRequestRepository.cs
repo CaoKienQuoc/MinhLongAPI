@@ -60,6 +60,40 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
             return images;
         }
+
+        public async Task<List<ReturnRequest>> GetAllAsync()
+        {
+            return await _context.ReturnRequests
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Images)
+                .ToListAsync();
+        }
+
+        public async Task<ReturnRequest> GetByIdWithAllDetailsAsync(Guid id)
+        {
+            return await _context.ReturnRequests
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Images)
+                .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
+        }
+
+        public async Task<List<ReturnRequest>> GetApprovedAsync()
+        {
+            return await _context.ReturnRequests
+                .Where(r => r.Status == "Approved")
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Images)
+                .ToListAsync();
+        }
+
+        public async Task<ReturnRequest> GetApprovedByIdAsync(Guid id)
+        {
+            return await _context.ReturnRequests
+                .Where(r => r.ReturnRequestId == id && r.Status == "Approved")
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Images)
+                .FirstOrDefaultAsync();
+        }
     }
 
 }

@@ -16,6 +16,15 @@ namespace Services.IService
         Task ImportToDamagedStockAsync(Guid returnRequestId, Guid warehouseUserId);
         Task<List<ReturnRequest>> GetPendingReturnsAsync();
 
+        Task<List<ReturnRequestProdductDto>> GetAllReturnRequestsAsync();
+        Task<ReturnRequestProdductDto> GetReturnRequestByIdAsync(Guid id);
+
+        Task<List<ReturnRequestProdductDto>> GetApprovedReturnRequestsAsync();
+        Task<ReturnRequestProdductDto> GetApprovedReturnRequestByIdAsync(Guid id);
+
+        Task<List<ReturnWarehouseReceiptDto>> GetAllReturnWarehouseReceiptsAsync();
+        Task<ReturnWarehouseReceiptDto> GetReturnWarehouseReceiptByIdAsync(long id);
+
     }
 
 }
