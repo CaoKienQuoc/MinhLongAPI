@@ -29,6 +29,9 @@ namespace BusinessObject.Models
         [Required]
         public Guid CreatedBy { get; set; }
 
+        // ✅ Người tạo phiếu (userId)
+        [Required]
+        public Guid ApprovedBy { get; set; }
 
         public Guid ReturnRequestId { get; set; }
         [ForeignKey(nameof(ReturnRequestId))]

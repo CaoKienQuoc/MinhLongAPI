@@ -101,7 +101,7 @@ namespace Services.Service
         }
 
 
-        public async Task ApproveReturnRequestAsync(Guid returnRequestId)
+        public async Task ApproveReturnRequestAsync(Guid returnRequestId, Guid userId)
         {
             // 🔍 Lấy dữ liệu yêu cầu trả hàng + chi tiết
             var request = await _returnRepo.GetByIdWithDetailsAsync(returnRequestId);
@@ -131,6 +131,7 @@ namespace Services.Service
                 ReceiptCode = $"RR-{DateTime.UtcNow:yyyyMMddHHmmss}",
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = request.CreatedByUserId,
+                ApprovedBy = userId,
                 WarehouseId = warehouseId,
                 Note = request.Note,
                 ReceiptDate = DateTime.UtcNow,

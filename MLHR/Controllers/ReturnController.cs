@@ -64,7 +64,8 @@ namespace MLHR.Controllers
         {
             try
             {
-                await _returnService.ApproveReturnRequestAsync(returnRequestId);
+                var userId = GetCurrentUserId();
+                await _returnService.ApproveReturnRequestAsync(returnRequestId, userId);
                 return Ok(new { message = "Đã duyệt yêu cầu trả hàng." });
             }
             catch (Exception ex)
