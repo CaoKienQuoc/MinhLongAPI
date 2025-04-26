@@ -59,7 +59,7 @@ namespace MLHR.Controllers
 
 
 
-        [HttpPut("approve/{returnRequestId}")]
+        [HttpPut("approve-Return-Request/{returnRequestId}")]
         public async Task<IActionResult> ApproveReturnRequest(Guid returnRequestId)
         {
             try
@@ -80,7 +80,7 @@ namespace MLHR.Controllers
 
 
         // 🟢 3. Kho xác nhận nhập hàng trả
-        [HttpPost("{warehouseReceiptId:long}/cancel")]
+        [HttpPost("{warehouseReceiptId:long}/Import-Damage-Stock")]
         public async Task<IActionResult> CancelAndImport(long warehouseReceiptId)
         {
             try
