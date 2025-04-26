@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
+using Microsoft.Extensions.Configuration;
 using Repo.IRepository;
 using Services.IService;
 
@@ -16,17 +17,23 @@ namespace Services.Service
         private readonly IReturnWarehouseReceiptRepository _returnWarehouseReceiptRepo;
         private readonly IReturnRequestRepository _returnRepo;
         private readonly IWarehouseRepository _warehouseRepo;
+        private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
         public DamagedStockService(
             IDamagedStockRepository repo,
             IReturnWarehouseReceiptRepository receiptRepo,
             IReturnRequestRepository reqRepo,
-            IWarehouseRepository whRepo)
+            IWarehouseRepository whRepo,
+            IConfiguration configuration,
+            IEmailService emailService)
         {
             _damagedRepo = repo;
             _returnWarehouseReceiptRepo = receiptRepo;
             _returnRepo = reqRepo;
             _warehouseRepo = whRepo;
+            _configuration = configuration;
+            _emailService = emailService;
         }
 
         public Task<IEnumerable<DamagedStockDto>> GetByWarehouseIdAsync(long warehouseId)
@@ -68,6 +75,14 @@ namespace Services.Service
 
             // 6) Cập nhật trạng thái trên ReturnRequest thành "Completed"
             await _returnRepo.UpdateStatusAsync(receipt.ReturnRequestId, "Completed");
+
+            var managerEmail = _configuration["EmailSetting:WarehouseManagerEmail"];
+            var warehouseName = receipt.Warehouse.WarehouseName;
+            await _emailService.SendDamagedStockNotificationEmailAsync(
+                managerEmail,
+                warehouseName,
+                damagedStocks
+            );
         }
     }
 }
