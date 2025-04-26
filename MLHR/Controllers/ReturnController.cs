@@ -145,10 +145,10 @@ namespace MLHR.Controllers
         }
 
         // 🟢 6. Lấy chi tiết yêu cầu trả hàng theo ID
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetReturnRequestById(Guid id)
+        [HttpGet("{returnRequestId}")]
+        public async Task<IActionResult> GetReturnRequestById(Guid returnRequestId)
         {
-            var result = await _returnService.GetReturnRequestByIdAsync(id);
+            var result = await _returnService.GetReturnRequestByIdAsync(returnRequestId);
             if (result == null)
                 return NotFound(new { message = "Không tìm thấy yêu cầu trả hàng." });
 
@@ -166,11 +166,11 @@ namespace MLHR.Controllers
         }
 
         // 🟢 8. Lấy chi tiết yêu cầu trả hàng đã duyệt theo ID
-        [HttpGet("for-warehouse/{id}")]
+        [HttpGet("for-warehouse/{returnRequestId}")]
         [Authorize]
-        public async Task<IActionResult> GetApprovedReturnRequestById(Guid id)
+        public async Task<IActionResult> GetApprovedReturnRequestById(Guid returnRequestId)
         {
-            var result = await _returnService.GetApprovedReturnRequestByIdAsync(id);
+            var result = await _returnService.GetApprovedReturnRequestByIdAsync(returnRequestId);
             if (result == null)
                 return NotFound(new { message = "Không tìm thấy yêu cầu trả hàng đã duyệt." });
 
@@ -185,10 +185,10 @@ namespace MLHR.Controllers
         }
 
         // 🟢 2. Lấy chi tiết phiếu nhập trả hàng theo ID
-        [HttpGet("return-receipts/{id}")]
-        public async Task<IActionResult> GetReturnWarehouseReceiptById(long id)
+        [HttpGet("return-receipts/{ReturnWarehouseReceiptId}")]
+        public async Task<IActionResult> GetReturnWarehouseReceiptById(long ReturnWarehouseReceiptId)
         {
-            var result = await _returnService.GetReturnWarehouseReceiptByIdAsync(id);
+            var result = await _returnService.GetReturnWarehouseReceiptByIdAsync(ReturnWarehouseReceiptId);
             if (result == null)
                 return NotFound(new { message = "Không tìm thấy phiếu nhập trả hàng." });
 

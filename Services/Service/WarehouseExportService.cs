@@ -7,9 +7,13 @@ using BusinessObject.DTO.Product;
 using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
+using QuestPDF.Helpers;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace Services.Service
 {
@@ -555,6 +559,89 @@ namespace Services.Service
             return receipts
                 .Where(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year)
                 .Sum(r => r.TotalAmount);
+        }
+
+
+        public async Task<byte[]> GenerateExportReceiptPdfAsync(int exportReceiptId, Guid userId)
+        {
+            var receipt = await _exportReceiptRepo.GetByIdAndUserIdAsync(exportReceiptId, userId);
+            if (receipt == null)
+                throw new Exception("Không tìm thấy phiếu xuất kho hoặc bạn không có quyền truy cập.");
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Margin(30);
+
+                    page.Header()
+                        .Text("PHIẾU XUẤT KHO")
+                        .SemiBold().FontSize(22).FontColor(Colors.Blue.Medium)
+                        .AlignCenter();
+
+                    page.Content().Column(column =>
+                    {
+                        column.Spacing(10);
+
+                        // Thông tin phiếu
+                        column.Item().Text($"Số phiếu: {receipt.DocumentNumber}").FontSize(14);
+                        column.Item().Text($"Ngày lập phiếu: {receipt.DocumentDate:dd/MM/yyyy}").FontSize(14);
+                        column.Item().Text($"Ngày xuất: {receipt.ExportDate:dd/MM/yyyy}").FontSize(14);
+                        column.Item().Text($"Kho xuất: {receipt.Warehouse?.WarehouseName ?? "N/A"}").FontSize(14);
+
+                        column.Item().PaddingVertical(5).LineHorizontal(1);
+
+                        // Bảng chi tiết sản phẩm
+                        column.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(4); // Tên sản phẩm
+                                columns.RelativeColumn(1); // Số lượng
+                                columns.RelativeColumn(2); // Đơn giá
+                                columns.RelativeColumn(2); // Thành tiền
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(CellStyle).Text("Tên sản phẩm").Bold();
+                                header.Cell().Element(CellStyle).AlignCenter().Text("Số lượng").Bold();
+                                header.Cell().Element(CellStyle).AlignRight().Text("Đơn giá").Bold();
+                                header.Cell().Element(CellStyle).AlignRight().Text("Thành tiền").Bold();
+                            });
+
+                            foreach (var d in receipt.ExportWarehouseReceiptDetails)
+                            {
+                                table.Cell().Element(CellStyle).Text(d.ProductName);
+                                table.Cell().Element(CellStyle).AlignCenter().Text(d.Quantity.ToString());
+                                table.Cell().Element(CellStyle).AlignRight().Text(d.UnitPrice.ToString("N0"));
+                                table.Cell().Element(CellStyle).AlignRight().Text(d.TotalProductAmount.ToString("N0"));
+                            }
+                        });
+
+                        column.Item().PaddingTop(5).LineHorizontal(1);
+
+                        column.Item().AlignRight().Text($"Tổng cộng: {receipt.TotalAmount:N0} VNĐ")
+                            .FontSize(16).Bold().FontColor(Colors.Red.Medium);
+                    });
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text("Cảm ơn quý khách!")
+                        .FontSize(10).FontColor(Colors.Grey.Medium);
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+
+        private static IContainer CellStyle(IContainer container)
+        {
+            return container
+                .PaddingVertical(5)
+                .PaddingHorizontal(2)
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten2);
         }
 
     }

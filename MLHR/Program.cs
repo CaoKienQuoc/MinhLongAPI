@@ -15,12 +15,14 @@ using System.Text;
 using Services.Exceptions;
 using Hangfire;
 using System.Runtime.InteropServices;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Lấy cấu hình JWT từ appsettings.json
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+QuestPDF.Settings.License = LicenseType.Community;
 
 
 // Cấu hình JWT Bearer Authentication cho Swagger

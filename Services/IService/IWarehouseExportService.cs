@@ -24,6 +24,8 @@ namespace Services.IService
 
         Task UpdateExportFromCoordinationImportAsync(int requestExportId, List<BatchResponseDto> importedBatches);
 
+        Task<byte[]> GenerateExportReceiptPdfAsync(int exportReceiptId, Guid userId);
+
         Task<int> GetTodayExportCountAsync(Guid userId);
         Task<int> GetThisMonthExportCountAsync(Guid userId);
         Task<int> GetTodayExportQuantityAsync(Guid userId);
