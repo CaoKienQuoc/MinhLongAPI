@@ -22,6 +22,9 @@ namespace Repo.IRepository
 
         Task<List<ReturnRequest>> GetApprovedAsync();
         Task<ReturnRequest> GetApprovedByIdAsync(Guid id);
+
+        Task<IEnumerable<ReturnRequest>> GetByUserIdAsync(Guid userId);
+        Task<ReturnRequest> GetByIdAndUserIdAsync(Guid returnRequestId, Guid userId);
     }
 
 }

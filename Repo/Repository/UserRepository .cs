@@ -420,7 +420,14 @@ namespace Repo.Repository
 
         public Task<bool> ExistsAsync(Guid employeeId)
         => _context.Employees.AnyAsync(e => e.UserId == employeeId);
+
+        public async Task<User> GetByIdAsync(Guid userId)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        }
     }
+
+
 
 
     public static class PasswordHelper

@@ -66,6 +66,7 @@ namespace Repo.Repository
             return await _context.ReturnRequests
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
+                .Include(r => r.Details)
                     .ThenInclude(d => d.Images)
                     .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
@@ -79,6 +80,7 @@ namespace Repo.Repository
             return await _context.ReturnRequests
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
+                .Include(r => r.Details)
                     .ThenInclude(d => d.Images)
                     .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
@@ -93,6 +95,7 @@ namespace Repo.Repository
                 .Where(r => r.Status == "Approved")
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
+                .Include(r => r.Details)
                     .ThenInclude(d => d.Images)
                     .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
@@ -107,12 +110,34 @@ namespace Repo.Repository
                 .Where(r => r.ReturnRequestId == id && r.Status == "Approved")
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
+                .Include(r => r.Details)
                     .ThenInclude(d => d.Images)
                     .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<ReturnRequest>> GetByUserIdAsync(Guid userId)
+        {
+            return await _context.ReturnRequests
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Product)
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Images)
+                .Where(r => r.CreatedByUserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<ReturnRequest> GetByIdAndUserIdAsync(Guid returnRequestId, Guid userId)
+        {
+            return await _context.ReturnRequests
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Product)
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Images)
+                .FirstOrDefaultAsync(r => r.ReturnRequestId == returnRequestId && r.CreatedByUserId == userId);
         }
     }
 

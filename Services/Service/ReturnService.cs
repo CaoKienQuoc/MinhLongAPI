@@ -348,6 +348,69 @@ namespace Services.Service
             };
         }
 
+
+        public async Task<IEnumerable<ReturnRequestProdductDto>> GetReturnRequestsByUserIdAsync(Guid userId)
+        {
+            var requests = await _returnRepo.GetByUserIdAsync(userId);
+            var user = await _employeeRepo.GetByIdAsync(userId);
+
+            return requests.Select(r => new ReturnRequestProdductDto
+            {
+                ReturnRequestId = r.ReturnRequestId,
+                OrderId = r.OrderId,
+                CreatedAt = r.CreatedAt,
+                CreatedByUserName = user?.Username ?? "Unknown",
+                Status = r.Status,
+                Note = r.Note,
+                Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
+                {
+                    ReturnRequestDetailId = d.ReturnRequestDetailId,
+                    OrderDetailId = d.OrderDetailId,
+                    ProductName = d.Product?.ProductName ?? "",
+                    Reason = d.Reason,
+                    QuantityReturned = d.QuantityReturned,
+                    Images = d.Images?.Select(img => new ReturnRequestImageDto
+                    {
+                        ReturnRequestImageId = img.ReturnRequestImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList() ?? new List<ReturnRequestImageDto>()
+                }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
+            }).ToList();
+        }
+
+
+        public async Task<ReturnRequestProdductDto> GetReturnRequestByIdAsync(Guid returnRequestId, Guid userId)
+        {
+            var request = await _returnRepo.GetByIdAndUserIdAsync(returnRequestId, userId);
+            if (request == null) return null;
+
+            var user = await _employeeRepo.GetByIdAsync(userId);
+
+            return new ReturnRequestProdductDto
+            {
+                ReturnRequestId = request.ReturnRequestId,
+                OrderId = request.OrderId,
+                CreatedAt = request.CreatedAt,
+                CreatedByUserName = user?.Username ?? "Unknown",
+                Status = request.Status,
+                Note = request.Note,
+                Details = request.Details?.Select(d => new ReturnRequestProdductDetailDto
+                {
+                    ReturnRequestDetailId = d.ReturnRequestDetailId,
+                    OrderDetailId = d.OrderDetailId,
+                    ProductName = d.Product?.ProductName ?? "",
+                    Reason = d.Reason,
+                    QuantityReturned = d.QuantityReturned,
+                    Images = d.Images?.Select(img => new ReturnRequestImageDto
+                    {
+                        ReturnRequestImageId = img.ReturnRequestImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList() ?? new List<ReturnRequestImageDto>()
+                }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
+            };
+        }
+
+
     }
 
 }

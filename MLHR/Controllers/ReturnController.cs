@@ -196,5 +196,33 @@ namespace MLHR.Controllers
             return Ok(result);
         }
 
+        [HttpGet("agency-return")]
+        [Authorize] // yêu cầu login
+        public async Task<IActionResult> GetReturnRequests()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            if (userId == Guid.Empty)
+                return Unauthorized();
+
+            var requests = await _returnService.GetReturnRequestsByUserIdAsync(userId);
+            return Ok(requests);
+        }
+
+        // GET: api/return-requests/{id}
+        [HttpGet("agency-return/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetReturnRequestByIdForAgency(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            if (userId == Guid.Empty)
+                return Unauthorized();
+
+            var request = await _returnService.GetReturnRequestByIdAsync(id, userId);
+            if (request == null)
+                return NotFound("Return request not found.");
+
+            return Ok(request);
+        }
+
     }
 }
