@@ -114,6 +114,13 @@ namespace Repo.Repository
                     .ThenInclude(r => r.User)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<int> GetTotalReturnedQuantityAsync(Guid orderDetailId)
+        {
+            return await _context.ReturnRequestDetails
+                .Where(d => d.OrderDetailId == orderDetailId)
+                .SumAsync(d => (int?)d.QuantityReturned) ?? 0;
+        }
     }
 
 }

@@ -63,6 +63,17 @@ namespace Services.Service
 
             long productId = orderDetail.ProductId;
 
+            // 🔥 Validate số lượng trả
+            // 1. Tổng số lượng đã trả trước đó
+            int totalReturned = await _returnRepo.GetTotalReturnedQuantityAsync(orderDetailId);
+
+            // 2. Số lượng còn lại có thể trả
+            int availableQuantity = orderDetail.Quantity - totalReturned;
+
+            if (quantity > availableQuantity)
+                throw new Exception($"Số lượng trả vượt quá số lượng còn lại. Số lượng còn lại có thể trả là {availableQuantity} sản phẩm.");
+
+
             // Upload ảnh lên Cloudinary hoặc thư mục lưu trữ
             var imageModel = new ImageModel { Files = images };
             var uploadedImages = await _imageService.UploadImagesAsync(imageModel, productId);
