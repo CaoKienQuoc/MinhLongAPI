@@ -145,6 +145,30 @@ namespace Repo.Repository
                     .ThenInclude(d => d.Images)
                 .FirstOrDefaultAsync(r => r.ReturnRequestId == returnRequestId && r.CreatedByUserId == userId);
         }
+        public async Task<string> GenerateRequestReturnCodeAsync()
+        {
+            var today = DateTime.Now.Date;
+            int countToday = await _context.RequestProducts
+                .Where(r => r.CreatedAt.Date == today)
+                .CountAsync();
+
+            string datePart = today.ToString("yyyyMMdd");
+            string requestCode = $"RT-{datePart}-{(countToday + 1):D3}";
+
+            return requestCode;
+        }
+        public async Task<string> GenerateWarehouseReturnCodeAsync()
+        {
+            var today = DateTime.Now.Date;
+            int countToday = await _context.RequestProducts
+                .Where(r => r.CreatedAt.Date == today)
+                .CountAsync();
+
+            string datePart = today.ToString("yyyyMMdd");
+            string requestCode = $"WR{datePart}-{(countToday + 1):D3}";
+
+            return requestCode;
+        }
     }
 
 }

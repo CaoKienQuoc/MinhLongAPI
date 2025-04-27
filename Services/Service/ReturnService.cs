@@ -49,7 +49,7 @@ namespace Services.Service
 
         public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, string? note, Guid userId, List<IFormFile> images)
         {
-
+            string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
             // 🔎 Lấy đơn hàng và kiểm tra trạng thái
             var order = await _orderRepo.GetOrderByIdAsync(orderId);
             if (order == null)
@@ -71,7 +71,7 @@ namespace Services.Service
             int availableQuantity = orderDetail.Quantity - totalReturned;
 
             if (quantity > availableQuantity)
-                throw new Exception($"Số lượng trả vượt quá số lượng còn lại. Số lượng còn lại có thể trả là {availableQuantity} sản phẩm.");
+                throw new Exception($"Số lượng trả vượt quá số lượng còn lại. Số lượng còn lại có thể trả là {availableQuantity} sản phẩm cho đơn hàng này.");
 
 
             // Upload ảnh lên Cloudinary hoặc thư mục lưu trữ
@@ -85,7 +85,9 @@ namespace Services.Service
                 CreatedByUserId = userId,
                 Note = note,
                 Status = "Pending",
+                ReturnRequestCode = returnRequestCode,
                 CreatedAt = DateTime.UtcNow,
+                
                 Details = new List<ReturnRequestDetail>
             {
                 new ReturnRequestDetail
@@ -117,6 +119,7 @@ namespace Services.Service
 
         public async Task ApproveReturnRequestAsync(Guid returnRequestId, Guid userId)
         {
+            string returnWarehouseCode = await _returnRepo.GenerateWarehouseReturnCodeAsync();
             // —————— 0) Validate user là Sale (Employee) ——————
             if (!await _employeeRepo.ExistsAsync(userId))
                 throw new UnauthorizedAccessException("Bạn không phải Sale.");
@@ -145,7 +148,7 @@ namespace Services.Service
             var receipt = new ReturnWarehouseReceipt
             {
                 ReturnRequestId = request.ReturnRequestId,
-                ReceiptCode = $"RR-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                ReceiptCode = returnWarehouseCode,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = request.CreatedByUserId,
                 ApprovedBy = userId,
@@ -200,6 +203,7 @@ namespace Services.Service
                 OrderId = r.OrderId,
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
+                ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
@@ -229,6 +233,7 @@ namespace Services.Service
                 OrderId = r.OrderId,
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
+                ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
@@ -258,6 +263,7 @@ namespace Services.Service
                 OrderId = r.OrderId,
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
+                ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
@@ -288,6 +294,7 @@ namespace Services.Service
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 Status = r.Status,
+                ReturnRequestCode = r.ReturnRequestCode,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
@@ -318,6 +325,7 @@ namespace Services.Service
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.ReturnRequest.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestId = r.ReturnRequestId,
+                ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
                 WarehouseId = r.WarehouseId,
                 Note = r.Note,
                 Status = r.Status,
@@ -345,6 +353,7 @@ namespace Services.Service
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.ReturnRequest.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestId = r.ReturnRequestId,
+                ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
                 WarehouseId = r.WarehouseId,
                 Note = r.Note,
                 Status = r.Status,
@@ -366,6 +375,8 @@ namespace Services.Service
             var result = receipts.Select(r => new ReturnWarehouseReceiptDto
             {
                 ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
+                ReturnRequestId = r.ReturnRequestId,
+                ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
                 ReceiptCode = r.ReceiptCode,
                 ReceiptDate = r.ReceiptDate,
                 WarehouseId = r.WarehouseId,
@@ -395,6 +406,7 @@ namespace Services.Service
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = user?.Username ?? "Unknown",
                 Status = r.Status,
+                ReturnRequestCode = r.ReturnRequestCode,
                 Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
@@ -427,6 +439,7 @@ namespace Services.Service
                 CreatedAt = request.CreatedAt,
                 CreatedByUserName = user?.Username ?? "Unknown",
                 Status = request.Status,
+                ReturnRequestCode = request.ReturnRequestCode,
                 Note = request.Note,
                 Details = request.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {

@@ -16,6 +16,8 @@ namespace Repo.IRepository
         Task SaveChangesAsync(); // ✅ thêm dòng này
         Task<IEnumerable<ReturnWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId);
         Task<List<ReturnWarehouseReceipt>> GetAllAsync();
+
+        
     }
 
 }

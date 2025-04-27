@@ -14,6 +14,7 @@ using Services.IService;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Services.Service
 {
@@ -49,127 +50,9 @@ namespace Services.Service
             _orderRepo = orderRepository;
         }
 
-        /*public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
-        {
-            
-            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId);
-            if (requestExport == null || requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
-                throw new InvalidOperationException("RequestExport not found or invalid.");
-
-            if (requestExport.Status == "Requested" || requestExport.Status == "Approved")
-                throw new InvalidOperationException("This request has already been processed.");
-
-            var orderId = requestExport.OrderId;
-            if (orderId == Guid.Empty)
-                throw new InvalidOperationException("OrderId is missing.");
-            var order = await _orderRepo.GetOrderByIdAsync(orderId);
-
-            var tempStockExports = await _tempExportRepo.GetByOrderIdAsync(orderId);
-            if (tempStockExports == null || !tempStockExports.Any())
-                throw new InvalidOperationException("No temporary stock exports found.");
-
-            var groupedByProduct = tempStockExports
-                .GroupBy(t => t.ProductId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.GroupBy(x => x.WarehouseId)
-                          .ToDictionary(y => y.Key, y => y.ToList())
-                );
-
-            var transferRequestsToSave = new List<WarehouseTransferRequest>();
-            var exportDetails = new List<ExportWarehouseReceiptDetail>();
-            long? mainWarehouseId = null;
-
-            foreach (var productGroup in groupedByProduct)
-            {
-                var productId = productGroup.Key;
-                var warehouseGroups = productGroup.Value;
-                // ✅ Xác định kho chính
-                var maxWarehouse = warehouseGroups
-                    .OrderByDescending(w => w.Value.Sum(x => x.Quantity))
-                    .First();
-
-                var mainId = maxWarehouse.Key;
-                // Nếu lần đầu gặp sản phẩm → gán main warehouse
-                if (mainWarehouseId == null)
-                    mainWarehouseId = mainId;
-
-                // ✅ Tạo chi tiết xuất kho cho kho chính
-                foreach (var item in maxWarehouse.Value)
-                {
-                    var product = await _productRepository.GetByIdAsync(item.ProductId);
-                    exportDetails.Add(new ExportWarehouseReceiptDetail
-                    {
-                        ProductId = item.ProductId,
-                        ProductName = product?.ProductName ?? "Unknown",
-                        BatchNumber = item.BatchNumber,
-                        Quantity = (int)item.Quantity,
-                        UnitPrice = item.UnitPrice,
-                        TotalProductAmount = item.Quantity * item.UnitPrice,
-                        ExpiryDate = item.ExpiryDate,
-                        WarehouseProductId = item.WarehouseProductId,
-                        BatchId = item.BatchId
-                    });
-                }
-
-                // ✅ Các kho còn lại → tạo điều phối
-                foreach (var other in warehouseGroups.Where(x => x.Key != mainId))
-                {
-                    transferRequestsToSave.Add(new WarehouseTransferRequest
-                    {
-                        SourceWarehouseId = other.Key,
-                        DestinationWarehouseId = mainId,
-                        Status = "Pending",
-                        RequestDate = DateTime.UtcNow,
-                        Notes = $"Transfer ProductId {productId} - Qty: {other.Value.Sum(x => x.Quantity)}",
-                        TransferProducts = other.Value.Select(t => new WarehouseTransferProduct
-                        {
-                            ProductId = t.ProductId,
-                            Quantity = (int)t.Quantity,
-                            BatchId = t.BatchId
-                        }).ToList()
-                    });
-                }
-            }
-
-            // ✅ Lưu ExportWarehouseReceipt cho kho chính
-            var exportReceipt = new ExportWarehouseReceipt
-            {
-                DocumentNumber = $"PXK-CHINH-{DateTime.UtcNow.Ticks}",
-                DocumentDate = DateTime.UtcNow,
-                ExportDate = DateTime.UtcNow,
-                ExportType = "PendingTransfer",
-                Status = "Pending",
-                WarehouseId = mainWarehouseId.Value,
-                RequestExportId = requestExportId,
-                ExportWarehouseReceiptDetails = exportDetails,
-                TotalQuantity = exportDetails.Sum(x => x.Quantity),
-                TotalAmount = exportDetails.Sum(x => x.TotalProductAmount)
-            };
-
-            await _exportReceiptRepo.AddRangeAsync(new List<ExportWarehouseReceipt> { exportReceipt }); // ✅ đúng
-            await _transferRepo.AddRangeAsync(transferRequestsToSave);
-
-            requestExport.Status = "Requested"; // hoặc Approved
-            order.Status = "WaitingDelivery"; // Cập nhật trạng thái đơn hàng
-            
-            await _requestExportRepository.UpdateRequestExportAsync(requestExport);
-            await _orderRepo.UpdateOrderAsync(order);
-            await _requestExportRepository.SaveChangesAsync();
-
-            // Gửi thông báo đến kho chính
-            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
-            {
-                title = "Kho",
-                message = "📦 Đơn xuất kho đã được duyệt. Vui lòng chuẩn bị xuất kho.",
-                payload = $"RequestExportCode: {requestExport.RequestExportCode}"
-            });
-
-            return exportReceipt;
-        }*/
-
         public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
         {
+            var random = new Random();
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
                 ?? throw new InvalidOperationException("RequestExport not found.");
 
@@ -214,7 +97,7 @@ namespace Services.Service
 
                 var receipt = new ExportWarehouseReceipt
                 {
-                    DocumentNumber = $"PXK-{DateTime.UtcNow.Ticks}",
+                    DocumentNumber = $"PXK-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
                     DocumentDate = DateTime.UtcNow,
                     ExportDate = DateTime.UtcNow,
                     ExportType = "AvailableExport",
@@ -286,7 +169,7 @@ namespace Services.Service
 
             var transferReceipt = new ExportWarehouseReceipt
             {
-                DocumentNumber = $"PXK-{DateTime.UtcNow.Ticks}",
+                DocumentNumber = $"PXK-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
                 DocumentDate = DateTime.UtcNow,
                 ExportDate = DateTime.UtcNow,
                 ExportType = "PendingTransfer",

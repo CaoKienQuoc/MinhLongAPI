@@ -35,6 +35,7 @@ namespace Services.Service
         }
         public async Task<ExportWarehouseReceipt> ApproveTransferRequestAndCreateReceiptAsync(int transferRequestId)
         {
+            var random = new Random();
             var transferRequest = await _transferRepo.GetByIdAsync(transferRequestId);
 
             if (transferRequest == null || transferRequest.TransferProducts == null || !transferRequest.TransferProducts.Any())
@@ -46,7 +47,7 @@ namespace Services.Service
             // ✅ Tạo phiếu xuất kho điều phối từ kho phụ
             var exportReceipt = new ExportWarehouseReceipt
             {
-                DocumentNumber = $"PXK-DP-{DateTime.UtcNow.Ticks}",
+                DocumentNumber = $"PXK-DP-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
                 DocumentDate = DateTime.UtcNow,
                 ExportDate = DateTime.UtcNow,
                 ExportType = "ExportCoordination",

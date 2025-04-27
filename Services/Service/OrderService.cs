@@ -253,10 +253,6 @@ namespace Services.Service
             return true;
         }
 
-        /*public async Task<List<Order>> GetOrdersByAgencyIdAsync(long agencyId)
-        {
-            return await _orderRepository.GetOrdersByAgencyIdAsync(agencyId);
-        }*/
 
         public async Task<List<OrderDto>> GetOrdersByAgencyIdAsync(long agencyId)
         {

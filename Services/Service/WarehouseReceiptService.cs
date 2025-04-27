@@ -15,6 +15,7 @@ using Services.Exceptions;
 using Services.IService;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Services.Service
 {
@@ -51,6 +52,7 @@ namespace Services.Service
 
         public async Task<bool> CreateReceiptAsync(WarehouseReceiptRequest request, Guid currentUserId)
         {
+            var random = new Random();
             var allowedTypes = new HashSet<string> { "ImportCoordination", "ImportProduction" };
             if (!allowedTypes.Contains(request.ImportType))
                 throw new Exception("ImportType is invalid! Only accepted: ImportCoordination, ImportProduction");
@@ -110,7 +112,7 @@ namespace Services.Service
 
                     processedBatches.Add(new BatchResponseDto
                     {
-                        BatchCode = $"BA{DateTime.Now:yyyyMMddHHmmss}",
+                        BatchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
                         ProductId = b.ProductId,
                         Unit = b.Unit,
                         Quantity = b.Quantity,
@@ -132,11 +134,11 @@ namespace Services.Service
             string documentNumber;
             if (request.ImportType == "ImportCoordination")
             {
-                documentNumber = $"IMP-TF-{DateTime.Now:yyyyMMddHHmmss}";
+                documentNumber = $"IMP-TF-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
             }
             else if (request.ImportType == "ImportProduction")
             {
-                documentNumber = $"IMP-NEW-{DateTime.Now:yyyyMMddHHmmss}";
+                documentNumber = $"IMP-NEW-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
             }
             else
             {
@@ -279,118 +281,11 @@ namespace Services.Service
             };
         }
 
-        /*public async Task<bool> ImportApprovedTransfersAsync(long destinationWarehouseId, Guid currentUserId)
-        {
-            var transferRequests = await _transferRepo.GetApprovedTransfersByDestinationAsync(destinationWarehouseId);
-
-            if (transferRequests == null || !transferRequests.Any())
-                throw new Exception("Không có điều phối nào ở trạng thái Approved cho kho này.");
-
-            foreach (var request in transferRequests)
-            {
-                var userId = await _warehouseRepository.GetUserIdByWarehouseIdAsync(request.DestinationWarehouseId);
-                if (userId != currentUserId)
-                    throw new UnauthorizedAccessException("Không có quyền thao tác với kho này.");
-
-                // ✅ Lấy batches từ transfer
-                var batches = request.TransferProducts.Select(tp =>
-                {
-                    if (tp.Batch == null)
-                        throw new Exception($"Không tìm thấy batch cho sản phẩm {tp.ProductId}");
-
-                    decimal totalAmount = tp.Quantity * tp.Batch.UnitCost;
-
-                    return new BatchResponseDto
-                    {
-                        BatchCode = tp.Batch.BatchCode,
-                        ProductId = tp.ProductId,
-                        Unit = tp.Batch.Unit,
-                        Quantity = tp.Quantity,
-                        UnitCost = tp.Batch.UnitCost,
-                        TotalAmount = totalAmount,
-                        SellingPrice = tp.Batch.SellingPrice ?? 0,
-                        Status = tp.Batch.Status,
-                        DateOfManufacture = tp.Batch.DateOfManufacture,
-                        ExpiryDate = tp.Batch.ExpiryDate
-                    };
-                }).ToList();
-
-                decimal totalPrice = batches.Sum(x => x.TotalAmount);
-                int totalQuantity = batches.Sum(x => x.Quantity);
-
-                // ✅ Bước 1: Lưu vào WarehouseReceipt
-                var warehouseReceipt = new WarehouseReceipt
-                {
-                    DocumentNumber = $"IMP-TF-{DateTime.Now:yyyyMMddHHmmss}",
-                    DocumentDate = DateTime.Now,
-                    WarehouseId = request.DestinationWarehouseId,
-                    ImportType = "ImportCoordination",
-                    Supplier = $"Kho #{request.SourceWarehouseId}",
-                    DateImport = DateTime.Now,
-                    TotalQuantity = totalQuantity,
-                    TotalPrice = totalPrice,
-                    IsApproved = true,
-                    BatchesJson = JsonConvert.SerializeObject(batches, Formatting.Indented)
-                };
-
-                await _receiptRepo.AddAsync(warehouseReceipt);
-                await _receiptRepo.SaveChangesAsync(); // Lấy xong receipt mới tạo giao dịch
-
-                // ✅ Bước 2: Lưu ImportTransaction
-                var importTransaction = new ImportTransaction
-                {
-                    DocumentNumber = warehouseReceipt.DocumentNumber,
-                    DocumentDate = warehouseReceipt.DocumentDate,
-                    TypeImport = warehouseReceipt.ImportType,
-                    Note = $"Tạo từ phiếu điều phối #{request.Id}",
-                    Supplier = warehouseReceipt.Supplier,
-                    WarehouseId = warehouseReceipt.WarehouseId,
-                    DateImport = warehouseReceipt.DateImport
-                };
-
-                await _receiptRepo.AddImportTransactionAsync(importTransaction);
-                await _receiptRepo.SaveChangesAsync();
-
-                // ✅ Bước 3: Lưu ImportTransactionDetail + Batch
-                foreach (var b in batches)
-                {
-                    var detail = new ImportTransactionDetail
-                    {
-                        ImportTransactionId = importTransaction.ImportTransactionId,
-                        TotalQuantity = b.Quantity,
-                        TotalPrice = b.TotalAmount,
-                        Note = $"SP #{b.ProductId} - Batch: {b.BatchCode}"
-                    };
-                    await _receiptRepo.AddImportTransactionDetailAsync(detail);
-                    await _receiptRepo.SaveChangesAsync();
-
-                    var batchEntity = new Batch
-                    {
-                        ProductId = b.ProductId,
-                        BatchCode = b.BatchCode,
-                        Quantity = b.Quantity,
-                        UnitCost = b.UnitCost,
-                        TotalAmount = b.TotalAmount,
-                        SellingPrice = b.SellingPrice,
-                        Unit = b.Unit,
-                        DateOfManufacture = b.DateOfManufacture,
-                        ExpiryDate = b.ExpiryDate,
-                        Status = b.Status,
-                        ImportTransactionDetailId = detail.ImportTransactionDetailId
-                    };
-                    await _batchRepo.AddAsync(batchEntity);
-                }
-                await _batchRepo.SaveChangesAsync();
-
-                // ✅ Gọi service cập nhật lại đơn xuất kho tổng theo RequestExportId
-                await _exportWarehouseService.UpdateExportFromCoordinationImportAsync(request.RequestExportId, batches);
-            }
-
-            return true;
-        }*/
+       
 
         public async Task<bool> ImportApprovedTransfersAsync(long destinationWarehouseId, Guid currentUserId)
         {
+            var random = new Random();
             var transferRequests = await _transferRepo.GetApprovedTransfersByDestinationAsync(destinationWarehouseId);
 
             if (transferRequests == null || !transferRequests.Any())
@@ -452,7 +347,7 @@ namespace Services.Service
 
                 var warehouseReceipt = new WarehouseReceipt
                 {
-                    DocumentNumber = $"IMP-TF-{DateTime.Now:yyyyMMddHHmmss}",
+                    DocumentNumber = $"IMP-TF-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
                     DocumentDate = DateTime.Now,
                     WarehouseId = request.DestinationWarehouseId,
                     ImportType = "ImportCoordination",

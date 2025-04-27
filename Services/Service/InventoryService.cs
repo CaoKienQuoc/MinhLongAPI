@@ -30,68 +30,7 @@ namespace Services.Service
         }
 
 
-        /*public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
-        {
-            var remainingQuantity = requiredQuantity;
-
-            var stockList = await _warehouseProductRepo.GetAvailableWarehouseProductsAsync(productId);
-
-            stockList = stockList
-                .Where(x => x.ExpirationDate != null)
-                .OrderBy(x => x.ExpirationDate)
-                .ToList();
-
-            foreach (var stock in stockList)
-            {
-                if (remainingQuantity <= 0)
-                    break;
-
-                var deductQuantity = Math.Min(stock.Quantity, remainingQuantity);
-
-                // Kiểm tra lại tồn kho
-                if (stock.Quantity < deductQuantity)
-                    throw new InvalidOperationException($"Tồn kho không đủ tại kho {stock.WarehouseId}.");
-
-                stock.Quantity -= (int)deductQuantity;
-                await _warehouseProductRepo.UpdateAsync(stock);
-
-                // ✅ Kiểm tra tồn tại bản ghi trong kho tạm
-                var existingTemp = await _tempExportRepo.GetByConditionAsync(x =>
-                    x.OrderId == orderId &&
-                    x.ProductId == productId &&
-                    x.WarehouseId == stock.WarehouseId &&
-                    !x.IsReverted
-                );
-
-                var matchedTemp = existingTemp.FirstOrDefault();
-                if (matchedTemp != null)
-                {
-                    matchedTemp.Quantity += deductQuantity;
-                    await _tempExportRepo.UpdateAsync(matchedTemp);
-                }
-                else
-                {
-                    await _tempExportRepo.AddAsync(new TemporaryStockExport
-                    {
-                        ProductId = productId,
-                        WarehouseId = stock.WarehouseId,
-                        BatchId = stock.BatchId,
-                        Quantity = deductQuantity,
-                        OrderId = orderId,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
-
-                remainingQuantity -= deductQuantity;
-            }
-
-            if (remainingQuantity > 0)
-                throw new InvalidOperationException($"Không đủ tồn kho cho sản phẩm {productId}. Thiếu {remainingQuantity}");
-
-            await _warehouseProductRepo.SaveChangesAsync();
-            await _tempExportRepo.SaveChangesAsync();
-        }*/
-
+        
 
         public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
         {
@@ -202,25 +141,7 @@ namespace Services.Service
             await _tempExportRepo.DeleteByOrderIdAsync(orderId);
             await _tempExportRepo.SaveChangesAsync();
 
-            /*// 4. Cập nhật lại AvailableStock của các sản phẩm liên quan
-            // Lấy danh sách ProductId duy nhất từ các bản ghi tạm vừa xử lý
-            var productIds = tempExports.Select(te => te.ProductId).Distinct();
-
-            foreach (var productId in productIds)
-            {
-                // Tính lại tổng tồn kho của sản phẩm từ bảng WarehouseProduct (chỉ tính các bản ghi có Status = 'ACTIVE')
-                var totalAvailable = await _warehouseProductRepo.GetTotalAvailableStockByProductIdAsync(productId);
-
-                // Lấy thông tin sản phẩm
-                var product = await _productRepository.GetByIdAsync(productId);
-                if (product != null)
-                {
-                    // Cập nhật AvailableStock (ép kiểu nếu cần)
-                    product.AvailableStock = (int)totalAvailable;
-                    await _productRepository.UpdateAsync(product);
-                }
-            }
-            await _productRepository.SaveChangesAsync();*/
+           
         }
 
     }

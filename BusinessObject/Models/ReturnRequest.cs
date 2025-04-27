@@ -16,6 +16,8 @@ namespace BusinessObject.Models
         [Required]
         public Guid CreatedByUserId { get; set; } // đại lý
 
+        public string ReturnRequestCode { get; set; } // mã yêu cầu trả hàng
+
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
