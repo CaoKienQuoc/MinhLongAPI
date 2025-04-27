@@ -14,7 +14,7 @@ namespace Repo.IRepository
         Task<ReturnWarehouseReceipt?> GetByIdWithDetailsAsync(long receiptId);
         Task UpdateStatusAsync(long receiptId, string newStatus);
         Task SaveChangesAsync(); // ✅ thêm dòng này
-
+        Task<IEnumerable<ReturnWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId);
         Task<List<ReturnWarehouseReceipt>> GetAllAsync();
     }
 

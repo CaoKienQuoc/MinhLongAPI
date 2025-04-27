@@ -72,6 +72,16 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<ReturnWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId)
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Where(r => r.WarehouseId == warehouseId)
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Product) // Include thêm Product cho mỗi Detail
+                .ToListAsync();
+        }
+
+
     }
 
 }

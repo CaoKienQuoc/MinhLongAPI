@@ -23,7 +23,7 @@ namespace Services.IService
 
         Task<List<ReturnWarehouseReceiptDto>> GetAllReturnWarehouseReceiptsAsync();
         Task<ReturnWarehouseReceiptDto> GetReturnWarehouseReceiptByIdAsync(long id);
-
+        Task<IEnumerable<ReturnWarehouseReceiptDto>> GetByWarehouseIdAsync(long warehouseId);
     }
 
 }

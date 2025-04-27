@@ -348,6 +348,31 @@ namespace Services.Service
             };
         }
 
+        public async Task<IEnumerable<ReturnWarehouseReceiptDto>> GetByWarehouseIdAsync(long warehouseId)
+        {
+            var receipts = await _returnWarehouseReceiptRepo.GetByWarehouseIdAsync(warehouseId);
+
+            var result = receipts.Select(r => new ReturnWarehouseReceiptDto
+            {
+                ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
+                ReceiptCode = r.ReceiptCode,
+                ReceiptDate = r.ReceiptDate,
+                Note = r.Note,
+                Status = r.Status,
+                Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
+                {
+                    ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
+                    ProductName = d.Product.ProductName,
+                    Quantity = d.Quantity,
+                    BatchId = d.BatchId,
+                    Reason = d.Reason
+                }).ToList()
+            });
+
+            return result;
+        }
+
+
     }
 
 }

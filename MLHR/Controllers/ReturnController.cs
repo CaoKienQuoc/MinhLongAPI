@@ -196,5 +196,17 @@ namespace MLHR.Controllers
             return Ok(result);
         }
 
+        [HttpGet("warehouse-return/WarehouseReturnByWarehouseId/{warehouseId}")]
+        public async Task<IActionResult> GetByWarehouseIdInReturnWarhouse(long warehouseId)
+        {
+            var receipts = await _returnService.GetByWarehouseIdAsync(warehouseId);
+            if (receipts == null || !receipts.Any())
+            {
+                return NotFound("Không tìm thấy phiếu nhập cho kho này.");
+            }
+            return Ok(receipts);
+        }
+
+
     }
 }
