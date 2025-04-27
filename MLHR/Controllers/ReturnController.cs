@@ -220,11 +220,12 @@ namespace MLHR.Controllers
         public async Task<IActionResult> GetByWarehouseIdInReturnWarhouse(long warehouseId)
         {
             var receipts = await _returnService.GetByWarehouseIdAsync(warehouseId);
-            if (receipts == null || !receipts.Any())
+
+            return Ok(new
             {
-                return NotFound("Không tìm thấy phiếu nhập cho kho này.");
-            }
-            return Ok(receipts);
+                message = "Danh sách phiếu nhập trả kho",
+                data = receipts ?? new List<ReturnWarehouseReceiptDto>() // ✅ Nếu receipts null thì trả [] luôn
+            });
         }
        
         [HttpGet("agency-return")]

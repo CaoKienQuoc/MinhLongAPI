@@ -372,11 +372,16 @@ namespace Services.Service
         {
             var receipts = await _returnWarehouseReceiptRepo.GetByWarehouseIdAsync(warehouseId);
 
+            if (receipts == null || !receipts.Any())
+            {
+                return new List<ReturnWarehouseReceiptDto>(); // ✅ trả mảng rỗng nếu không có dữ liệu
+            }
+
             var result = receipts.Select(r => new ReturnWarehouseReceiptDto
             {
                 ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
                 ReturnRequestId = r.ReturnRequestId,
-                ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
+                ReturnRequestCode = r.ReturnRequest?.ReturnRequestCode, // 🔥 dùng ? để tránh lỗi nếu ReturnRequest null
                 ReceiptCode = r.ReceiptCode,
                 ReceiptDate = r.ReceiptDate,
                 WarehouseId = r.WarehouseId,
@@ -385,15 +390,16 @@ namespace Services.Service
                 Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
                 {
                     ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
-                    ProductName = d.Product.ProductName,
+                    ProductName = d.Product?.ProductName, // 🔥 thêm ? để tránh lỗi nếu Product null
                     Quantity = d.Quantity,
                     BatchId = d.BatchId,
                     Reason = d.Reason
                 }).ToList()
-            });
+            }).ToList();
 
             return result;
         }
+
         public async Task<IEnumerable<ReturnRequestProdductDto>> GetReturnRequestsByUserIdAsync(Guid userId)
         {
             var requests = await _returnRepo.GetByUserIdAsync(userId);
