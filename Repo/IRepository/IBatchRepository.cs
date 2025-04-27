@@ -25,6 +25,9 @@ namespace Repo.IRepository
 
         Task<List<Batch>> GetBatchesByWarehouseIdAsync(long warehouseId);
 
+        IQueryable<Batch> GetQueryable();
+        Task UpdateRangeAsync(IEnumerable<Batch> batches);
+
     }
 
 }

@@ -20,6 +20,7 @@ namespace Services.IService
 
         Task<List<BatchDisplayDto>> GetBatchesByWarehouseIdAsync(long warehouseId);
 
+        Task<int> UpdateExpiredBatchesAsync(DateTime nowVietnamTime);
 
     }
 }

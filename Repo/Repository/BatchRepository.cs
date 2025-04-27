@@ -145,7 +145,16 @@ namespace Repo.Repository
 
         }
 
+        public IQueryable<Batch> GetQueryable()
+        {
+            return _context.Batches.AsQueryable();
+        }
 
+        public async Task UpdateRangeAsync(IEnumerable<Batch> batches)
+        {
+            _context.Batches.UpdateRange(batches);
+            await _context.SaveChangesAsync();
+        }
 
     }
 

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.DTO.Product;
 using BusinessObject.Models;
+using Microsoft.EntityFrameworkCore;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
@@ -149,6 +150,25 @@ namespace Services.Service
                     Status = b.Status
                 })
                 .ToList();
+        }
+
+        public async Task<int> UpdateExpiredBatchesAsync(DateTime nowVietnamTime)
+        {
+            var expiredBatches = await _batchRepository.GetQueryable()
+                .Where(b => b.Status == "ACTIVE" && b.ExpiryDate < nowVietnamTime)
+                .ToListAsync();
+
+            foreach (var batch in expiredBatches)
+            {
+                batch.Status = "EXPIRED";
+            }
+
+            if (expiredBatches.Any())
+            {
+                await _batchRepository.UpdateRangeAsync(expiredBatches);
+            }
+
+            return expiredBatches.Count;
         }
 
     }

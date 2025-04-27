@@ -10,6 +10,7 @@ namespace BusinessObject.DTO.Warehouse
     {
         public long Id { get; set; }
         public long SourceWarehouseId { get; set; }
+        public string WarehouseTranferCode { get; set; }
         public string SourceWarehouseName { get; set; }
         public long DestinationWarehouseId { get; set; }
         public string DestinationWarehouseName { get; set; }

@@ -35,6 +35,8 @@ namespace BusinessObject.Models
 
         public long WarehouseProductId { get; set; } // ✅ Cần – để tracking lại
 
+        public string TranferRequestCode { get; set; }
+
         // Danh sách sản phẩm cần chuyển
         public ICollection<WarehouseTransferProduct> TransferProducts { get; set; } = new List<WarehouseTransferProduct>();
     }

@@ -153,6 +153,7 @@ namespace Services.Service
                             Status = "Pending",
                             RequestDate = DateTime.UtcNow,
                             Notes = $"Transfer for order {order.OrderCode}",
+                            TranferRequestCode = $"PDP-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
                             TransferProducts = new List<WarehouseTransferProduct>()
                         };
                         transferRequests.Add(existing);

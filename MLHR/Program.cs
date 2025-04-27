@@ -166,21 +166,29 @@ builder.Services.AddScoped<IWarehouseExportService, WarehouseExportService>();
 
 builder.Services.AddScoped<IReturnRequestRepository, ReturnRequestRepository>();
 builder.Services.AddScoped<IReturnService, ReturnService>();
+
 builder.Services.AddScoped<IDamagedStockRepository, DamagedStockRepository>();
 builder.Services.AddScoped<IDamagedStockService, DamagedStockService>();
+
 builder.Services.AddScoped<IReturnWarehouseReceiptRepository, ReturnWarehouseReceiptRepository>();
 
+builder.Services.AddHostedService<ExpiredBatchBackgroundService>();
 
 builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
 builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
-builder.Services.AddMemoryCache(); // hoặc services.AddMemoryCache() nếu dùng Startup
-builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+
 builder.Services.AddScoped<IAgencyAccountRepository, AgencyAccountRepository>();
 builder.Services.AddScoped<IAgencyAccountLevelRepository, AgencyAccountLevelRepository>();
 
 builder.Services.AddScoped<IWarehouseProductRepository, WarehouseProductRepository>();
+
 builder.Services.AddScoped<IInventoryService, InventoryService>();
+
 builder.Services.AddScoped<ITemporaryWarehouseExportRepository, TemporaryWarehouseExportRepository>();
+
+builder.Services.AddMemoryCache(); // hoặc services.AddMemoryCache() nếu dùng Startup
+builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddHttpContextAccessor();

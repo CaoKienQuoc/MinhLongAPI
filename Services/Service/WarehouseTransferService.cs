@@ -127,6 +127,7 @@ namespace Services.Service
                 SourceWarehouseId = r.SourceWarehouseId,
                 SourceWarehouseName = r.SourceWarehouse?.WarehouseName ?? "",
                 DestinationWarehouseId = r.DestinationWarehouseId,
+                WarehouseTranferCode = r.TranferRequestCode,
                 DestinationWarehouseName = r.DestinationWarehouse?.WarehouseName ?? "",
                 RequestExportId = r.RequestExportId,
                 RequestDate = r.RequestDate,

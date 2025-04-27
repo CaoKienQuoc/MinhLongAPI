@@ -106,7 +106,7 @@ namespace Services.Service
 
                     int defaultExpirationDays = product.DefaultExpiration ?? 720; // fallback nếu null
                     DateTime manufactureDate = b.DateOfManufacture;
-                    DateTime expiryDate = manufactureDate.AddDays(defaultExpirationDays);
+                    DateTime expiryDate = manufactureDate.AddDays(defaultExpirationDays).AddDays(1); // ✅ cộng thêm 1 ngày
 
                     string status = expiryDate < DateTime.Now ? "EXPIRED" : "CALCULATING_PRICE";
 

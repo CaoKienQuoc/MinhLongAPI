@@ -69,5 +69,14 @@ namespace MLHR.Controllers
             }
         }
 
+        /*[HttpGet("list")]
+        public async Task<IActionResult> GetBatches()
+        {
+            await _batchService.UpdateExpiredBatchesAsync(); // 🔥 update trước mỗi lần load
+            var batches = await _batchService.GetAllBatchesAsync();
+            return Ok(batches);
+        }
+*/
+
     }
 }
