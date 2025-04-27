@@ -24,6 +24,8 @@ namespace Repo.IRepository
         Task<ReturnRequest> GetApprovedByIdAsync(Guid id);
 
         Task<int> GetTotalReturnedQuantityAsync(Guid orderDetailId);
+        Task<IEnumerable<ReturnRequest>> GetByUserIdAsync(Guid userId);
+        Task<ReturnRequest> GetByIdAndUserIdAsync(Guid returnRequestId, Guid userId);
     }
 
 }

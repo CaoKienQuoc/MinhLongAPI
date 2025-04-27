@@ -130,20 +130,26 @@ namespace Services.Service
         public async Task<List<BatchDisplayDto>> GetBatchesByWarehouseIdAsync(long warehouseId)
         {
             var batches = await _batchRepository.GetBatchesByWarehouseIdAsync(warehouseId);
-            return batches.Select(b => new BatchDisplayDto
-            {
-                ProductId = b.ProductId,
-                ProductName = b.Product.ProductName,
-                BatchCode = b.BatchCode,
-                UnitCost = b.UnitCost,
-                Quantity = b.Quantity,
-                DateOfManufacture = b.DateOfManufacture,
-                ExpiryDate = b.ExpiryDate,
-                TotalAmount = b.TotalAmount,
-                SellingPrice = b.SellingPrice ?? 0,
-                ProfitMarginPercent = b.ProfitMarginPercent,
-                Status = b.Status
-            }).ToList();
+
+            return batches
+                .OrderByDescending(b => b.BatchId) // 🛠️ Sort theo BatchId giảm dần
+                .Select(b => new BatchDisplayDto
+                {
+                    BatchId = b.BatchId,
+                    ProductId = b.ProductId,
+                    ProductName = b.Product.ProductName,
+                    BatchCode = b.BatchCode,
+                    UnitCost = b.UnitCost,
+                    Quantity = b.Quantity,
+                    DateOfManufacture = b.DateOfManufacture,
+                    ExpiryDate = b.ExpiryDate,
+                    TotalAmount = b.TotalAmount,
+                    SellingPrice = b.SellingPrice ?? 0,
+                    ProfitMarginPercent = b.ProfitMarginPercent,
+                    Status = b.Status
+                })
+                .ToList();
         }
+
     }
 }

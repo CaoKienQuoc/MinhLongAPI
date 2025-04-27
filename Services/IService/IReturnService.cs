@@ -24,6 +24,10 @@ namespace Services.IService
         Task<List<ReturnWarehouseReceiptDto>> GetAllReturnWarehouseReceiptsAsync();
         Task<ReturnWarehouseReceiptDto> GetReturnWarehouseReceiptByIdAsync(long id);
         Task<IEnumerable<ReturnWarehouseReceiptDto>> GetByWarehouseIdAsync(long warehouseId);
+
+        Task<IEnumerable<ReturnRequestProdductDto>> GetReturnRequestsByUserIdAsync(Guid userId);
+        Task<ReturnRequestProdductDto> GetReturnRequestByIdAsync(Guid returnRequestId, Guid userId);
+
     }
 
 }

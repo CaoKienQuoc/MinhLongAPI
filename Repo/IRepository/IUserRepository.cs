@@ -58,6 +58,7 @@ namespace Repo.IRepository
         Task<Employee> GetByUserIdAsync(Guid userId);
 
         Task<bool> ExistsAsync(Guid employeeId);
+        Task<User> GetByIdAsync(Guid userId);
     }
 
 }
