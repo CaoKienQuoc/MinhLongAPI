@@ -78,6 +78,7 @@ namespace Repo.Repository
                 .Where(r => r.WarehouseId == warehouseId)
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Product) // Include thêm Product cho mỗi Detail
+                    .Include(r => r.ReturnRequest)
                 .ToListAsync();
         }
 
