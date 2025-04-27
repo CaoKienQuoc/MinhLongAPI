@@ -368,6 +368,7 @@ namespace Services.Service
                 ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
                 ReceiptCode = r.ReceiptCode,
                 ReceiptDate = r.ReceiptDate,
+                WarehouseId = r.WarehouseId,
                 Note = r.Note,
                 Status = r.Status,
                 Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto

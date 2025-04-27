@@ -42,19 +42,39 @@ namespace MLHR.Controllers
         [Authorize]
         [RequestSizeLimit(10_000_000)]
         public async Task<IActionResult> CreateReturnRequestWithImages(
-        [FromForm] Guid orderId,
-        [FromForm] string? note,
-        [FromForm] Guid orderDetailId,
-        [FromForm] int quantity,
-        [FromForm] string reason,
-        [FromForm] List<IFormFile> images)
+    [FromForm] Guid orderId,
+    [FromForm] string? note,
+    [FromForm] Guid orderDetailId,
+    [FromForm] int quantity,
+    [FromForm] string reason,
+    [FromForm] List<IFormFile> images)
         {
             var userId = GetLoggedInUserId();
-            if (userId == null) return Unauthorized();
+            if (userId == null)
+                return Unauthorized(new { message = "Bạn chưa đăng nhập." });
 
-            var result = await _returnService.CreateReturnRequestWithImagesAsync(orderId, orderDetailId, quantity, reason, note, userId.Value, images);
-            return Ok(new { message = "Tạo yêu cầu trả hàng thành công", data = result });
+            try
+            {
+                var result = await _returnService.CreateReturnRequestWithImagesAsync(
+                    orderId, orderDetailId, quantity, reason, note, userId.Value, images
+                );
+
+                return Ok(new
+                {
+                    message = "Tạo yêu cầu trả hàng thành công.",
+                    data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = "Tạo yêu cầu trả hàng thất bại.",
+                    error = ex.Message
+                });
+            }
         }
+
 
 
 
