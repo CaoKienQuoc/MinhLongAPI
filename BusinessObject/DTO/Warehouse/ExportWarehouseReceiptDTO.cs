@@ -31,6 +31,7 @@ namespace BusinessObject.DTO.Warehouse
         public long ProductId { get; set; }
         public string ProductName { get; set; }
         public string BatchNumber { get; set; }
+        public int RequestedQuantity { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal TotalProductAmount { get; set; }
