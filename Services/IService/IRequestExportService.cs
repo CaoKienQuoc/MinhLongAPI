@@ -13,5 +13,9 @@ namespace Services.IService
         Task<List<RequestExportDto>> GetAllRequestExportsAsync(string? sortBy = null);
 
         Task<RequestExportDto> GetRequestExportByIdAsync(int requestId);
+
+        Task<List<RequestExportDto>> GetRequestExportsBySalesAsync(Guid salesUserId, string? sortBy = null);
+
+        Task<RequestExportDto?> GetRequestExportByIdForSalesAsync(int requestId, Guid salesUserId);
     }
 }

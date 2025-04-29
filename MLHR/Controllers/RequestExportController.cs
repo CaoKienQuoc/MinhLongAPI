@@ -40,6 +40,7 @@ namespace MLHR.Controllers
             return Ok(requestExports);
         }
 
+
         [HttpPost("create-for-main-warehouse/{requestExportId}")]
         public async Task<IActionResult> CreateForMainWarehouse(int requestExportId)
         {
@@ -65,6 +66,29 @@ namespace MLHR.Controllers
                 });
             }
         }
+
+        [HttpGet("manage-by-sales")]
+        public async Task<IActionResult> GetAllRequestExportsBySales([FromQuery] string? sortBy)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var requestExports = await _requestExportService.GetRequestExportsBySalesAsync(userId, sortBy);
+            return Ok(requestExports);
+        }
+
+        [HttpGet("manage-by-sales/{requestExportId}")]
+        public async Task<IActionResult> GetRequestExportByIdBySales(int requestExportId)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var requestExport = await _requestExportService.GetRequestExportByIdForSalesAsync(requestExportId, userId);
+
+            if (requestExport == null)
+                return NotFound("Đơn này không thuộc quyền quản lý của bạn");
+
+            return Ok(requestExport);
+        }
+
+
+
 
         private Guid GetLoggedInUserId()
         {

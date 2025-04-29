@@ -10,6 +10,11 @@ namespace Repo.IRepository
     public interface IRequestExportRepository
     {
         Task<List<RequestExport>> GetAllRequestExportsAsync();
+
+        Task<List<RequestExport>> GetRequestExportsBySalesUserIdAsync(Guid salesUserId);
+
+        Task<RequestExport?> GetRequestExportByIdAsync(int requestId, Guid salesUserId);
+
         Task AddExportAsync(RequestExport export);
         Task AddExportDetailsAsync(List<RequestExportDetail> exportDetails);
         Task<RequestExport> GetRequestExportById(int requestId);

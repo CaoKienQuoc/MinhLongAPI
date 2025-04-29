@@ -83,6 +83,44 @@ namespace Services.Service
         }
 
 
+        public async Task<List<OrderDto>> GetAllOrdersBySalesUserAsync(Guid salesUserId)
+        {
+            var orders = await _orderRepository.GetAllOrdersAsync();
+
+            // Lọc theo UserId của nhân viên đang quản lý agency
+            var filteredOrders = orders
+                .Where(o => o.RequestProduct?.AgencyAccount?.ManagedByEmployee?.UserId == salesUserId)
+                .ToList();
+
+            return filteredOrders.Select(o => new OrderDto
+            {
+                OrderId = o.OrderId,
+                OrderCode = o.OrderCode,
+                OrderDate = o.OrderDate,
+                Discount = o.Discount,
+                FinalPrice = o.FinalPrice,
+                Status = o.Status,
+                AgencyId = o.RequestProduct?.AgencyId ?? 0,
+                RequestCode = o.RequestProduct?.RequestCode ?? "N/A",
+                AgencyName = o.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
+                OrderDetails = o.OrderDetails.Select(od => new OrderDetailDto
+                {
+                    OrderDetailId = od.OrderDetailId,
+                    OrderId = od.OrderId,
+                    ProductId = od.ProductId,
+                    ProductName = od.Product?.ProductName ?? "N/A",
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    TotalAmount = od.TotalAmount,
+                    Unit = od.Unit,
+                    CreatedAt = od.CreatedAt
+                }).ToList()
+
+            }).ToList();
+        }
+
+
+
         /*public async Task<Order> GetOrderByIdAsync(Guid orderId)
         {
             return await _orderRepository.GetOrderByIdAsync(orderId);
@@ -124,6 +162,40 @@ namespace Services.Service
                 }).ToList()
             };
         }
+
+        public async Task<OrderDto> GetOrderByIdBySalesUserAsync(Guid orderId, Guid salesUserId)
+        {
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order?.RequestProduct?.AgencyAccount?.ManagedByEmployee?.UserId != salesUserId)
+                throw new UnauthorizedAccessException("You do not have permission to view this order.");
+
+            return new OrderDto
+            {
+                OrderId = order.OrderId,
+                OrderCode = order.OrderCode,
+                OrderDate = order.OrderDate,
+                Discount = order.Discount,
+                FinalPrice = order.FinalPrice,
+                Status = order.Status,
+                AgencyId = order.RequestProduct?.AgencyId ?? 0,
+                RequestCode = order.RequestProduct?.RequestCode ?? "N/A",
+                AgencyName = order.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
+                OrderDetails = order.OrderDetails.Select(od => new OrderDetailDto
+                {
+                    OrderDetailId = od.OrderDetailId,
+                    OrderId = od.OrderId,
+                    ProductId = od.ProductId,
+                    ProductName = od.Product?.ProductName ?? "N/A",
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    TotalAmount = od.TotalAmount,
+                    Unit = od.Unit,
+                    CreatedAt = od.CreatedAt
+                }).ToList()
+            };
+        }
+
 
         public async Task<bool> ProcessPaymentAsync(Guid orderId)
         {

@@ -28,6 +28,34 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<List<RequestExport>> GetRequestExportsBySalesUserIdAsync(Guid salesUserId)
+        {
+            return await _context.RequestExports
+                .Include(re => re.RequestExportDetails)
+                    .ThenInclude(red => red.Product)
+                .Include(re => re.RequestedByAgency)
+                    .ThenInclude(aa => aa.ManagedByEmployee)
+                        .ThenInclude(emp => emp.User)
+                .Where(re => re.RequestedByAgency.ManagedByEmployee != null &&
+                             re.RequestedByAgency.ManagedByEmployee.UserId == salesUserId)
+                .ToListAsync();
+        }
+
+        public async Task<RequestExport?> GetRequestExportByIdAsync(int requestId, Guid salesUserId)
+        {
+            return await _context.RequestExports
+                .Include(re => re.RequestExportDetails)
+                    .ThenInclude(red => red.Product)
+                .Include(re => re.RequestedByAgency)
+                    .ThenInclude(aa => aa.ManagedByEmployee)
+                        .ThenInclude(emp => emp.User)
+                .Where(re => re.RequestExportId == requestId &&
+                             re.RequestedByAgency.ManagedByEmployee != null &&
+                             re.RequestedByAgency.ManagedByEmployee.UserId == salesUserId)
+                .FirstOrDefaultAsync();
+        }
+
+
 
 
         public async Task AddExportAsync(RequestExport export)

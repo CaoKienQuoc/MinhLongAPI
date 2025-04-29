@@ -13,8 +13,14 @@ namespace Services.IService
     {
         //Task<IEnumerable<Order>> GetAllOrdersAsync();
         Task<List<OrderDto>> GetAllOrdersAsync();
+
+        Task<List<OrderDto>> GetAllOrdersBySalesUserAsync(Guid salesUserId);
+
         //Task<Order> GetOrderByIdAsync(Guid orderId);
         Task<OrderDto> GetOrderByIdAsync(Guid orderId);
+
+        Task<OrderDto> GetOrderByIdBySalesUserAsync(Guid orderId, Guid salesUserId);
+
         Task<bool> CancelOrderAsync(Guid orderId);
 
         //Task<List<Order>> GetOrdersByAgencyIdAsync(long agencyId);
