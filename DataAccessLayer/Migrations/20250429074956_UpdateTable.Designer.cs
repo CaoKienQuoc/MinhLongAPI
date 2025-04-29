@@ -4,6 +4,7 @@ using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    partial class MinhLongDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250429074956_UpdateTable")]
+    partial class UpdateTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1054,36 +1057,6 @@ namespace DataAccessLayer.Migrations
                     b.HasKey("RegisterId");
 
                     b.ToTable("RegisterAccount", (string)null);
-                });
-
-            modelBuilder.Entity("BusinessObject.Models.RegisterAccountContract", b =>
-                {
-                    b.Property<long>("ContractId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ContractId"));
-
-                    b.Property<string>("FileName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FileType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("RegisterId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("ContractId");
-
-                    b.HasIndex("RegisterId");
-
-                    b.ToTable("RegisterAccountContract", (string)null);
                 });
 
             modelBuilder.Entity("BusinessObject.Models.RequestExport", b =>
@@ -2289,17 +2262,6 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Updater");
                 });
 
-            modelBuilder.Entity("BusinessObject.Models.RegisterAccountContract", b =>
-                {
-                    b.HasOne("BusinessObject.Models.RegisterAccount", "RegisterAccount")
-                        .WithMany("Contracts")
-                        .HasForeignKey("RegisterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("RegisterAccount");
-                });
-
             modelBuilder.Entity("BusinessObject.Models.RequestExport", b =>
                 {
                     b.HasOne("BusinessObject.Models.Order", "Order")
@@ -2765,11 +2727,6 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Addresses");
 
                     b.Navigation("Districts");
-                });
-
-            modelBuilder.Entity("BusinessObject.Models.RegisterAccount", b =>
-                {
-                    b.Navigation("Contracts");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.RequestExport", b =>

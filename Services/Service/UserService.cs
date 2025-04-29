@@ -84,10 +84,11 @@ namespace Services.Service
                 UserType = user.UserType,
                 Email = user.Email,
                 Phone = user.Phone,
+                Status = user.Status,
+                VerifyEmail = user.VerifyEmail,
                 AgencyLevelName = null,
                 CreditLimit = null,
-                Status = user.Status,
-                VerifyEmail = user.VerifyEmail
+                Contracts = new List<ContractDto>() // Luôn khởi tạo
             };
 
             if (user.UserType?.ToUpper() == "AGENCY")
@@ -95,19 +96,32 @@ namespace Services.Service
                 var agency = await _userRepository.GetAgencyAccountByUserIdAsync(userId);
                 if (agency != null)
                 {
-                    var level = await _agencyAccountLevelRepository
-                        .GetLatestLevelByAgencyIdAsync(agency.AgencyId);
-
+                    // Nếu đại lý có cấp độ
+                    var level = await _agencyAccountLevelRepository.GetLatestLevelByAgencyIdAsync(agency.AgencyId);
                     if (level != null)
                     {
                         dto.AgencyLevelName = level.Level?.LevelName;
                         dto.CreditLimit = level.Level?.CreditLimit;
+                    }
+
+                    // ✅ Lấy danh sách hợp đồng
+                    if (agency.Contracts != null && agency.Contracts.Any())
+                    {
+                        dto.Contracts = agency.Contracts.Select(c => new ContractDto
+                        {
+                            ContractId = c.ContractId,
+                            FileName = c.FileName,
+                            FilePath = c.FilePath,
+                            FileType = c.FileType,
+                            CreatedAt = c.CreatedAt
+                        }).ToList();
                     }
                 }
             }
 
             return dto;
         }
+
 
 
         // Hàm kiểm tra User có RoleId = 1 không
@@ -196,6 +210,7 @@ namespace Services.Service
 
                 // ✅ Nếu là Employee thì AgencyName có thể null
                 request.AgencyName = "unknow";
+
             }
 
             // ✅ Nếu UserType là AGENCY -> Bắt buộc nhập AgencyName, các trường khác có thể null
@@ -234,6 +249,30 @@ namespace Services.Service
             request.AgencyName = request.AgencyName?.Trim();
             request.Password = request.Password?.Trim();
 
+            if (request.Contracts != null && request.Contracts.Any())
+            {
+                var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
+
+                foreach (var contract in request.Contracts)
+                {
+                    string fileName = contract.FileName ?? "";
+
+                    // ✅ Nếu là link, parse từ FilePath (URL)
+                    if (string.IsNullOrEmpty(fileName) && !string.IsNullOrEmpty(contract.FilePath))
+                    {
+                        fileName = Path.GetFileName(contract.FilePath);
+                    }
+
+                    string ext = Path.GetExtension(fileName).ToLower();
+
+                    if (!allowedExtensions.Contains(ext))
+                    {
+                        throw new ArgumentException($"File '{fileName}' is not allowed. Only PDF, JPG, JPEG, PNG are supported.");
+                    }
+                }
+            }
+
+
 
 
             // ✅ Tạo đối tượng RegisterAccount
@@ -251,7 +290,13 @@ namespace Services.Service
                 WardName = request.WardName,
                 DistrictName = request.DistrictName,
                 ProvinceName = request.ProvinceName,
-                AgencyName = request.AgencyName
+                AgencyName = request.AgencyName,
+                Contracts = request.Contracts.Select(c => new RegisterAccountContract
+                {
+                    FileName = c.FileName,
+                    FilePath = c.FilePath,
+                    FileType = c.FileType
+                }).ToList()
             };
 
             // ✅ Gọi Repo để lưu RegisterAccount

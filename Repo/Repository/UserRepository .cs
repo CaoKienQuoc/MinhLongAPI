@@ -30,6 +30,7 @@ namespace Repo.Repository
         {
             return await _context.Users
                     .Include(u => u.Employee) // Lấy thông tin Employee của User
+
                     .ToListAsync();
         }
 
@@ -167,6 +168,25 @@ namespace Repo.Repository
                         };
 
                         _context.AgencyAccounts.Add(agency);
+                        await _context.SaveChangesAsync(); // ✅ Lưu để có AgencyId
+
+                        // 💡 Lấy danh sách hợp đồng từ RegisterAccountContract
+                        var registerContracts = await _context.RegisterAccountContract
+                            .Where(rc => rc.RegisterId == registerAccount.RegisterId)
+                            .ToListAsync();
+
+                        foreach (var rc in registerContracts)
+                        {
+                            var contract = new Contract
+                            {
+                                AgencyId = agency.AgencyId,
+                                FileName = rc.FileName,
+                                FilePath = rc.FilePath,
+                                FileType = rc.FileType,
+                                CreatedAt = rc.UploadedAt
+                            };
+                            _context.Contract.Add(contract);
+                        }
 
                         roleId = 2;
                     }
@@ -236,7 +256,9 @@ namespace Repo.Repository
 
         public async Task<AgencyAccount> GetAgencyAccountByUserIdAsync(Guid? userId)
         {
-            return await _context.AgencyAccounts.FirstOrDefaultAsync(a => a.UserId == userId);
+            return await _context.AgencyAccounts
+                .Include(a => a.Contracts) // ✅ thêm Include
+        .FirstOrDefaultAsync(a => a.UserId == userId);
         }
 
         public async Task<Guid?> GetUserIdByAgencyIdAsync(long agencyId)

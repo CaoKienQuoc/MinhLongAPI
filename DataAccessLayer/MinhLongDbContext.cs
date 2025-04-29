@@ -75,6 +75,10 @@ namespace DataAccessLayer
         public DbSet<ReturnWarehouseReceipt> ReturnWarehouseReceipts { get; set; }
         public DbSet<ReturnWarehouseReceiptDetail> ReturnWarehouseReceiptDetails { get; set; }
         public DbSet<DamagedStock> DamagedStocks { get; set; }
+        public DbSet<Contract> Contract { get; set; }
+
+        public DbSet<RegisterAccountContract> RegisterAccountContract { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // 🏷️ **Định danh bảng**
@@ -123,6 +127,8 @@ namespace DataAccessLayer
             modelBuilder.Entity<ReturnWarehouseReceipt>().ToTable("ReturnWarehouseReceipt");
             modelBuilder.Entity<ReturnWarehouseReceiptDetail>().ToTable("ReturnWarehouseReceiptDetail");
             modelBuilder.Entity<DamagedStock>().ToTable("DamagedStock");
+            modelBuilder.Entity<Contract>().ToTable("Contract");
+            modelBuilder.Entity<RegisterAccountContract>().ToTable("RegisterAccountContract");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -190,6 +196,8 @@ namespace DataAccessLayer
             modelBuilder.Entity<ReturnWarehouseReceipt>().Property(wr => wr.ReturnWarehouseReceiptId).ValueGeneratedOnAdd();
             modelBuilder.Entity<ReturnWarehouseReceiptDetail>().Property(wr => wr.ReturnWarehouseReceiptDetailId).ValueGeneratedOnAdd();
             modelBuilder.Entity<DamagedStock>().Property(wr => wr.DamagedStockId).ValueGeneratedOnAdd();
+            modelBuilder.Entity<Contract>().Property(wr => wr.ContractId).ValueGeneratedOnAdd();
+            modelBuilder.Entity<RegisterAccountContract>().Property(wr => wr.ContractId).ValueGeneratedOnAdd();
 
             // 🔥 **Cấu hình quan hệ nhiều - nhiều**
             modelBuilder.Entity<UserRole>()
@@ -769,7 +777,12 @@ namespace DataAccessLayer
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            
+            modelBuilder.Entity<AgencyAccount>()
+                .HasMany(a => a.Contracts)
+                .WithOne(c => c.AgencyAccount)
+                .HasForeignKey(c => c.AgencyId)
+                .OnDelete(DeleteBehavior.Cascade);  
+
         }
     }
 

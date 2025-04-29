@@ -43,5 +43,7 @@ namespace BusinessObject.Models
         public bool IsApproved { get; set; } = false;  // Mặc định chưa duyệt
 
         public string AccountRegisterStatus { get; set; } = "Pending";
+
+        public ICollection<RegisterAccountContract> Contracts { get; set; }
     }
 }

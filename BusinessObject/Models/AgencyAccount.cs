@@ -38,5 +38,7 @@ namespace BusinessObject.Models
 
         public ICollection<AgencyAccountLevel> AgencyAccountLevels { get; set; }
 
+        public ICollection<Contract> Contracts { get; set; }
+
     }
 }

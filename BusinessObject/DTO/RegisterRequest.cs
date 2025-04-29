@@ -27,6 +27,8 @@ namespace BusinessObject.DTO
         public string DistrictName { get; set; }
         public string ProvinceName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public List<RegisterAccountContractDto> Contracts { get; set; }
     }
 
 }
