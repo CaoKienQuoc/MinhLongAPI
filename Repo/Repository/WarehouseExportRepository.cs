@@ -87,6 +87,8 @@ namespace Repo.Repository
                     .ThenInclude(req => req.Order)
                         .ThenInclude(o => o.RequestProduct)
                         .ThenInclude(x => x.AgencyAccount)
+                .Include(r => r.RequestExport)
+            .ThenInclude(re => re.RequestExportDetails)
                 .Where(e => e.Warehouse.UserId == userId)
                 .ToListAsync();
         }
@@ -101,6 +103,8 @@ namespace Repo.Repository
                     .ThenInclude(req => req.Order)
                         .ThenInclude(o => o.RequestProduct)
                         .ThenInclude(x => x.AgencyAccount)
+                .Include(r => r.RequestExport)
+            .ThenInclude(re => re.RequestExportDetails)
                 .FirstOrDefaultAsync(e => e.ExportWarehouseReceiptId == receiptId && e.Warehouse.UserId == userId);
         }
 

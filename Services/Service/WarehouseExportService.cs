@@ -270,32 +270,42 @@ namespace Services.Service
             var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
             var result = new List<ExportWarehouseReceiptDTO>();
 
-            foreach (var r in receipts)
+            foreach (var receipt in receipts)
             {
+                // ✅ Lấy danh sách RequestExportDetails cho từng receipt
+                var requestExportDetails = receipt.RequestExport?.RequestExportDetails?.ToList() ?? new List<RequestExportDetail>();
+
                 var dto = new ExportWarehouseReceiptDTO
                 {
-                    ExportWarehouseReceiptId = r.ExportWarehouseReceiptId,
-                    DocumentNumber = r.DocumentNumber,
-                    DocumentDate = r.DocumentDate,
-                    ExportDate = r.ExportDate,
-                    ExportType = r.ExportType,
-                    TotalQuantity = r.TotalQuantity,
-                    TotalAmount = r.TotalAmount,
-                    Status = r.Status,
-                    WarehouseId = r.WarehouseId,
-                    RequestExportId = r.RequestExportId,
-                    OrderCode = r.RequestExport.Order.OrderCode,
-                    AgencyName = r.RequestExport.Order.RequestProduct.AgencyAccount.AgencyName,
-                    Details = r.ExportWarehouseReceiptDetails.Select(d => new ExportWarehouseReceiptDetailDTO
+                    ExportWarehouseReceiptId = receipt.ExportWarehouseReceiptId,
+                    DocumentNumber = receipt.DocumentNumber,
+                    DocumentDate = receipt.DocumentDate,
+                    ExportDate = receipt.ExportDate,
+                    ExportType = receipt.ExportType,
+                    TotalQuantity = receipt.TotalQuantity,
+                    TotalAmount = receipt.TotalAmount,
+                    Status = receipt.Status,
+                    WarehouseId = receipt.WarehouseId,
+                    RequestExportId = receipt.RequestExportId,
+                    OrderCode = receipt.RequestExport?.Order?.OrderCode ?? "",
+                    AgencyName = receipt.RequestExport?.Order?.RequestProduct?.AgencyAccount?.AgencyName ?? "",
+                    Details = receipt.ExportWarehouseReceiptDetails.Select(detail =>
                     {
-                        WarehouseProductId = d.WarehouseProductId,
-                        ProductId = d.ProductId,
-                        ProductName = d.Product?.ProductName ?? "",
-                        BatchNumber = d.BatchNumber,
-                        Quantity = d.Quantity,
-                        UnitPrice = d.UnitPrice,
-                        TotalProductAmount = d.Quantity * d.UnitPrice,
-                        ExpiryDate = d.ExpiryDate
+                        var requestedQuantity = requestExportDetails
+                            .FirstOrDefault(x => x.ProductId == detail.ProductId)?.RequestedQuantity ?? 0;
+
+                        return new ExportWarehouseReceiptDetailDTO
+                        {
+                            WarehouseProductId = detail.WarehouseProductId,
+                            ProductId = detail.ProductId,
+                            ProductName = detail.Product?.ProductName ?? "",
+                            BatchNumber = detail.BatchNumber,
+                            Quantity = detail.Quantity,
+                            UnitPrice = detail.UnitPrice,
+                            TotalProductAmount = detail.TotalProductAmount,
+                            ExpiryDate = detail.ExpiryDate,
+                            RequestedQuantity = requestedQuantity
+                        };
                     }).ToList()
                 };
 
@@ -305,38 +315,51 @@ namespace Services.Service
             return result;
         }
 
+
         public async Task<ExportWarehouseReceiptDTO?> GetExportByIdAsync(int exportReceiptId, Guid userId)
         {
-            var r = await _exportReceiptRepo.GetByIdAndUserIdAsync(exportReceiptId, userId);
-            if (r == null) return null;
+            var receipt = await _exportReceiptRepo.GetByIdAndUserIdAsync(exportReceiptId, userId);
+            if (receipt == null) return null;
 
-            return new ExportWarehouseReceiptDTO
+            var requestExportDetails = receipt.RequestExport?.RequestExportDetails?.ToList() ?? new List<RequestExportDetail>();
+
+            var dto = new ExportWarehouseReceiptDTO
             {
-                ExportWarehouseReceiptId = r.ExportWarehouseReceiptId,
-                DocumentNumber = r.DocumentNumber,
-                DocumentDate = r.DocumentDate,
-                ExportDate = r.ExportDate,
-                ExportType = r.ExportType,
-                TotalQuantity = r.TotalQuantity,
-                TotalAmount = r.TotalAmount,
-                Status = r.Status,
-                WarehouseId = r.WarehouseId,
-                RequestExportId = r.RequestExportId,
-                OrderCode = r.RequestExport.Order.OrderCode,
-                AgencyName = r.RequestExport.Order.RequestProduct.AgencyAccount.AgencyName,
-                Details = r.ExportWarehouseReceiptDetails.Select(d => new ExportWarehouseReceiptDetailDTO
+                ExportWarehouseReceiptId = receipt.ExportWarehouseReceiptId,
+                DocumentNumber = receipt.DocumentNumber,
+                DocumentDate = receipt.DocumentDate,
+                ExportDate = receipt.ExportDate,
+                ExportType = receipt.ExportType,
+                TotalQuantity = receipt.TotalQuantity,
+                TotalAmount = receipt.TotalAmount,
+                Status = receipt.Status,
+                WarehouseId = receipt.WarehouseId,
+                RequestExportId = receipt.RequestExportId,
+                OrderCode = receipt.RequestExport?.Order?.OrderCode ?? "",
+                AgencyName = receipt.RequestExport?.Order?.RequestProduct?.AgencyAccount?.AgencyName ?? "",
+                Details = receipt.ExportWarehouseReceiptDetails.Select(detail =>
                 {
-                    WarehouseProductId = d.WarehouseProductId,
-                    ProductId = d.ProductId,
-                    ProductName = d.Product?.ProductName ?? "",
-                    BatchNumber = d.BatchNumber,
-                    Quantity = d.Quantity,
-                    UnitPrice = d.UnitPrice,
-                    TotalProductAmount = d.Quantity * d.UnitPrice,
-                    ExpiryDate = d.ExpiryDate
+                    var requestedQuantity = requestExportDetails
+                        .FirstOrDefault(x => x.ProductId == detail.ProductId)?.RequestedQuantity ?? 0;
+
+                    return new ExportWarehouseReceiptDetailDTO
+                    {
+                        WarehouseProductId = detail.WarehouseProductId,
+                        ProductId = detail.ProductId,
+                        ProductName = detail.Product?.ProductName ?? "",
+                        BatchNumber = detail.BatchNumber,
+                        Quantity = detail.Quantity,
+                        UnitPrice = detail.UnitPrice,
+                        TotalProductAmount = detail.TotalProductAmount,
+                        ExpiryDate = detail.ExpiryDate,
+                        RequestedQuantity = requestedQuantity
+                    };
                 }).ToList()
             };
+
+            return dto;
         }
+
 
         public async Task UpdateExportFromCoordinationImportAsync(int requestExportId, List<BatchResponseDto> importedBatches)
         {

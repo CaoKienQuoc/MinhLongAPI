@@ -68,6 +68,30 @@ namespace MLHR.Controllers
             return Ok(order);
         }
 
+
+        [HttpGet("manage-by-sales")]
+        public async Task<IActionResult> GetOrdersBySales()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+                return Unauthorized("Invalid user token.");
+
+            var orders = await _orderService.GetAllOrdersBySalesUserAsync(userId);
+            return Ok(orders);
+        }
+
+        [HttpGet("manage-by-sales/{orderId}")]
+        public async Task<IActionResult> GetOrderDetailBySales(Guid orderId)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+                return Unauthorized("Invalid user token.");
+
+            var order = await _orderService.GetOrderByIdBySalesUserAsync(orderId, userId);
+            return Ok(order);
+        }
+
+
         // API lấy danh sách Order dựa trên AgencyId của user đang đăng nhập
         [HttpGet("my-orders")]
         public async Task<IActionResult> GetOrdersForLoggedInAgency()

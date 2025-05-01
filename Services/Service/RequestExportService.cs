@@ -151,5 +151,97 @@ namespace Services.Service
             };
         }
 
+
+        public async Task<List<RequestExportDto>> GetRequestExportsBySalesAsync(Guid salesUserId, string? sortBy = null)
+        {
+            var requestExports = await _requestExportRepository.GetRequestExportsBySalesUserIdAsync(salesUserId);
+
+            var orderIds = requestExports.Select(x => x.OrderId).Distinct().ToList();
+            var tempExports = await _temporaryWarehouseRepository.GetByOrderIdsAsync(orderIds);
+            var tempExportDict = tempExports.GroupBy(t => t.OrderId).ToDictionary(g => g.Key, g => g.ToList());
+
+            // Sắp xếp theo yêu cầu
+            var statusPriority = new Dictionary<string, int> {
+        { "Pending", 0 }, { "Requested", 1 }, { "Approved", 2 }
+    };
+
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                requestExports = sortBy.ToLower() switch
+                {
+                    "status" => requestExports.OrderBy(re => statusPriority.ContainsKey(re.Status) ? statusPriority[re.Status] : 99).ToList(),
+                    "requestdate_desc" => requestExports.OrderByDescending(re => re.RequestDate).ToList(),
+                    "requestdate_asc" => requestExports.OrderBy(re => re.RequestDate).ToList(),
+                    _ => requestExports
+                };
+            }
+
+            return requestExports.Select(re => new RequestExportDto
+            {
+                RequestExportId = re.RequestExportId,
+                OrderId = re.OrderId,
+                AgencyName = re.RequestedByAgency?.AgencyName ?? "Unknown",
+                RequestDate = re.RequestDate,
+                Status = re.Status,
+                Note = re.Note,
+                RequestExportCode = re.RequestExportCode,
+                RequestExportDetails = re.RequestExportDetails.Select(red => new RequestExportDetailDto
+                {
+                    RequestExportDetailId = red.RequestItemId,
+                    ProductId = red.ProductId,
+                    ProductName = red.Product?.ProductName ?? "N/A",
+                    Unit = red.Product?.Unit ?? "N/A",
+                    Price = red.Product?.Price ?? 0,
+                    RequestedQuantity = red.RequestedQuantity
+                }).ToList(),
+                TemporaryStockExportDetails = tempExportDict.ContainsKey(re.OrderId)
+                    ? tempExportDict[re.OrderId].Select(tse => new TemporaryStockExportDto
+                    {
+                        WarehouseId = tse.WarehouseId,
+                        ProductId = tse.ProductId,
+                        BatchId = tse.BatchId,
+                        Quantity = tse.Quantity
+                    }).ToList()
+                    : new List<TemporaryStockExportDto>()
+            }).ToList();
+        }
+
+
+        public async Task<RequestExportDto?> GetRequestExportByIdForSalesAsync(int requestId, Guid salesUserId)
+        {
+            var re = await _requestExportRepository.GetRequestExportByIdAsync(requestId, salesUserId);
+            if (re == null) return null;
+
+            var tempExports = await _temporaryWarehouseRepository.GetByOrderIdAsync(re.OrderId);
+
+            return new RequestExportDto
+            {
+                RequestExportId = re.RequestExportId,
+                OrderId = re.OrderId,
+                AgencyName = re.RequestedByAgency?.AgencyName ?? "Unknown",
+                RequestDate = re.RequestDate,
+                Status = re.Status,
+                Note = re.Note,
+                RequestExportCode = re.RequestExportCode,
+                RequestExportDetails = re.RequestExportDetails.Select(red => new RequestExportDetailDto
+                {
+                    RequestExportDetailId = red.RequestItemId,
+                    ProductId = red.ProductId,
+                    ProductName = red.Product?.ProductName ?? "N/A",
+                    Unit = red.Product?.Unit ?? "N/A",
+                    Price = red.Product?.Price ?? 0,
+                    RequestedQuantity = red.RequestedQuantity
+                }).ToList(),
+                TemporaryStockExportDetails = tempExports.Select(tse => new TemporaryStockExportDto
+                {
+                    WarehouseId = tse.WarehouseId,
+                    ProductId = tse.ProductId,
+                    BatchId = tse.BatchId,
+                    Quantity = tse.Quantity
+                }).ToList()
+            };
+        }
+
+
     }
 }

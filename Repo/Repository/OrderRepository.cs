@@ -31,9 +31,11 @@ namespace Repo.Repository
         {
             return await _context.Orders
                 .Include(o => o.OrderDetails)
-                .ThenInclude(od => od.Product)
+                    .ThenInclude(od => od.Product)
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
+                        .ThenInclude(aa => aa.ManagedByEmployee) // thêm dòng này
+                            .ThenInclude(e => e.User) // để có UserId của nhân viên
                 .ToListAsync();
         }
 
@@ -73,7 +75,8 @@ namespace Repo.Repository
                     .ThenInclude(od => od.Product)
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
-                .Include(o => o.RequestProduct)
+                        .ThenInclude(aa => aa.ManagedByEmployee) // thêm dòng này
+                            .ThenInclude(e => e.User)
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
 

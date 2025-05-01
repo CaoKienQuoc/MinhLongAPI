@@ -277,6 +277,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseStaticFiles(); // Cho phép truy cập /uploads/ từ trình duyệt nếu cần
 
 // ✅ Bật HTTPS
 app.UseHttpsRedirection();
