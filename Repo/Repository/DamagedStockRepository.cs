@@ -47,6 +47,15 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task AddAsync(DamagedStock damagedStock)
+        {
+            await _context.DamagedStocks.AddAsync(damagedStock);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 
 }

@@ -28,6 +28,7 @@ namespace Repo.IRepository
         IQueryable<Batch> GetQueryable();
         Task UpdateRangeAsync(IEnumerable<Batch> batches);
 
+        Task<Batch> GetExpiredBatchByIdAsync(long batchId);
     }
 
 }

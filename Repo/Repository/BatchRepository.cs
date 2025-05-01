@@ -156,6 +156,12 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Batch> GetExpiredBatchByIdAsync(long batchId)
+        {
+            return await _context.Batches
+                .FirstOrDefaultAsync(b => b.BatchId == batchId && b.Status == "EXPIRED");
+        }
+
     }
 
 }

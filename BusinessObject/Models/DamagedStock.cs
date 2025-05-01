@@ -27,6 +27,10 @@ namespace BusinessObject.Models
         public int Quantity { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public string Reason { get; set; } // Lý do hủy hàng
+
+        public string Status { get; set; } // Trạng thái (Pending, Completed, Cancelled)
     }
 
 }

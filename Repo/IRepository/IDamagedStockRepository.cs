@@ -12,6 +12,9 @@ namespace Repo.IRepository
     {
         Task AddRangeAsync(List<DamagedStock> stocks);
         Task<IEnumerable<DamagedStockDto>> GetByWarehouseIdAsync(long warehouseId);
+
+        Task AddAsync(DamagedStock damagedStock);
+        Task SaveChangesAsync();
     }
 
 }

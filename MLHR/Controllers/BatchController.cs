@@ -69,14 +69,14 @@ namespace MLHR.Controllers
             }
         }
 
-        /*[HttpGet("list")]
-        public async Task<IActionResult> GetBatches()
+        [HttpPost("cancel-expired/{batchId}")]
+        public async Task<IActionResult> CancelExpiredBatch(long batchId)
         {
-            await _batchService.UpdateExpiredBatchesAsync(); // 🔥 update trước mỗi lần load
-            var batches = await _batchService.GetAllBatchesAsync();
-            return Ok(batches);
-        }
-*/
+            var result = await _batchService.CancelExpiredBatchAsync(batchId);
+            if (!result)
+                return BadRequest("Batch không tồn tại hoặc không phải trạng thái EXPIRED.");
 
+            return Ok("Nhập huỷ thành công.");
+        }
     }
 }

@@ -17,12 +17,20 @@ namespace Services.Service
         private readonly IBatchRepository _batchRepository;
         private readonly IProductRepository _productRepository;
         private readonly IWarehouseProductRepository _warehouseProductRepo;
+        private readonly IWarehouseReceiptRepository _warehouseReceiptRepo;
+        private readonly IDamagedStockRepository _damegedStockRepo;
 
-        public BatchService(IBatchRepository batchRepository, IWarehouseProductRepository warehouseProductRepo, IProductRepository productRepository)
+        public BatchService(IBatchRepository batchRepository, 
+            IWarehouseProductRepository warehouseProductRepo, 
+            IProductRepository productRepository, 
+            IWarehouseReceiptRepository warehouseReceiptRepo, 
+            IDamagedStockRepository damegedStockRepo)
         {
             _batchRepository = batchRepository;
             _warehouseProductRepo = warehouseProductRepo;
             _productRepository = productRepository;
+            _warehouseReceiptRepo = warehouseReceiptRepo;
+            _damegedStockRepo = damegedStockRepo;
         }
 
         public async Task<Batch> GetBatchByIdAsync(long batchId)
@@ -169,6 +177,33 @@ namespace Services.Service
             }
 
             return expiredBatches.Count;
+        }
+
+        public async Task<bool> CancelExpiredBatchAsync(long batchId)
+        {
+            var batch = await _batchRepository.GetExpiredBatchByIdAsync(batchId);
+            if (batch == null) return false;
+
+            var importDetail = await _warehouseReceiptRepo.GetImportTransactionDetailByIdAsync(batch.ImportTransactionDetailId);
+            if (importDetail == null) return false;
+
+            var importTransaction = await _warehouseReceiptRepo.GetImportTransactionByIdAsync(importDetail.ImportTransactionId);
+            if (importTransaction == null) return false;
+
+            var cancelReceipt = new DamagedStock
+            {
+                BatchId = batch.BatchId,
+                ProductId = batch.ProductId,
+                Quantity = batch.Quantity,
+                WarehouseId = importTransaction.WarehouseId,
+                Reason = "Expired",
+                CreatedAt = DateTime.UtcNow,
+                Status = "ExportCancel"
+            };
+
+            await _damegedStockRepo.AddAsync(cancelReceipt);
+            await _damegedStockRepo.SaveChangesAsync();
+            return true;
         }
 
     }

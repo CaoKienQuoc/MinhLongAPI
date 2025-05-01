@@ -18,5 +18,8 @@ namespace Repo.IRepository
 
         Task AddImportTransactionDetailAsync(ImportTransactionDetail importTransactionDetail);
 
+        Task<ImportTransactionDetail> GetImportTransactionDetailByIdAsync(long id);
+        Task<ImportTransaction> GetImportTransactionByIdAsync(long id);
+
     }
 }

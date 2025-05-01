@@ -51,5 +51,16 @@ namespace Repo.Repository
         {
             await _context.ImportTransactionDetails.AddAsync(importTransactionDetail);
         }
+        public async Task<ImportTransactionDetail> GetImportTransactionDetailByIdAsync(long id)
+        {
+            return await _context.Set<ImportTransactionDetail>()
+                .FirstOrDefaultAsync(x => x.ImportTransactionDetailId == id);
+        }
+
+        public async Task<ImportTransaction> GetImportTransactionByIdAsync(long id)
+        {
+            return await _context.Set<ImportTransaction>()
+                .FirstOrDefaultAsync(x => x.ImportTransactionId == id);
+        }
     }
 }

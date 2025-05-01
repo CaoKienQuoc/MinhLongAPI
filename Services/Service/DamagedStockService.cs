@@ -75,7 +75,9 @@ namespace Services.Service
                     WarehouseId = userWarehouseId,
                     Quantity = d.Quantity,
                     BatchId = d.BatchId,
-                    CreatedAt = now
+                    CreatedAt = now,
+                    Reason = "DefectiveGood",
+                    Status = "Return"
                 })
                 .ToList();
 
