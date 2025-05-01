@@ -249,28 +249,31 @@ namespace Services.Service
             request.AgencyName = request.AgencyName?.Trim();
             request.Password = request.Password?.Trim();
 
-            if (request.Contracts != null && request.Contracts.Any())
+            if (request.UserType.ToUpper() == "AGENCY")
             {
-                var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
+                if (request.Contracts == null || !request.Contracts.Any())
+                {
+                    throw new ArgumentException("Agency must provide at least one contract file.");
+                }
 
                 foreach (var contract in request.Contracts)
                 {
-                    string fileName = contract.FileName ?? "";
-
-                    // ✅ Nếu là link, parse từ FilePath (URL)
-                    if (string.IsNullOrEmpty(fileName) && !string.IsNullOrEmpty(contract.FilePath))
+                    if (string.IsNullOrWhiteSpace(contract.FilePath))
                     {
-                        fileName = Path.GetFileName(contract.FilePath);
+                        throw new ArgumentException("Each contract must have a valid FilePath.");
                     }
 
-                    string ext = Path.GetExtension(fileName).ToLower();
+                    string ext = Path.GetExtension(contract.FilePath).ToLower();
+                    var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
 
                     if (!allowedExtensions.Contains(ext))
                     {
-                        throw new ArgumentException($"File '{fileName}' is not allowed. Only PDF, JPG, JPEG, PNG are supported.");
+                        throw new ArgumentException($"File '{contract.FilePath}' is not allowed. Only PDF, JPG, JPEG, PNG are supported.");
                     }
                 }
-            }
+            
+        }
+
 
 
 
