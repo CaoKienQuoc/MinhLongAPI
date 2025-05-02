@@ -177,6 +177,37 @@ namespace MLHR.Controllers
         }
 
 
+        [HttpGet("return-requests/sale")]
+        public async Task<IActionResult> GetAllReturnRequestsForSales()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+
+            var result = await _returnService.GetAllReturnRequestsAsyncForSales(userId);
+            return Ok(result);
+        }
+
+
+        [HttpGet("return-requests/sale/{id}")]
+        public async Task<IActionResult> GetReturnRequestByIdForSales(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+
+            try
+            {
+                var result = await _returnService.GetReturnRequestByIdAsyncForSales(id, userId);
+                if (result == null)
+                    return NotFound("Không tìm thấy yêu cầu trả hàng.");
+
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+        }
+
+
+
         // 🟢 7. Lấy danh sách yêu cầu trả hàng đã duyệt
         [HttpGet("for-warehouse")]
         [Authorize]

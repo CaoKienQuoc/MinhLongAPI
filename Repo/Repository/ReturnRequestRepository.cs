@@ -72,13 +72,18 @@ namespace Repo.Repository
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
+                    .Include(r => r.Order)
+                     .ThenInclude(o => o.RequestProduct)
+                    .ThenInclude(rp => rp.AgencyAccount)
+                        .ThenInclude(aa => aa.ManagedByEmployee) // thêm dòng này
+                            .ThenInclude(e => e.User) // để có UserId của nhân viên
                 .ToListAsync();
         }
 
         public async Task<ReturnRequest> GetByIdWithAllDetailsAsync(Guid id)
         {
             return await _context.ReturnRequests
-                .Include(r => r.Details)
+               .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Images)
@@ -86,6 +91,11 @@ namespace Repo.Repository
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
+                    .Include(r => r.Order)
+                     .ThenInclude(o => o.RequestProduct)
+                    .ThenInclude(rp => rp.AgencyAccount)
+                        .ThenInclude(aa => aa.ManagedByEmployee) // thêm dòng này
+                            .ThenInclude(e => e.User) // để có UserId của nhân viên
                 .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
         }
 

@@ -253,6 +253,78 @@ namespace Services.Service
         }
 
 
+        public async Task<List<ReturnRequestProdductDto>> GetAllReturnRequestsAsyncForSales(Guid userId)
+        {
+            var requests = await _returnRepo.GetAllAsync();
+
+            // Lọc các đơn trả hàng có đại lý được quản lý bởi sale này
+            var filtered = requests
+                .Where(r => r.Order?.RequestProduct?.AgencyAccount?.ManagedByEmployee?.UserId == userId)
+                .ToList();
+
+
+
+            return filtered.Select(r => new ReturnRequestProdductDto
+            {
+                ReturnRequestId = r.ReturnRequestId,
+                OrderId = r.OrderId,
+                CreatedAt = r.CreatedAt,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
+                ReturnRequestCode = r.ReturnRequestCode,
+                Status = r.Status,
+                Note = r.Note,
+                Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
+                {
+                    ReturnRequestDetailId = d.ReturnRequestDetailId,
+                    OrderDetailId = d.OrderDetailId,
+                    ProductName = d.Product?.ProductName ?? "",
+                    Reason = d.Reason,
+                    QuantityReturned = d.QuantityReturned,
+                    Images = d.Images?.Select(img => new ReturnRequestImageDto
+                    {
+                        ReturnRequestImageId = img.ReturnRequestImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList() ?? new List<ReturnRequestImageDto>()
+                }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
+            }).ToList();
+        }
+
+        public async Task<ReturnRequestProdductDto> GetReturnRequestByIdAsyncForSales(Guid id, Guid userId)
+        {
+            var r = await _returnRepo.GetByIdWithAllDetailsAsync(id);
+            if (r == null) return null;
+
+            // Kiểm tra xem đơn có thuộc agency do sale quản lý không
+            if (r.Order?.RequestProduct?.AgencyAccount?.ManagedByEmployee?.UserId != userId)
+                throw new UnauthorizedAccessException("Bạn không có quyền truy cập đơn này.");
+
+            return new ReturnRequestProdductDto
+            {
+                ReturnRequestId = r.ReturnRequestId,
+                OrderId = r.OrderId,
+                CreatedAt = r.CreatedAt,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
+                ReturnRequestCode = r.ReturnRequestCode,
+                Status = r.Status,
+                Note = r.Note,
+                Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
+                {
+                    ReturnRequestDetailId = d.ReturnRequestDetailId,
+                    OrderDetailId = d.OrderDetailId,
+                    ProductName = d.Product?.ProductName ?? "",
+                    Reason = d.Reason,
+                    QuantityReturned = d.QuantityReturned,
+                    Images = d.Images?.Select(img => new ReturnRequestImageDto
+                    {
+                        ReturnRequestImageId = img.ReturnRequestImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList() ?? new List<ReturnRequestImageDto>()
+                }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
+            };
+        }
+
+
+
         public async Task<List<ReturnRequestProdductDto>> GetApprovedReturnRequestsAsync()
         {
             var requests = await _returnRepo.GetApprovedAsync();

@@ -18,6 +18,10 @@ namespace Services.IService
         Task<List<ReturnRequestProdductDto>> GetAllReturnRequestsAsync();
         Task<ReturnRequestProdductDto> GetReturnRequestByIdAsync(Guid id);
 
+        Task<List<ReturnRequestProdductDto>> GetAllReturnRequestsAsyncForSales(Guid userId);
+
+        Task<ReturnRequestProdductDto> GetReturnRequestByIdAsyncForSales(Guid id, Guid userId);
+
         Task<List<ReturnRequestProdductDto>> GetApprovedReturnRequestsAsync();
         Task<ReturnRequestProdductDto> GetApprovedReturnRequestByIdAsync(Guid id);
 
