@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class UpDateDb : Migration
+    public partial class UpdateDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -165,6 +165,29 @@ namespace DataAccessLayer.Migrations
                         column: x => x.ProvinceId,
                         principalTable: "Province",
                         principalColumn: "ProvinceId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RegisterAccountContract",
+                columns: table => new
+                {
+                    ContractId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RegisterId = table.Column<int>(type: "int", nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FileType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RegisterAccountContract", x => x.ContractId);
+                    table.ForeignKey(
+                        name: "FK_RegisterAccountContract_RegisterAccount_RegisterId",
+                        column: x => x.RegisterId,
+                        principalTable: "RegisterAccount",
+                        principalColumn: "RegisterId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -584,6 +607,29 @@ namespace DataAccessLayer.Migrations
                         column: x => x.LevelId,
                         principalTable: "AgencyLevel",
                         principalColumn: "LevelId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Contract",
+                columns: table => new
+                {
+                    ContractId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AgencyId = table.Column<long>(type: "bigint", nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FileType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Contract", x => x.ContractId);
+                    table.ForeignKey(
+                        name: "FK_Contract_AgencyAccount_AgencyId",
+                        column: x => x.AgencyId,
+                        principalTable: "AgencyAccount",
+                        principalColumn: "AgencyId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -1414,6 +1460,11 @@ namespace DataAccessLayer.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Contract_AgencyId",
+                table: "Contract",
+                column: "AgencyId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DamagedStock_BatchId",
                 table: "DamagedStock",
                 column: "BatchId");
@@ -1594,6 +1645,11 @@ namespace DataAccessLayer.Migrations
                 name: "IX_ProductCategory_UpdatedBy",
                 table: "ProductCategory",
                 column: "UpdatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RegisterAccountContract_RegisterId",
+                table: "RegisterAccountContract",
+                column: "RegisterId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RequestExport_OrderId",
@@ -1807,6 +1863,9 @@ namespace DataAccessLayer.Migrations
                 name: "AgencyAccountLevel");
 
             migrationBuilder.DropTable(
+                name: "Contract");
+
+            migrationBuilder.DropTable(
                 name: "DamagedStock");
 
             migrationBuilder.DropTable(
@@ -1825,7 +1884,7 @@ namespace DataAccessLayer.Migrations
                 name: "PaymentTransaction");
 
             migrationBuilder.DropTable(
-                name: "RegisterAccount");
+                name: "RegisterAccountContract");
 
             migrationBuilder.DropTable(
                 name: "RequestExportDetail");
@@ -1868,6 +1927,9 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "PaymentHistory");
+
+            migrationBuilder.DropTable(
+                name: "RegisterAccount");
 
             migrationBuilder.DropTable(
                 name: "ReturnRequestDetail");
