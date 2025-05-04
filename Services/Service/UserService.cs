@@ -27,8 +27,12 @@ namespace Services.Service
         private readonly IAgencyAccountRepository _agencyAccountRepository;
         private readonly IAgencyAccountLevelRepository _agencyAccountLevelRepository;
         private readonly IAgencyLevelRepository _agencyLevelRepository;
+        private readonly IContractService _contractService;
+        private readonly IContractRepository _contractRepository;
 
-        public UserService(IUserRepository userRepository, JwtService jwtService, IEmailService mailService, IAgencyAccountRepository agencyAccountRepository, IAgencyAccountLevelRepository agencyAccountLevelRepository, IAgencyLevelRepository agencyLevelRepository)
+        public UserService(IUserRepository userRepository, JwtService jwtService, IEmailService mailService, 
+            IAgencyAccountRepository agencyAccountRepository, IAgencyAccountLevelRepository agencyAccountLevelRepository, 
+            IAgencyLevelRepository agencyLevelRepository, IContractService contractService, IContractRepository contractRepository)
         {
             _userRepository = userRepository;
             _jwtService = jwtService;
@@ -36,6 +40,8 @@ namespace Services.Service
             _agencyAccountRepository = agencyAccountRepository;
             _agencyAccountLevelRepository = agencyAccountLevelRepository;
             _agencyLevelRepository = agencyLevelRepository;
+            _contractService = contractService;
+            _contractRepository = contractRepository;
         }
 
 
@@ -249,42 +255,13 @@ namespace Services.Service
             request.AgencyName = request.AgencyName?.Trim();
             request.Password = request.Password?.Trim();
 
-            if (request.UserType.ToUpper() == "AGENCY")
-            {
-                if (request.Contracts == null || !request.Contracts.Any())
-                {
-                    throw new ArgumentException("Agency must provide at least one contract file.");
-                }
-
-                foreach (var contract in request.Contracts)
-                {
-                    if (string.IsNullOrWhiteSpace(contract.FilePath))
-                    {
-                        throw new ArgumentException("Each contract must have a valid FilePath.");
-                    }
-
-                    string ext = Path.GetExtension(contract.FilePath).ToLower();
-                    var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
-
-                    if (!allowedExtensions.Contains(ext))
-                    {
-                        throw new ArgumentException($"File '{contract.FilePath}' is not allowed. Only PDF, JPG, JPEG, PNG are supported.");
-                    }
-                }
-            
-        }
-
-
-
-
-
-            // ✅ Tạo đối tượng RegisterAccount
+            // ✅ Bước 1: Tạo RegisterAccount
             var registerAccount = new RegisterAccount
             {
-                Username = request.Username?.Trim(),
-                Email = request.Email?.Trim(),
-                Password = request.Password?.Trim(),
-                Phone = request.Phone?.Trim(),
+                Username = request.Username,
+                Email = request.Email,
+                Password = request.Password,
+                Phone = request.Phone,
                 UserType = request.UserType,
                 FullName = request.FullName,
                 Position = request.Position,
@@ -293,19 +270,31 @@ namespace Services.Service
                 WardName = request.WardName,
                 DistrictName = request.DistrictName,
                 ProvinceName = request.ProvinceName,
-                AgencyName = request.AgencyName,
-                Contracts = request.Contracts.Select(c => new RegisterAccountContract
+                AgencyName = request.AgencyName
+            };
+
+            var createdRegister = await _userRepository.RegisterUserRequestAsync(registerAccount);
+
+            // ✅ Bước 2: Nếu là AGENCY và có ContractFiles => upload và lưu
+            if (request.UserType == "AGENCY" && request.ContractFiles != null && request.ContractFiles.Any())
+            {
+                var uploadedContracts = await _contractService.UploadContractsAsync(request.ContractFiles); // không cần AgencyId
+
+                var registerContracts = uploadedContracts.Select(c => new RegisterAccountContract
                 {
+                    RegisterId = createdRegister.RegisterId,
                     FileName = c.FileName,
                     FilePath = c.FilePath,
                     FileType = c.FileType
-                }).ToList()
-            };
+                }).ToList();
 
-            // ✅ Gọi Repo để lưu RegisterAccount
-            return await _userRepository.RegisterUserRequestAsync(registerAccount);
+                await _contractRepository.AddRangeRegisterContractsAsync(registerContracts);
+
+                createdRegister.Contracts = registerContracts;
+            }
+
+            return createdRegister;
         }
-
         /*// ✅ Duyệt tài khoản và chuyển dữ liệu từ RegisterAccount vào User
         public async Task<bool> ApproveUserAsync(int registerId)
         {

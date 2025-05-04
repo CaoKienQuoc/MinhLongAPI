@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace BusinessObject.DTO
 {
@@ -28,7 +30,8 @@ namespace BusinessObject.DTO
         public string ProvinceName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public List<RegisterAccountContractDto> Contracts { get; set; }
+        [NotMapped]
+        public List<IFormFile> ContractFiles { get; set; }
     }
 
 }

@@ -45,18 +45,23 @@ namespace MLHR.Controllers
         /// Người dùng gửi yêu cầu đăng ký
         /// </summary>
         [HttpPost("auth/register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromForm] RegisterRequest request)
         {
             try
             {
                 var registerAccount = await _userService.RegisterUserRequestAsync(request);
-                return Ok(new { message = "Registration successful, please wait for admin approval!", registerId = registerAccount.RegisterId });
+                return Ok(new
+                {
+                    message = "Registration successful, please wait for admin approval!",
+                    registerId = registerAccount.RegisterId
+                });
             }
             catch (Exception ex)
             {
                 return BadRequest(new { error = ex.Message });
             }
         }
+
 
 
         /// <summary>
