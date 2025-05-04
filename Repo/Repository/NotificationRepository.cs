@@ -36,5 +36,10 @@ namespace Repo.Repository
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
+
+        public async Task<Notification> GetByIdAsync(Guid id)
+        {
+            return await _context.Notification.FirstOrDefaultAsync(n => n.NotificationId == id);
+        }
     }
 }

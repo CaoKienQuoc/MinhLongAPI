@@ -285,6 +285,7 @@ namespace Services.Service
                 {
                     string message = $"🚚 Đại lý '{requestProduct.AgencyAccount?.AgencyName}' vừa thanh toán đơn hàng: {order.OrderCode}";
 
+                    // Gửi real-time SignalR
                     await _hub.Clients.User(saleUserId.Value.ToString())
                         .SendAsync("ReceiveNotification", new
                         {
@@ -293,17 +294,17 @@ namespace Services.Service
                             payload = order.OrderCode
                         });
 
-                    // ✅ Lưu vào bảng Notification
+                    // ✅ Lưu vào Notification
                     var notification = new Notification
                     {
                         UserId = saleUserId.Value,
                         Title = "Đơn hàng mới",
                         Message = message,
-                        Url = $"/orders/{order.OrderId}" // hoặc null
+                        Url = $"/orders/{order.OrderId}" // hoặc custom path
                     };
 
                     await _notificationRepository.AddAsync(notification);
-                    await _notificationRepository.SaveChangesAsync();
+                    await _notificationRepository.SaveChangesAsync(); // <-- Đảm bảo hàm này không bị bỏ qua
                 }
 
 

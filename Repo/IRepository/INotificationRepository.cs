@@ -12,6 +12,7 @@ namespace Repo.IRepository
         Task AddAsync(Notification notification);
         Task SaveChangesAsync();
         Task<List<Notification>> GetNotificationsByUserIdAsync(Guid userId);
+        Task<Notification> GetByIdAsync(Guid id);
     }
 
 }

@@ -27,6 +27,8 @@ namespace Services.Service
         private readonly IWarehouseExportRepository _exportReceiptRepo;
         private readonly IRequestExportRepository _requestExportRepo;
         private readonly IOrderRepository _orderRepo;
+        private readonly IUserRepository _userRepository;
+        private readonly INotificationRepository _notificationRepository;
 
         private readonly IHubContext<NotificationHub> _hub;
 
@@ -38,7 +40,9 @@ namespace Services.Service
             IRequestExportRepository requestExportRepository,
             IWarehouseExportRepository exportReceiptRepo,
             IRequestExportRepository requestExportRepo,
-            IOrderRepository orderRepository)
+            IOrderRepository orderRepository,
+            IUserRepository userRepository,
+            INotificationRepository notificationRepository)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -48,6 +52,8 @@ namespace Services.Service
             _exportReceiptRepo = exportReceiptRepo;
             _requestExportRepo = requestExportRepo;
             _orderRepo = orderRepository;
+            _userRepository = userRepository;
+            _notificationRepository = notificationRepository;
         }
 
         public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
@@ -111,7 +117,13 @@ namespace Services.Service
 
                 await _exportReceiptRepo.AddRangeAsync(new[] { receipt });
                 await UpdateRequestAndOrderStatusAsync(requestExport, order);
-                await SendWarehouseNotification(requestExport.RequestExportCode, "📦 Đơn hàng đủ tồn, xuất kho trực tiếp.");
+
+
+                // ✅ Gửi thông báo
+                var message = $"📦 Đơn hàng {order.OrderCode} đã sẵn sàng xuất trực tiếp từ kho.";
+                await SendWarehouseNotification(warehouseId, requestExport.RequestExportCode, message);
+
+
                 return receipt;
             }
 
@@ -185,7 +197,12 @@ namespace Services.Service
             await _exportReceiptRepo.AddRangeAsync(new[] { transferReceipt });
             await _transferRepo.AddRangeAsync(transferRequests);
             await UpdateRequestAndOrderStatusAsync(requestExport, order);
-            await SendWarehouseNotification(requestExport.RequestExportCode, "📦 Đơn cần điều phối. Vui lòng chuẩn bị xuất kho.");
+
+
+            var notifyMessage = $"📦 Đơn hàng {order.OrderCode} cần điều phối. Vui lòng chuẩn bị xuất kho.";
+            await SendWarehouseNotification(mainWarehouseId, requestExport.RequestExportCode, notifyMessage);
+
+
             return transferReceipt;
         }
 
@@ -198,14 +215,30 @@ namespace Services.Service
             await _requestExportRepository.SaveChangesAsync();
         }
 
-        private async Task SendWarehouseNotification(string code, string message)
+        private async Task SendWarehouseNotification(long warehouseId, string code, string message)
         {
-            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
+            // Gửi SignalR đến user của kho
+            var userId = await _userRepository.GetUserIdByWarehouseIdAsync(warehouseId);
+            if (userId == null) return;
+
+            await _hub.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", new
             {
-                title = "Kho",
+                title = "Yêu cầu xuất kho",
                 message,
                 payload = $"RequestExportCode: {code}"
             });
+
+            // Lưu vào DB Notification
+            var notification = new Notification
+            {
+                UserId = userId.Value,
+                Title = "Yêu cầu xuất kho",
+                Message = message,
+                Url = $"/export-requests/{code}"
+            };
+
+            await _notificationRepository.AddAsync(notification);
+            await _notificationRepository.SaveChangesAsync();
         }
 
 
