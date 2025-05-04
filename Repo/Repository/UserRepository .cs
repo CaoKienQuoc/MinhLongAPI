@@ -359,7 +359,9 @@ namespace Repo.Repository
 
         public async Task<List<RegisterAccount>> GetRegisterAccount()
         {
-            return _context.RegisterAccounts.ToList();
+            return await _context.RegisterAccounts
+                        .Include(r => r.Contracts)
+                        .ToListAsync();
         }
 
         public async Task<long?> GetAgencyIdByUserId(Guid userId)

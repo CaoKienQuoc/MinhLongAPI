@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MailKit;
 using BusinessObject.DTO.Email;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Services.Service
 {
@@ -697,9 +698,36 @@ namespace Services.Service
             return new { roleName, roleId, token };
         }
 
-        public async Task<List<RegisterAccount>> GetRegisterAccount()
+        public async Task<List<RegisterAccountWithContractsDto>> GetRegisterAccount()
         {
-            return await _userRepository.GetRegisterAccount();
+            var accounts = await _userRepository.GetRegisterAccount();
+
+            return accounts.Select(a => new RegisterAccountWithContractsDto
+            {
+                RegisterId = a.RegisterId,
+                Username = a.Username,
+                Email = a.Email,
+                Phone = a.Phone,
+                UserType = a.UserType,
+                FullName = a.FullName,
+                Position = a.Position,
+                Department = a.Department,
+                AgencyName = a.AgencyName,
+                Street = a.Street,
+                WardName = a.WardName,
+                DistrictName = a.DistrictName,
+                ProvinceName = a.ProvinceName,
+                IsApproved = a.IsApproved,
+                AccountRegisterStatus = a.AccountRegisterStatus,
+                Contracts = a.Contracts?.Select(c => new ContractDto
+                {
+                    ContractId = c.ContractId,
+                    FileName = c.FileName,
+                    FilePath = c.FilePath,
+                    FileType = c.FileType,
+                    CreatedAt = c.UploadedAt
+                }).ToList() ?? new()
+            }).ToList();
         }
 
         public async Task<long?> GetAgencyIdByUserId(Guid userId)

@@ -17,22 +17,18 @@ namespace MLHR.Controllers
             _userService = userService;
         }
 
-        
+
         [HttpGet("auth")]
         public async Task<IActionResult> GetRegisterAccount()
         {
             try
             {
-                // Lấy thông tin tài khoản từ service
-                var account = await _userService.GetRegisterAccount();
+                var accountDtos = await _userService.GetRegisterAccount();
 
-                // Kiểm tra nếu tài khoản không tồn tại
-                if (account == null)
-                {
-                    return NotFound(new { message = "Account does not exist!" });
-                }
+                if (accountDtos == null || !accountDtos.Any())
+                    return NotFound(new { message = "No accounts found!" });
 
-                return Ok(account);
+                return Ok(accountDtos);
             }
             catch (Exception ex)
             {
