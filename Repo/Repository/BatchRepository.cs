@@ -162,6 +162,12 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(b => b.BatchId == batchId && b.Status == "EXPIRED");
         }
 
+        public async Task DeleteAsync(Batch batch)
+        {
+            _context.Batches.Remove(batch);
+            await Task.CompletedTask; // hoặc bạn có thể bỏ nếu không async
+        }
+
     }
 
 }

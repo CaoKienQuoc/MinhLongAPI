@@ -197,13 +197,14 @@ namespace Services.Service
                 Quantity = batch.Quantity,
                 WarehouseId = importTransaction.WarehouseId,
                 Reason = "Expired",
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 Status = "ExportCancel"
             };
 
             await _damegedStockRepo.AddAsync(cancelReceipt);
-            batch.Status = "Canceled";
+            batch.Status = "CANCELED";
             await _damegedStockRepo.SaveChangesAsync();
+
             return true;
         }
 

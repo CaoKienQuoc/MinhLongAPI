@@ -29,6 +29,8 @@ namespace Repo.IRepository
         Task UpdateRangeAsync(IEnumerable<Batch> batches);
 
         Task<Batch> GetExpiredBatchByIdAsync(long batchId);
+
+        Task DeleteAsync(Batch batch);
     }
 
 }
