@@ -79,6 +79,8 @@ namespace DataAccessLayer
 
         public DbSet<RegisterAccountContract> RegisterAccountContract { get; set; }
 
+        public DbSet<Notification> Notification { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // 🏷️ **Định danh bảng**
@@ -129,6 +131,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<DamagedStock>().ToTable("DamagedStock");
             modelBuilder.Entity<Contract>().ToTable("Contract");
             modelBuilder.Entity<RegisterAccountContract>().ToTable("RegisterAccountContract");
+            modelBuilder.Entity<Notification>().ToTable("Notification");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -781,7 +784,13 @@ namespace DataAccessLayer
                 .HasMany(a => a.Contracts)
                 .WithOne(c => c.AgencyAccount)
                 .HasForeignKey(c => c.AgencyId)
-                .OnDelete(DeleteBehavior.Cascade);  
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

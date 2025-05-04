@@ -39,6 +39,7 @@ namespace BusinessObject.Models
         public AgencyAccount AgencyAccount { get; set; }
 
         public ICollection<PaymentHistory> PaymentHistories { get; set; }
+        public ICollection<Notification> Notifications { get; set; }
 
     }
 }

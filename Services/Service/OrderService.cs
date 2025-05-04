@@ -24,6 +24,7 @@ namespace Services.Service
         private readonly IPaymentHistoryRepository _paymentHistoryRepository;
         private readonly IInventoryService _iventoryService;
         private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
+        private readonly INotificationRepository _notificationRepository;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -33,7 +34,8 @@ namespace Services.Service
             IHubContext<NotificationHub> hub,
             IPaymentHistoryRepository paymentHistoryRepository
             ,IInventoryService inventoryService,
-            ITemporaryWarehouseExportRepository tempExportRepo)
+            ITemporaryWarehouseExportRepository tempExportRepo,
+            INotificationRepository notificationRepository)
         {
             _orderRepository = orderRepository;
             _exportRepository = exportRepository;
@@ -43,6 +45,7 @@ namespace Services.Service
             _paymentHistoryRepository = paymentHistoryRepository;
             _iventoryService = inventoryService;
             _tempExportRepo = tempExportRepo;
+            _notificationRepository = notificationRepository;
         }
         public async Task<List<OrderDto>> GetAllOrdersAsync()
         {
@@ -277,20 +280,32 @@ namespace Services.Service
                 await _orderRepository.UpdateOrderAsync(order);
                 await _orderRepository.SaveChangesAsync();
 
-                /*// Gửi cho Sale
-                await _hub.Clients.Group("4")
-                    .SendAsync("ReceiveNotification", $"🚚 Có Đơn Hàng Mới Được Thanh Toán!");*/
-
-                var notification = new
+                var saleUserId = requestProduct.AgencyAccount?.ManagedByEmployee?.UserId;
+                if (saleUserId.HasValue)
                 {
-                    title = "Sales", // Tiêu đề thông báo
-                    message = "🚚 Có Đơn Hàng Mới Được Thanh Toán!", // Nội dung thông báo
-                    payload = order.OrderCode // Có thể thêm mã đơn hàng hoặc thông tin chi tiết nếu cần
-                };
+                    string message = $"🚚 Đại lý '{requestProduct.AgencyAccount?.AgencyName}' vừa thanh toán đơn hàng: {order.OrderCode}";
 
-                // Gửi thông báo qua SignalR cho Sale
-                await _hub.Clients.Group("4")
-                    .SendAsync("ReceiveNotification", notification);
+                    await _hub.Clients.User(saleUserId.Value.ToString())
+                        .SendAsync("ReceiveNotification", new
+                        {
+                            title = "Đơn hàng mới",
+                            message,
+                            payload = order.OrderCode
+                        });
+
+                    // ✅ Lưu vào bảng Notification
+                    var notification = new Notification
+                    {
+                        UserId = saleUserId.Value,
+                        Title = "Đơn hàng mới",
+                        Message = message,
+                        Url = $"/orders/{order.OrderId}" // hoặc null
+                    };
+
+                    await _notificationRepository.AddAsync(notification);
+                    await _notificationRepository.SaveChangesAsync();
+                }
+
 
                 return true;
             }

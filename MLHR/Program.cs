@@ -16,6 +16,7 @@ using Services.Exceptions;
 using Hangfire;
 using System.Runtime.InteropServices;
 using QuestPDF.Infrastructure;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -170,6 +171,9 @@ builder.Services.AddScoped<IReturnService, ReturnService>();
 builder.Services.AddScoped<IDamagedStockRepository, DamagedStockRepository>();
 builder.Services.AddScoped<IDamagedStockService, DamagedStockService>();
 
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 builder.Services.AddScoped<IReturnWarehouseReceiptRepository, ReturnWarehouseReceiptRepository>();
 
 builder.Services.AddHostedService<ExpiredBatchBackgroundService>();
@@ -265,7 +269,7 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddSignalR();
-
+builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 
 
 var app = builder.Build();
