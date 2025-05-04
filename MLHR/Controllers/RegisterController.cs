@@ -17,22 +17,18 @@ namespace MLHR.Controllers
             _userService = userService;
         }
 
-        
+
         [HttpGet("auth")]
         public async Task<IActionResult> GetRegisterAccount()
         {
             try
             {
-                // Lấy thông tin tài khoản từ service
-                var account = await _userService.GetRegisterAccount();
+                var accountDtos = await _userService.GetRegisterAccount();
 
-                // Kiểm tra nếu tài khoản không tồn tại
-                if (account == null)
-                {
-                    return NotFound(new { message = "Account does not exist!" });
-                }
+                if (accountDtos == null || !accountDtos.Any())
+                    return NotFound(new { message = "No accounts found!" });
 
-                return Ok(account);
+                return Ok(accountDtos);
             }
             catch (Exception ex)
             {
@@ -45,18 +41,23 @@ namespace MLHR.Controllers
         /// Người dùng gửi yêu cầu đăng ký
         /// </summary>
         [HttpPost("auth/register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromForm] RegisterRequest request)
         {
             try
             {
                 var registerAccount = await _userService.RegisterUserRequestAsync(request);
-                return Ok(new { message = "Registration successful, please wait for admin approval!", registerId = registerAccount.RegisterId });
+                return Ok(new
+                {
+                    message = "Registration successful, please wait for admin approval!",
+                    registerId = registerAccount.RegisterId
+                });
             }
             catch (Exception ex)
             {
                 return BadRequest(new { error = ex.Message });
             }
         }
+
 
 
         /// <summary>

@@ -24,7 +24,7 @@ namespace Services.IService
         Task<bool> ChangeEmployeeRoleAsync(Guid userId, int newRoleId);
         Task<object> LoginAsync(LoginRequest request);
         Task<PagedResult<User>> GetUsersAsync();
-        Task<List<RegisterAccount>> GetRegisterAccount();
+        Task<List<RegisterAccountWithContractsDto>> GetRegisterAccount();
         Task<long?> GetAgencyIdByUserId(Guid userId);
         Task<long?> GetEmployeeIdByUserId(Guid userId);
         Task<bool> CancelUserAsync(int registerId);

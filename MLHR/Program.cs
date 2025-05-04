@@ -174,6 +174,9 @@ builder.Services.AddScoped<IDamagedStockService, DamagedStockService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
+builder.Services.AddScoped<IContractRepository, ContractRepository>();
+builder.Services.AddScoped<IContractService, ContractService>();
+
 builder.Services.AddScoped<IReturnWarehouseReceiptRepository, ReturnWarehouseReceiptRepository>();
 
 builder.Services.AddHostedService<ExpiredBatchBackgroundService>();
