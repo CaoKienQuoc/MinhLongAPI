@@ -202,6 +202,7 @@ namespace Services.Service
             };
 
             await _damegedStockRepo.AddAsync(cancelReceipt);
+            batch.Status = "Canceled";
             await _damegedStockRepo.SaveChangesAsync();
             return true;
         }

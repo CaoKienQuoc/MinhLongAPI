@@ -27,10 +27,6 @@ namespace BusinessObject.Models
         [ForeignKey("AddressId")]
         public Address Address { get; set; }
 
-        /*public int LocationId { get; set; }
-        [ForeignKey("LocationId")]
-        public Location Location { get; set; }*/
-
         public long? ManagedByEmployeeId { get; set; }
 
         [ForeignKey("ManagedByEmployeeId")]
@@ -39,6 +35,10 @@ namespace BusinessObject.Models
         public ICollection<AgencyAccountLevel> AgencyAccountLevels { get; set; }
 
         public ICollection<Contract> Contracts { get; set; }
+
+        public ICollection<AgencyScoreHistory> ScoreHistories { get; set; }
+        public ICollection<AgencyPromotionRequest> PromotionRequests { get; set; }
+
 
     }
 }

@@ -76,10 +76,10 @@ namespace DataAccessLayer
         public DbSet<ReturnWarehouseReceiptDetail> ReturnWarehouseReceiptDetails { get; set; }
         public DbSet<DamagedStock> DamagedStocks { get; set; }
         public DbSet<Contract> Contract { get; set; }
-
         public DbSet<RegisterAccountContract> RegisterAccountContract { get; set; }
-
         public DbSet<Notification> Notification { get; set; }
+        public DbSet<AgencyScoreHistory> AgencyScoreHistory { get; set; }
+        public DbSet<AgencyPromotionRequest> AgencyPromotionRequest { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -132,6 +132,8 @@ namespace DataAccessLayer
             modelBuilder.Entity<Contract>().ToTable("Contract");
             modelBuilder.Entity<RegisterAccountContract>().ToTable("RegisterAccountContract");
             modelBuilder.Entity<Notification>().ToTable("Notification");
+            modelBuilder.Entity<AgencyScoreHistory>().ToTable("AgencyScoreHistory");
+            modelBuilder.Entity<AgencyPromotionRequest>().ToTable("AgencyPromotionRequest");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -201,6 +203,8 @@ namespace DataAccessLayer
             modelBuilder.Entity<DamagedStock>().Property(wr => wr.DamagedStockId).ValueGeneratedOnAdd();
             modelBuilder.Entity<Contract>().Property(wr => wr.ContractId).ValueGeneratedOnAdd();
             modelBuilder.Entity<RegisterAccountContract>().Property(wr => wr.ContractId).ValueGeneratedOnAdd();
+            modelBuilder.Entity<AgencyScoreHistory>().Property(wr => wr.AgencyScoreHistoryId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<AgencyPromotionRequest>().Property(wr => wr.AgencyPromotionRequestId).HasDefaultValueSql("NEWID()");
 
             // 🔥 **Cấu hình quan hệ nhiều - nhiều**
             modelBuilder.Entity<UserRole>()
@@ -234,7 +238,21 @@ namespace DataAccessLayer
                 .HasOne(a => a.User)
                 .WithOne(u => u.AgencyAccount)
                 .HasForeignKey<AgencyAccount>(a => a.UserId);
-            
+
+            // Mối quan hệ: AgencyAccount (1) <-> (N) AgencyScoreHistory
+            modelBuilder.Entity<AgencyScoreHistory>()
+                .HasOne(s => s.Agency)
+                .WithMany(a => a.ScoreHistories)
+                .HasForeignKey(s => s.AgencyId)
+                .OnDelete(DeleteBehavior.Cascade); // hoặc Restrict nếu không muốn xóa theo
+
+            // Mối quan hệ: AgencyAccount (1) <-> (N) AgencyPromotionRequest
+            modelBuilder.Entity<AgencyPromotionRequest>()
+                .HasOne(p => p.Agency)
+                .WithMany(a => a.PromotionRequests)
+                .HasForeignKey(p => p.AgencyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Liên kết Warehouse với Address (1 Warehouse - 1 Address)
             modelBuilder.Entity<Warehouse>()
                 .HasOne(w => w.Address)

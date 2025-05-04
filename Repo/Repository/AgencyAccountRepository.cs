@@ -72,7 +72,16 @@ namespace Repo.Repository
         .ToListAsync();
         }
 
+        public async Task<AgencyAccount> GetByIdAsync(long agencyId)
+        {
+            return await _context.AgencyAccounts.FindAsync(agencyId);
+        }
 
+
+        public async Task<List<AgencyAccount>> GetAllAsync()
+        {
+            return await _context.AgencyAccounts.ToListAsync();
+        }
     }
 
 }

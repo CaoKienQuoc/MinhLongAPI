@@ -18,6 +18,9 @@ namespace Repo.IRepository
         Task UpdateAsync(AgencyAccount agencyAccount);
 
         Task<List<AgencyAccount>> GetAgenciesManagedByEmployeeIdAsync(long employeeId);
+
+        Task<AgencyAccount> GetByIdAsync(long agencyId);
+        Task<List<AgencyAccount>> GetAllAsync();
     }
 
 }
