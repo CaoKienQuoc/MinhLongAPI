@@ -74,7 +74,10 @@ namespace Repo.Repository
 
         public async Task<AgencyAccount> GetByIdAsync(long agencyId)
         {
-            return await _context.AgencyAccounts.FindAsync(agencyId);
+            return await _context.AgencyAccounts
+     .Include(a => a.AgencyAccountLevels)
+     .FirstOrDefaultAsync(a => a.AgencyId == agencyId);
+
         }
 
 

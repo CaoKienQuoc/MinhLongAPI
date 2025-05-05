@@ -42,7 +42,18 @@ namespace Services.Service
             var score = await _scoreRepo.GetTotalScoreAsync(agencyId);
             var agency = await _accountRepo.GetByIdAsync(agencyId);
 
-            if (agency.AgencyAccountLevels.Count == 3 && score >= 100)
+            if (agency == null)
+                throw new Exception("Không tìm thấy đại lý.");
+
+            if (agency.AgencyAccountLevels == null || !agency.AgencyAccountLevels.Any())
+                throw new Exception("Đại lý chưa có dữ liệu cấp độ.");
+
+            // 🧠 Lấy cấp hiện tại dựa trên bản ghi mới nhất theo ChangeDate
+            var currentLevel = agency.AgencyAccountLevels
+                .OrderByDescending(l => l.ChangeDate)
+                .FirstOrDefault();
+
+            if (currentLevel != null && currentLevel.LevelId == 3 && score >= 100)
             {
                 var hasPending = await _promotionRepo.IsPendingRequestExistAsync(agencyId);
                 if (!hasPending)
@@ -50,12 +61,15 @@ namespace Services.Service
                     await _promotionRepo.CreateAsync(new AgencyPromotionRequest
                     {
                         AgencyId = agencyId,
-                        CurrentLevelId = 3,
+                        CurrentLevelId = (int)currentLevel.LevelId,
                         SuggestedLevelId = 2,
-                        TotalScore = score
+                        TotalScore = score,
+                        Status = "Pending",
+                        CreatedAt = DateTime.UtcNow
                     });
                 }
             }
         }
+
     }
 }
