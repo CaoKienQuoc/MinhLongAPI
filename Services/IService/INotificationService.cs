@@ -10,6 +10,10 @@ namespace Services.IService
     public interface INotificationService
     {
         Task<List<Notification>> GetNotificationsForUserAsync(Guid userId);
+        Task<bool> MarkAsReadAsync(Guid notificationId, Guid currentUserId);
+
+        Task<Notification> GetNotificationDetailAsync(Guid notificationId, Guid currentUserId);
+
     }
 
 }

@@ -7,6 +7,7 @@ using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
 using Repo.IRepository;
+using Repo.Repository;
 using Services.IService;
 
 namespace Services.Service
@@ -17,6 +18,8 @@ namespace Services.Service
         private readonly IWarehouseTransferRepository _transferRepo;
         private readonly IProductRepository _productRepository;
         private readonly IWarehouseExportRepository _exportReceiptRepo;
+        private readonly IUserRepository _userRepository;
+        private readonly INotificationRepository _notificationRepository;
 
         private readonly IHubContext<NotificationHub> _hub;
 
@@ -25,13 +28,17 @@ namespace Services.Service
             IWarehouseTransferRepository transferRepo,
             IProductRepository productRepository,
             IHubContext<NotificationHub> hub,
-            IWarehouseExportRepository exportReceiptRepo)
+            IWarehouseExportRepository exportReceiptRepo,
+            IUserRepository userRepository,
+            INotificationRepository notificationRepository)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
             _productRepository = productRepository;
             _hub = hub;
             _exportReceiptRepo = exportReceiptRepo;
+            _userRepository = userRepository;
+            _notificationRepository = notificationRepository;
         }
         public async Task<ExportWarehouseReceipt> ApproveTransferRequestAndCreateReceiptAsync(int transferRequestId)
         {
@@ -95,13 +102,34 @@ namespace Services.Service
             await _transferRepo.UpdateAsync(transferRequest);
             await _transferRepo.SaveChangesAsync();
 
-            // Gửi thông báo (nếu cần)
-            await _hub.Clients.Group("3").SendAsync("ReceiveNotification", new
+            // ✅ Gửi thông báo đến user của kho nhận (DestinationWarehouseId)
+            var destinationWarehouseId = transferRequest.DestinationWarehouseId;
+            var userId = await _userRepository.GetUserIdByWarehouseIdAsync(destinationWarehouseId);
+
+            if (userId != null)
             {
-                title = "Kho phụ",
-                message = "📦 Phiếu điều phối đã được duyệt và xuất kho.",
-                payload = $"TransferRequestId: {transferRequestId}"
-            });
+                string message = $"📦 Phiếu điều phối từ kho phụ đã được duyệt và đang chuyển hàng đến kho của bạn.";
+
+                // Gửi qua SignalR
+                await _hub.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "Phiếu điều phối",
+                    message,
+                    payload = $"TransferRequestId: {transferRequestId}"
+                });
+
+                // Lưu DB
+                var notification = new Notification
+                {
+                    UserId = userId.Value,
+                    Title = "Phiếu điều phối",
+                    Message = message,
+                    Url = $"/transfer-requests/{transferRequestId}"
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                await _notificationRepository.SaveChangesAsync();
+            }
 
             return exportReceipt;
         }

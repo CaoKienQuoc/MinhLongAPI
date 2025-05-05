@@ -20,8 +20,38 @@ namespace Services.Service
 
         public async Task<List<Notification>> GetNotificationsForUserAsync(Guid userId)
         {
-            return await _notificationRepository.GetNotificationsByUserIdAsync(userId);
+            var notifications = await _notificationRepository.GetNotificationsByUserIdAsync(userId);
+            return notifications
+                .OrderByDescending(n => n.CreatedAt)
+                .ToList();
         }
+
+        public async Task<bool> MarkAsReadAsync(Guid notificationId, Guid currentUserId)
+        {
+            var notification = await _notificationRepository.GetByIdAsync(notificationId);
+
+            if (notification == null || notification.UserId != currentUserId)
+                return false;
+
+            if (!notification.IsRead)
+            {
+                notification.IsRead = true;
+                await _notificationRepository.SaveChangesAsync();
+            }
+
+            return true;
+        }
+
+        public async Task<Notification> GetNotificationDetailAsync(Guid notificationId, Guid currentUserId)
+        {
+            var notification = await _notificationRepository.GetByIdAsync(notificationId);
+
+            if (notification == null || notification.UserId != currentUserId)
+                return null;
+
+            return notification;
+        }
+
     }
 
 }

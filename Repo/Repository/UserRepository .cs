@@ -449,6 +449,16 @@ namespace Repo.Repository
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
         }
+
+
+        public async Task<Guid?> GetUserIdByWarehouseIdAsync(long warehouseId)
+        {
+            return await _context.Warehouses
+         .Where(w => w.WarehouseId == warehouseId)
+         .Select(w => (Guid?)w.UserId)
+         .FirstOrDefaultAsync();
+        }
+
     }
 
 
