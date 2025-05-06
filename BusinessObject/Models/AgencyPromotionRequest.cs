@@ -16,7 +16,7 @@ namespace BusinessObject.Models
         public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ReviewedAt { get; set; }
-        public string? ReviewedBy { get; set; }
+        public Guid ReviewedBy { get; set; }
 
         public AgencyAccount Agency { get; set; }
     }

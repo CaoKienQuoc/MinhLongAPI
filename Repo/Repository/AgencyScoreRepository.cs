@@ -35,5 +35,18 @@ namespace Repo.Repository
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<AgencyScoreHistory?> GetByAgencyIdAndReasonAsync(long agencyId, string reason)
+        {
+            return await _context.AgencyScoreHistory
+                .FirstOrDefaultAsync(x => x.AgencyId == agencyId && x.Reason == reason);
+        }
+
+        public async Task UpdateAsync(AgencyScoreHistory history)
+        {
+            _context.AgencyScoreHistory.Update(history);
+            await Task.CompletedTask;
+        }
+
     }
 }

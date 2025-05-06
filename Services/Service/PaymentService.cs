@@ -101,8 +101,8 @@ namespace Services.Service
                 var returnurlfail = _configuration["PayOS:ReturnUrlFail"];
 
                 // ✅ returnUrl chỉ cần OrderId
-                //string returnUrl = $"http://localhost:5214/api/Payment/paymentconfirm" +
-                string returnUrl = $"https://minhlong.mlhr.org/api/Payment/paymentconfirm" +
+                string returnUrl = $"http://localhost:5214/api/Payment/paymentconfirm" +
+                //string returnUrl = $"https://minhlong.mlhr.org/api/Payment/paymentconfirm" +
                    $"?orderCode={orderCode}" +
                    $"&accountId={accountId}" +
                    $"&amount={request.Price}"+
@@ -350,7 +350,8 @@ namespace Services.Service
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,  
                         SerieNumber = $"SER-{DateTime.Now.Ticks}",
-                        UserId = userId.Value
+                        UserId = userId.Value,
+                        DueDate = DateTime.Now.AddMonths(3)
                     };
 
                     // ❗ KHÔNG gán PaymentHistoryId ở đây
@@ -390,17 +391,33 @@ namespace Services.Service
                 await _paymentRepository.SaveChangesAsync();
 
                 // ✅ Nếu thanh toán đủ & đúng hạn => Cộng điểm
-                if (existingHistory.Status == "PAID" && transaction.PaymentDate <= existingHistory.DueDate)
+                if (existingHistory.Status == "PAID")
                 {
-                    var scoreEntry = new AgencyScoreHistory
+                    var reason = "Thanh toán đơn hàng đúng hạn";
+                    var existingScore = await _agencyScoreRepository.GetByAgencyIdAndReasonAsync(agency.AgencyId, reason);
+
+                    if (existingScore != null)
                     {
-                        AgencyId = agency.AgencyId,
-                        ScoreChange = 5,
-                        Reason = "Thanh toán đơn hàng đúng hạn",
-                        CreatedDate = transaction.PaymentDate
-                    };
-                    await _agencyScoreRepository.AddScoreAsync(scoreEntry);
+                        // ✅ Cập nhật điểm nếu đã có bản ghi
+                        existingScore.ScoreChange += 5;
+                        existingScore.CreatedDate = transaction.PaymentDate;
+                        await _agencyScoreRepository.UpdateAsync(existingScore);
+                    }
+                    else
+                    {
+                        // ✅ Thêm mới nếu chưa có
+                        var scoreEntry = new AgencyScoreHistory
+                        {
+                            AgencyId = agency.AgencyId,
+                            ScoreChange = 5,
+                            Reason = "Thanh toán đơn hàng đúng hạn",
+                            CreatedDate = transaction.PaymentDate
+                        };
+                        await _agencyScoreRepository.AddScoreAsync(scoreEntry);
+                    }
+
                     await _agencyScoreRepository.SaveChangesAsync();
+
 
                     var totalScore = await _agencyScoreRepository.GetTotalScoreByAgencyIdAsync(agency.AgencyId);
                     var currentLevel = await _agencyLevelRepository.GetCurrentLevelByAgencyIdAsync(agency.AgencyId);

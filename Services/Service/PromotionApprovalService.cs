@@ -22,29 +22,35 @@ namespace Services.Service
             _levelRepo = levelRepo;
         }
 
-        public async Task ApprovePromotionAsync(Guid promotionRequestId)
+        public async Task ApprovePromotionAsync(Guid promotionRequestId, Guid userId)
         {
             var request = await _promotionRepo.GetByIdAsync(promotionRequestId);
             if (request == null || request.Status != "Pending")
                 throw new Exception("Yêu cầu thăng hạng không hợp lệ hoặc đã được duyệt.");
 
-            // ✅ Thêm bản ghi cấp mới cho agency
-            var newLevel = new AgencyAccountLevel
-            {
-                AgencyId = request.AgencyId,
-                LevelId = request.SuggestedLevelId,
-                ChangeDate = DateTime.Now
-            };
-            await _levelRepo.AddAsync(newLevel); // <-- Cần thêm method AddAsync()
+            // ✅ Lấy bản ghi cấp hiện tại của đại lý
+            var agencyLevel = await _levelRepo.GetLatestLevelByAgencyIdAsync(request.AgencyId);
+            if (agencyLevel == null)
+                throw new Exception("Không tìm thấy bản ghi cấp của đại lý.");
 
-            // ✅ Cập nhật trạng thái request
+            // ✅ Cập nhật cấp & cộng thêm 5% chiết khấu
+            agencyLevel.LevelId = request.SuggestedLevelId;
+            agencyLevel.ChangeDate = DateTime.Now;
+            agencyLevel.OrderDiscount += 5; // cộng thêm 5%
+
+            await _levelRepo.UpdateAsync(agencyLevel);
+
+            // ✅ Cập nhật trạng thái yêu cầu
             request.Status = "Approved";
+            request.ReviewedAt = DateTime.Now;
+            request.ReviewedBy = userId;
             await _promotionRepo.UpdateAsync(request);
 
             // ✅ Lưu thay đổi
             await _levelRepo.SaveAsync();
             await _promotionRepo.SaveChangesAsync();
         }
+
 
     }
 

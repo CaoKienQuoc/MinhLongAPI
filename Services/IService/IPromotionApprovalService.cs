@@ -8,6 +8,6 @@ namespace Services.IService
 {
     public interface IPromotionApprovalService
     {
-        Task ApprovePromotionAsync(Guid promotionRequestId);
+        Task ApprovePromotionAsync(Guid promotionRequestId, Guid userId);
     }
 }

@@ -11,7 +11,8 @@ namespace Repo.IRepository
     {
         Task AddScoreAsync(AgencyScoreHistory history);
         Task<int> GetTotalScoreByAgencyIdAsync(long agencyId);
-
+        Task<AgencyScoreHistory?> GetByAgencyIdAndReasonAsync(long agencyId, string reason);
+        Task UpdateAsync(AgencyScoreHistory history);
         Task SaveChangesAsync();
 
     }
