@@ -39,6 +39,11 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync();
         }
 
+        public async Task UpdateAsync(AgencyAccountLevel level)
+        {
+            _context.AgencyAccountLevels.Update(level);
+            await Task.CompletedTask;
+        }
     }
 
 }

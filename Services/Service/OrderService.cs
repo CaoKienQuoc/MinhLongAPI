@@ -280,6 +280,8 @@ namespace Services.Service
                 await _orderRepository.UpdateOrderAsync(order);
                 await _orderRepository.SaveChangesAsync();
 
+
+
                 var saleUserId = requestProduct.AgencyAccount?.ManagedByEmployee?.UserId;
                 if (saleUserId.HasValue)
                 {

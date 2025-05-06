@@ -50,6 +50,19 @@ namespace Repo.Repository
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<long> GetCurrentLevelByAgencyIdAsync(long agencyId)
+        {
+            var current = await _context.AgencyAccountLevels
+                .Where(x => x.AgencyId == agencyId)
+                .OrderByDescending(x => x.ChangeDate) // Lấy bản ghi mới nhất
+                .Select(x => x.LevelId)
+                .FirstOrDefaultAsync();
+
+            return current; // Nếu không có thì trả về 0
+        }
+
+
     }
 
 }

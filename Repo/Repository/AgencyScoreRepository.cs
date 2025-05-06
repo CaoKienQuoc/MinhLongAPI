@@ -19,17 +19,21 @@ namespace Repo.Repository
             _context = context;
         }
 
-        public async Task AddAsync(AgencyScoreHistory history)
+        public async Task AddScoreAsync(AgencyScoreHistory scoreEntry)
         {
-            _context.AgencyScoreHistory.Add(history);
-            await _context.SaveChangesAsync();
+            await _context.AgencyScoreHistory.AddAsync(scoreEntry);
         }
 
-        public async Task<int> GetTotalScoreAsync(long agencyId)
+        public async Task<int> GetTotalScoreByAgencyIdAsync(long agencyId)
         {
             return await _context.AgencyScoreHistory
-                .Where(x => x.AgencyId == agencyId)
-                .SumAsync(x => x.ScoreChange);
+                .Where(s => s.AgencyId == agencyId)
+                .SumAsync(s => s.ScoreChange);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

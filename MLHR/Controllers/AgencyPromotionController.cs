@@ -8,18 +8,25 @@ namespace MLHR.Controllers
     [Route("api/[controller]")]
     public class AgencyScoreController : ControllerBase
     {
-        private readonly IAgencyScoreService _scoreService;
+        private readonly IPromotionApprovalService _promotionService;
 
-        public AgencyScoreController(IAgencyScoreService scoreService)
+        public AgencyScoreController(IPromotionApprovalService promotionService)
         {
-            _scoreService = scoreService;
+            _promotionService = promotionService;
         }
 
-        [HttpPost("add")]
-        public async Task<IActionResult> AddScore(long agencyId, int score, string reason)
+        [HttpPost("approve/{promotionRequestId}")]
+        public async Task<IActionResult> Approve(Guid promotionRequestId)
         {
-            await _scoreService.AddScoreAsync(agencyId, score, reason);
-            return Ok("Đã cộng điểm tín nhiệm.");
+            try
+            {
+                await _promotionService.ApprovePromotionAsync(promotionRequestId);
+                return Ok(new { message = "Duyệt thăng hạng thành công." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 

@@ -194,7 +194,7 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ITemporaryWarehouseExportRepository, TemporaryWarehouseExportRepository>();
 
 builder.Services.AddScoped<IAgencyScoreHistoryRepository, AgencyScoreRepository>();
-builder.Services.AddScoped<IAgencyScoreService, AgencyScoreService>();
+builder.Services.AddScoped<IPromotionApprovalService, PromotionApprovalService>();
 builder.Services.AddScoped<IAgencyPromotionRequestRepository, AgencyPromotionRequestRepository>();
 
 builder.Services.AddMemoryCache(); // hoặc services.AddMemoryCache() nếu dùng Startup

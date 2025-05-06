@@ -19,27 +19,34 @@ namespace Repo.Repository
             _context = context;
         }
 
-        public async Task<bool> IsPendingRequestExistAsync(long agencyId)
+        public async Task AddAsync(AgencyPromotionRequest request)
         {
-            return await _context.AgencyPromotionRequest
-                .AnyAsync(x => x.AgencyId == agencyId && x.Status == "Pending");
+            await _context.AgencyPromotionRequest.AddAsync(request);
         }
 
-        public async Task CreateAsync(AgencyPromotionRequest request)
+        public async Task<bool> HasPendingRequestAsync(long agencyId, long suggestedLevelId)
         {
-            _context.AgencyPromotionRequest.Add(request);
+            return await _context.AgencyPromotionRequest.AnyAsync(x =>
+                x.AgencyId == agencyId &&
+                x.SuggestedLevelId == suggestedLevelId &&
+                x.Status == "Pending");
+        }
+
+        public async Task SaveChangesAsync()
+        {
             await _context.SaveChangesAsync();
         }
 
-        public async Task<AgencyPromotionRequest> GetByIdAsync(Guid id)
+        public async Task<AgencyPromotionRequest> GetByIdAsync(Guid requestId)
         {
-            return await _context.AgencyPromotionRequest.FindAsync(id);
+            return await _context.AgencyPromotionRequest
+                .FirstOrDefaultAsync(x => x.AgencyPromotionRequestId == requestId);
         }
 
         public async Task UpdateAsync(AgencyPromotionRequest request)
         {
             _context.AgencyPromotionRequest.Update(request);
-            await _context.SaveChangesAsync();
+            await Task.CompletedTask;
         }
 
     }

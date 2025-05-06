@@ -13,5 +13,7 @@ namespace Repo.IRepository
         Task SaveAsync(); // nếu cần
         Task<AgencyAccountLevel?> GetLatestLevelByAgencyIdAsync(long agencyId);
 
+        Task UpdateAsync(AgencyAccountLevel level);
+
     }
 }

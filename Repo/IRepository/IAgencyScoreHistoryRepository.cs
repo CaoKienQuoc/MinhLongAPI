@@ -9,8 +9,11 @@ namespace Repo.IRepository
 {
     public interface IAgencyScoreHistoryRepository
     {
-        Task AddAsync(AgencyScoreHistory history);
-        Task<int> GetTotalScoreAsync(long agencyId);
+        Task AddScoreAsync(AgencyScoreHistory history);
+        Task<int> GetTotalScoreByAgencyIdAsync(long agencyId);
+
+        Task SaveChangesAsync();
+
     }
 
 }

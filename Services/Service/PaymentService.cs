@@ -33,6 +33,9 @@ namespace Services.Service
         private readonly IOrderService _orderService;
         private readonly HttpClient _client;
         private readonly IPaymentHistoryRepository _repository;
+        private readonly IAgencyScoreHistoryRepository _agencyScoreRepository;
+        private readonly IAgencyLevelRepository _agencyLevelRepository;
+        private readonly IAgencyPromotionRequestRepository _agencyPromotionRepository;
 
         // Constructor có đầy đủ các dependency
         public PaymentService(IOptions<PayOSSettings> payOSSettings,
@@ -42,7 +45,10 @@ namespace Services.Service
                               IUserRepository userRepository,
                               HttpClient client,
                               IOrderService orderService,
-                              IPaymentHistoryRepository repository)
+                              IPaymentHistoryRepository repository,
+                              IAgencyScoreHistoryRepository agencyScoreHistory,
+                              IAgencyLevelRepository agencyLevel,
+                              IAgencyPromotionRequestRepository agencyPromotionRequest)
         {
             // Kiểm tra nếu payOSSettings bị null
             _payOSSettings = payOSSettings?.Value ?? throw new ArgumentNullException(nameof(payOSSettings));
@@ -62,6 +68,9 @@ namespace Services.Service
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
             _client = client;
             _repository = repository;
+            _agencyScoreRepository = agencyScoreHistory ?? throw new ArgumentNullException(nameof(agencyScoreHistory));
+            _agencyLevelRepository = agencyLevel ?? throw new ArgumentNullException(nameof(agencyLevel));
+            _agencyPromotionRepository = agencyPromotionRequest ?? throw new ArgumentNullException(nameof(agencyPromotionRequest));
         }
     
         public async Task<CreatePaymentResult> SendPaymentLink(Guid accountId, CreatePaymentRequest request)
@@ -378,7 +387,61 @@ namespace Services.Service
 
                 await _paymentRepository.InsertPaymentTransactionAsync(transaction);
                 //order.Status = "Paid";
-                await _paymentRepository.SaveChangesAsync();               
+                await _paymentRepository.SaveChangesAsync();
+
+                // ✅ Nếu thanh toán đủ & đúng hạn => Cộng điểm
+                if (existingHistory.Status == "PAID" && transaction.PaymentDate <= existingHistory.DueDate)
+                {
+                    var scoreEntry = new AgencyScoreHistory
+                    {
+                        AgencyId = agency.AgencyId,
+                        ScoreChange = 5,
+                        Reason = "Thanh toán đơn hàng đúng hạn",
+                        CreatedDate = transaction.PaymentDate
+                    };
+                    await _agencyScoreRepository.AddScoreAsync(scoreEntry);
+                    await _agencyScoreRepository.SaveChangesAsync();
+
+                    var totalScore = await _agencyScoreRepository.GetTotalScoreByAgencyIdAsync(agency.AgencyId);
+                    var currentLevel = await _agencyLevelRepository.GetCurrentLevelByAgencyIdAsync(agency.AgencyId);
+
+                    if (currentLevel == 3 && totalScore >= 1000)
+                    {
+                        bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 2);
+                        if (!exists)
+                        {
+                            var promotionRequest = new AgencyPromotionRequest
+                            {
+                                AgencyId = agency.AgencyId,
+                                CurrentLevelId = 3,
+                                SuggestedLevelId = 2,
+                                TotalScore = totalScore,
+                                Status = "Pending",
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            await _agencyPromotionRepository.AddAsync(promotionRequest);
+                            await _agencyPromotionRepository.SaveChangesAsync();
+                        }
+                    }
+                    else if (currentLevel == 2 && totalScore >= 5000)
+                    {
+                        bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 1);
+                        if (!exists)
+                        {
+                            var promotionRequest = new AgencyPromotionRequest
+                            {
+                                AgencyId = agency.AgencyId,
+                                CurrentLevelId = 2,
+                                SuggestedLevelId = 1,
+                                TotalScore = totalScore,
+                                Status = "Pending",
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            await _agencyPromotionRepository.AddAsync(promotionRequest);
+                            await _agencyPromotionRepository.SaveChangesAsync();
+                        }
+                    }
+                }
 
                 return new StatusPayment
                 {

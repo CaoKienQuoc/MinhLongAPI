@@ -9,9 +9,11 @@ namespace Repo.IRepository
 {
     public interface IAgencyPromotionRequestRepository
     {
-        Task<bool> IsPendingRequestExistAsync(long agencyId);
-        Task CreateAsync(AgencyPromotionRequest request);
-        Task<AgencyPromotionRequest> GetByIdAsync(Guid id);
+        Task AddAsync(AgencyPromotionRequest request);
+        Task<bool> HasPendingRequestAsync(long agencyId, long suggestedLevelId);
+        Task SaveChangesAsync();
+
+        Task<AgencyPromotionRequest> GetByIdAsync(Guid requestId);
         Task UpdateAsync(AgencyPromotionRequest request);
     }
 }
