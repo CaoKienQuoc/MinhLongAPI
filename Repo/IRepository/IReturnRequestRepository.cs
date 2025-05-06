@@ -29,6 +29,9 @@ namespace Repo.IRepository
 
         Task<string> GenerateRequestReturnCodeAsync();
         Task<string> GenerateWarehouseReturnCodeAsync();
+
+        Task UpdateAsync(ReturnRequest request);
+        Task SaveChangesAsync();
     }
 
 }

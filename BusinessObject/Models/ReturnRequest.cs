@@ -32,7 +32,11 @@ namespace BusinessObject.Models
 
         public ICollection<ReturnRequestDetail> Details { get; set; }
 
-
+        // ✅ Các trường phục vụ từ chối yêu cầu
+        public Guid? RejectedBy { get; set; }           // UserId của Sale từ chối
+        public DateTime? RejectedAt { get; set; }       // Thời gian từ chối
+        public string? Reason { get; set; }       // Lý do từ chối
     }
+
 
 }

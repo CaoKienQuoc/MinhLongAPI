@@ -183,9 +183,31 @@ namespace Services.Service
 
             // ✅ Lưu chi tiết phiếu
             await _warehouseReceiptRepo.CreateReturnWarehouseReceiptDetailAsync(receiptDetails);
+            request.Reason = "Đã duyệt yêu cầu trả hàng";
             await _warehouseReceiptRepo.SaveChangesAsync();
         }
-        
+
+        public async Task RejectReturnRequestAsync(Guid returnRequestId, Guid userId, string rejectReason)
+        {
+            if (!await _employeeRepo.ExistsAsync(userId))
+                throw new UnauthorizedAccessException("Bạn không phải Sale.");
+
+            var request = await _returnRepo.GetByIdWithDetailsAsync(returnRequestId);
+            if (request == null)
+                throw new Exception("Không tìm thấy yêu cầu trả hàng.");
+
+            if (!string.Equals(request.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Yêu cầu đã được xử lý trước đó!");
+
+            request.Status = "Rejected";
+            request.RejectedAt = DateTime.UtcNow;
+            request.RejectedBy = userId;
+            request.Reason = rejectReason;
+
+            await _returnRepo.UpdateAsync(request);
+            await _returnRepo.SaveChangesAsync();
+        }
+
 
         public async Task<List<ReturnRequest>> GetPendingReturnsAsync()
         {

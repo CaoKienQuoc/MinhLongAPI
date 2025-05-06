@@ -179,6 +179,17 @@ namespace Repo.Repository
 
             return requestCode;
         }
+
+        public async Task UpdateAsync(ReturnRequest request)
+        {
+            _context.ReturnRequests.Update(request);
+            await Task.CompletedTask;
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 
 }

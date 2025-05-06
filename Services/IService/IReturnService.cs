@@ -31,7 +31,7 @@ namespace Services.IService
 
         Task<IEnumerable<ReturnRequestProdductDto>> GetReturnRequestsByUserIdAsync(Guid userId);
         Task<ReturnRequestProdductDto> GetReturnRequestByIdAsync(Guid returnRequestId, Guid userId);
-
+        Task RejectReturnRequestAsync(Guid returnRequestId, Guid userId, string rejectReason);
     }
 
 }
