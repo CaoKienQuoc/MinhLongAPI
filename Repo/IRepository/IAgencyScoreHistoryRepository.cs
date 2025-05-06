@@ -15,6 +15,8 @@ namespace Repo.IRepository
         Task UpdateAsync(AgencyScoreHistory history);
         Task SaveChangesAsync();
 
+        Task<List<AgencyScoreHistory>> GetHistoryByAgencyIdAsync(long agencyId);
+
     }
 
 }

@@ -11,11 +11,13 @@ namespace MLHR.Controllers
     {
         private readonly IPromotionApprovalService _promotionService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IUserRepository _employeeRepo;
 
-        public AgencyScoreController(IPromotionApprovalService promotionService, IHttpContextAccessor httpContextAccessor)
+        public AgencyScoreController(IPromotionApprovalService promotionService, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository)
         {
             _promotionService = promotionService;
             _httpContextAccessor = httpContextAccessor;
+            _employeeRepo = userRepository;
         }
 
         [HttpPost("approve/{promotionRequestId}")]
@@ -50,6 +52,47 @@ namespace MLHR.Controllers
             throw new UnauthorizedAccessException("Không xác định được người dùng đăng nhập.");
         }
 
+        [HttpGet("managed")]
+        public async Task<IActionResult> GetManagedRequests()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var employee = await _employeeRepo.GetByUserIdAsync(userId);
+            if (employee == null)
+                return Unauthorized(new { message = "Không tìm thấy thông tin nhân viên." });
+
+            var result = await _promotionService.GetRequestsManagedByEmployeeIdAsync(employee.EmployeeId);
+            return Ok(result);
+        }
+
+        [HttpGet("managed/{id}")]
+        public async Task<IActionResult> GetManagedRequestById(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var employee = await _employeeRepo.GetByUserIdAsync(userId);
+            if (employee == null)
+                return Unauthorized(new { message = "Không tìm thấy thông tin nhân viên." });
+
+            var request = await _promotionService.GetRequestByIdManagedAsync(id, employee.EmployeeId);
+            if (request == null)
+                return NotFound(new { message = "Không tìm thấy yêu cầu hoặc bạn không có quyền." });
+
+            return Ok(request);
+        }
+
+        [HttpGet("get-my-score")]
+        public async Task<IActionResult> GetMyScoreDetail()
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var dto = await _promotionService.GetScoreDetailByUserIdAsync(userId);
+                return Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 
 }
