@@ -17,6 +17,7 @@ namespace BusinessObject.Models
         public DateTime OrderDate { get; set; }
         /*public long SalesAgentId { get; set; }*/
         public decimal Discount { get; set; }
+        public decimal TotalPrice { get; set; }
         public decimal FinalPrice { get; set; }
         public string Status { get; set; } // PENDING, PROCESSING, CANCELED
         // Thêm khóa ngoại để liên kết với RequestProduct

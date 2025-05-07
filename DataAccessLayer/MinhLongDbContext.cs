@@ -665,7 +665,9 @@ namespace DataAccessLayer
                 .HasOne(p => p.RequestProductDetail)
                 .WithOne(d => d.Product)
                 .HasForeignKey<RequestProductDetail>(d => d.ProductId);*/
-           
+            modelBuilder.Entity<Order>()
+                .Property(od => od.TotalPrice)
+                .HasPrecision(18, 2);
 
             modelBuilder.Entity<OrderDetail>()
                 .Property(od => od.TotalAmount)

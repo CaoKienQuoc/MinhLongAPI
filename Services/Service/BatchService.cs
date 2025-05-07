@@ -162,15 +162,20 @@ namespace Services.Service
 
         public async Task<int> UpdateExpiredBatchesAsync(DateTime nowVietnamTime)
         {
+            // ✅ Lấy batch đã hết hạn và có trạng thái ACTIVE hoặc CALCULATING_PRICE
             var expiredBatches = await _batchRepository.GetQueryable()
-                .Where(b => b.Status == "ACTIVE" && b.ExpiryDate < nowVietnamTime)
+                .Where(b =>
+                    (b.Status == "ACTIVE" || b.Status == "CALCULATING_PRICE") &&
+                    b.ExpiryDate < nowVietnamTime)
                 .ToListAsync();
 
             foreach (var batch in expiredBatches)
             {
                 batch.Status = "EXPIRED";
+                //batch.UpdatedAt = DateTime.UtcNow; // ✅ Cập nhật thời gian
             }
 
+            // ✅ Chỉ update nếu có batch cần cập nhật
             if (expiredBatches.Any())
             {
                 await _batchRepository.UpdateRangeAsync(expiredBatches);
@@ -178,6 +183,7 @@ namespace Services.Service
 
             return expiredBatches.Count;
         }
+
 
         public async Task<bool> CancelExpiredBatchAsync(long batchId)
         {

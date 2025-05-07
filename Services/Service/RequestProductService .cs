@@ -285,7 +285,8 @@ namespace Services.Service
                     Status = "WaitPaid",
                     RequestId = requestId,
                     Discount = discount * 100,
-                    FinalPrice = 0
+                    FinalPrice = 0,
+                    TotalPrice = 0,
                 };
 
                 await _orderRepository.AddOrderAsync(order);
@@ -340,6 +341,7 @@ namespace Services.Service
             if (orderDetails.Any())
                 await _orderRepository.AddOrderDetailAsync(orderDetails);
 
+            order.TotalPrice = finalPrice;
             order.FinalPrice = finalPrice * (1 - discount);
             await _orderRepository.UpdateOrderAsync(order);
             await _orderRepository.SaveChangesAsync();

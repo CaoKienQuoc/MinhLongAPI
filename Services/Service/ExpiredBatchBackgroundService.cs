@@ -31,6 +31,7 @@ namespace Services.Service
                     var nowUtc = DateTime.UtcNow;
                     var nowVietnam = nowUtc.AddHours(7);
 
+                    // ✅ Gọi hàm update expired batches
                     var updatedCount = await batchService.UpdateExpiredBatchesAsync(nowVietnam);
                     Console.WriteLine($"[{nowVietnam:yyyy-MM-dd HH:mm:ss}] Updated {updatedCount} expired batches.");
                 }
@@ -39,9 +40,11 @@ namespace Services.Service
                     Console.WriteLine($"[{DateTime.UtcNow.AddHours(7):yyyy-MM-dd HH:mm:ss}] Error updating expired batches: {ex.Message}");
                 }
 
+                // ✅ Đợi 5 phút trước khi kiểm tra lại
                 await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
             }
         }
+
     }
 
 }
