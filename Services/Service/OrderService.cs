@@ -132,6 +132,9 @@ namespace Services.Service
         public async Task<OrderDto> GetOrderByIdAsync(Guid orderId)
         {
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
+            var agencyId = order.RequestProduct?.AgencyId ?? 0;
+            var discount = await _orderRepository.GetAgencyDiscountAsync(agencyId);
+
 
             if (order == null)
             {
@@ -143,7 +146,7 @@ namespace Services.Service
                 OrderId = order.OrderId,
                 OrderCode = order.OrderCode,
                 OrderDate = order.OrderDate,
-                Discount = order.Discount,
+                Discount = discount,
                 FinalPrice = order.FinalPrice,
                 Status = order.Status,
                 // ✅ Thêm AgencyId
@@ -347,13 +350,14 @@ namespace Services.Service
         public async Task<List<OrderDto>> GetOrdersByAgencyIdAsync(long agencyId)
         {
             var orders = await _orderRepository.GetOrdersByAgencyIdAsync(agencyId);
+            var discount = await _orderRepository.GetAgencyDiscountAsync(agencyId);
 
             return orders.Select(o => new OrderDto
             {
                 OrderId = o.OrderId,
                 OrderCode = o.OrderCode,
                 OrderDate = o.OrderDate,
-                Discount = o.Discount,
+                Discount = discount,
                 FinalPrice = o.FinalPrice,
                 Status = o.Status,
                 // ✅ Thêm AgencyId

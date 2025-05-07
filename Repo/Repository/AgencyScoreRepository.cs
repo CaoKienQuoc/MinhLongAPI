@@ -48,5 +48,13 @@ namespace Repo.Repository
             await Task.CompletedTask;
         }
 
+        public async Task<List<AgencyScoreHistory>> GetHistoryByAgencyIdAsync(long agencyId)
+        {
+            return await _context.AgencyScoreHistory
+                .Where(s => s.AgencyId == agencyId)
+                .OrderByDescending(s => s.CreatedDate)
+                .ToListAsync();
+        }
+
     }
 }

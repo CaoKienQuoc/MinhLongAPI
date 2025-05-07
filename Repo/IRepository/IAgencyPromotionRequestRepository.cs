@@ -15,5 +15,8 @@ namespace Repo.IRepository
 
         Task<AgencyPromotionRequest> GetByIdAsync(Guid requestId);
         Task UpdateAsync(AgencyPromotionRequest request);
+
+        Task<List<AgencyPromotionRequest>> GetRequestsByManagedEmployeeAsync(long employeeId);
+        Task<AgencyPromotionRequest?> GetRequestByIdManagedAsync(Guid requestId, long employeeId);
     }
 }

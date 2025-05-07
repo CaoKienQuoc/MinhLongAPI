@@ -49,5 +49,23 @@ namespace Repo.Repository
             await Task.CompletedTask;
         }
 
+        public async Task<List<AgencyPromotionRequest>> GetRequestsByManagedEmployeeAsync(long employeeId)
+        {
+            return await _context.AgencyPromotionRequest
+                .Include(x => x.Agency)
+                .Where(x => x.Agency.ManagedByEmployeeId == employeeId)
+                .ToListAsync();
+        }
+
+        public async Task<AgencyPromotionRequest?> GetRequestByIdManagedAsync(Guid requestId, long employeeId)
+        {
+            return await _context.AgencyPromotionRequest
+                .Include(x => x.Agency)
+                .FirstOrDefaultAsync(x =>
+                    x.AgencyPromotionRequestId == requestId &&
+                    x.Agency.ManagedByEmployeeId == employeeId);
+        }
+
+
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO;
 using BusinessObject.Models;
 using Repo.IRepository;
 using Repo.Repository;
@@ -14,13 +15,19 @@ namespace Services.Service
     {
         private readonly IAgencyPromotionRequestRepository _promotionRepo;
         private readonly IAgencyAccountLevelRepository _levelRepo;
+        private readonly IAgencyAccountRepository _accountRepo;
+        private readonly IAgencyScoreHistoryRepository _scoreHistoryRepo;
 
         public PromotionApprovalService(
             IAgencyPromotionRequestRepository promotionRepo,
-            IAgencyAccountLevelRepository levelRepo)
+            IAgencyAccountLevelRepository levelRepo,
+            IAgencyAccountRepository accountRepository,
+            IAgencyScoreHistoryRepository scoreHistoryRepository)
         {
             _promotionRepo = promotionRepo;
             _levelRepo = levelRepo;
+            _accountRepo = accountRepository;
+            _scoreHistoryRepo = scoreHistoryRepository;
         }
 
         public async Task ApprovePromotionAsync(Guid promotionRequestId, Guid userId)
@@ -59,6 +66,60 @@ namespace Services.Service
             await _levelRepo.SaveAsync();
             await _promotionRepo.SaveChangesAsync();
         }
+
+
+        public async Task<List<AgencyPromotionRequestDto>> GetRequestsManagedByEmployeeIdAsync(long employeeId)
+        {
+            var requests = await _promotionRepo.GetRequestsByManagedEmployeeAsync(employeeId);
+            return requests.Select(MapToDto).ToList();
+        }
+
+        public async Task<AgencyPromotionRequestDto?> GetRequestByIdManagedAsync(Guid requestId, long employeeId)
+        {
+            var request = await _promotionRepo.GetRequestByIdManagedAsync(requestId, employeeId);
+            return request == null ? null : MapToDto(request);
+        }
+
+        private AgencyPromotionRequestDto MapToDto(AgencyPromotionRequest request)
+        {
+            return new AgencyPromotionRequestDto
+            {
+                AgencyPromotionRequestId = request.AgencyPromotionRequestId,
+                AgencyId = request.AgencyId,
+                AgencyName = request.Agency?.AgencyName,
+                CurrentLevelId = request.CurrentLevelId,
+                SuggestedLevelId = request.SuggestedLevelId,
+                TotalScore = request.TotalScore,
+                Status = request.Status,
+                CreatedAt = request.CreatedAt,
+                ReviewedAt = request.ReviewedAt,
+                ReviewedBy = request.ReviewedBy
+            };
+        }
+
+        public async Task<AgencyScoreDetailDto> GetScoreDetailByUserIdAsync(Guid userId)
+        {
+            var agency = await _accountRepo.GetByUserIdAsync(userId);
+            if (agency == null)
+                throw new Exception("Không tìm thấy thông tin đại lý.");
+
+            var total = await _scoreHistoryRepo.GetTotalScoreByAgencyIdAsync(agency.AgencyId);
+            var history = await _scoreHistoryRepo.GetHistoryByAgencyIdAsync(agency.AgencyId);
+
+            return new AgencyScoreDetailDto
+            {
+                AgencyId = agency.AgencyId,
+                AgencyName = agency.AgencyName,
+                TotalScore = total,
+                ScoreHistory = history.Select(h => new AgencyScoreItemDto
+                {
+                    ScoreChange = h.ScoreChange,
+                    Reason = h.Reason,
+                    CreatedDate = h.CreatedDate
+                }).ToList()
+            };
+        }
+
     }
 
 }
