@@ -13,7 +13,7 @@ namespace Repo.IRepository
     {
 
         //Task<IEnumerable<Order>> GetAllOrdersAsync();
-
+        Task<decimal> GetAgencyDiscountAsync(long agencyId);
         Task<List<Order>> GetAllOrdersAsync();
         Task AddOrderAsync(Order order);
         Task UpdateOrderAsync(Order order);

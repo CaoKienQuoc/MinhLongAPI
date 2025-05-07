@@ -27,6 +27,17 @@ namespace Repo.Repository
                 ToListAsync();
         }*/
 
+        public async Task<decimal> GetAgencyDiscountAsync(long agencyId)
+        {
+            var latestLevel = await _context.AgencyAccountLevels
+                .Where(aal => aal.AgencyId == agencyId)
+                .OrderByDescending(aal => aal.ChangeDate)
+                .Select(aal => aal.Level)
+                .FirstOrDefaultAsync();
+
+            return latestLevel?.DiscountPercentage ?? 0;
+        }
+
         public async Task<List<Order>> GetAllOrdersAsync()
         {
             return await _context.Orders
@@ -117,6 +128,8 @@ namespace Repo.Repository
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
                 .Include(o => o.RequestProduct)
+                    .ThenInclude(rp => rp.AgencyAccount)
+                    .ThenInclude(aa => aa.AgencyAccountLevels)
                 .ToListAsync();
         }
 
