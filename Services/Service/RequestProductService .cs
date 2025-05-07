@@ -33,6 +33,7 @@ namespace Services.Service
         private readonly IProductRepository _productRepository;
         private readonly IUserRepository _userRepository;
         private readonly IHubContext<NotificationHub> _hub;
+        private readonly IAgencyAccountLevelRepository _agencyAccountLevelRepository;
 
         public RequestProductService(
             IRequestProductRepository requestProductRepository,
@@ -42,7 +43,8 @@ namespace Services.Service
             IUserRepository userRepository,
             IHubContext<NotificationHub> hub,
             IInventoryService inventoryService,
-            IProductService productService)
+            IProductService productService,
+            IAgencyAccountLevelRepository agencyAccountLevelRepository)
         {
             _requestProductRepository = requestProductRepository;
             _orderRepository = orderRepository;
@@ -52,6 +54,7 @@ namespace Services.Service
             _hub = hub;
             _inventoryService = inventoryService;
             _productService = productService;
+            _agencyAccountLevelRepository = agencyAccountLevelRepository;
         }
 
 
@@ -255,6 +258,17 @@ namespace Services.Service
             if (requestProduct == null)
                 throw new Exception("Request not found!");
 
+            // ✅ Lấy AgencyId từ RequestProduct
+            long agencyId = requestProduct.AgencyId;
+            var agencyLevel = await _agencyAccountLevelRepository.GetLatestLevelByAgencyIdAsync(agencyId);
+            if (agencyLevel == null)
+                throw new Exception($"Không tìm thấy bản ghi cấp của đại lý với AgencyId = {agencyId}");
+
+            // ✅ Lấy Discount từ AgencyAccountLevel
+            decimal discount = agencyLevel.OrderDiscount / 100m;
+            if (discount < 0 || discount > 1)
+                throw new Exception($"Giá trị Discount không hợp lệ: {discount * 100}%");
+
             var existingOrder = await _orderRepository.GetOrderByRequestIdAsync(requestId);
             if (existingOrder != null && existingOrder.Status == "Paid")
                 return;
@@ -270,7 +284,7 @@ namespace Services.Service
                     OrderDate = DateTime.Now,
                     Status = "WaitPaid",
                     RequestId = requestId,
-                    Discount = 0,
+                    Discount = discount * 100,
                     FinalPrice = 0
                 };
 
@@ -326,7 +340,7 @@ namespace Services.Service
             if (orderDetails.Any())
                 await _orderRepository.AddOrderDetailAsync(orderDetails);
 
-            order.FinalPrice = finalPrice;
+            order.FinalPrice = finalPrice * (1 - discount);
             await _orderRepository.UpdateOrderAsync(order);
             await _orderRepository.SaveChangesAsync();
         }
