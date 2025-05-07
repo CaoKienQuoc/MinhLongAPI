@@ -44,6 +44,11 @@ namespace Repo.Repository
             _context.AgencyAccountLevels.Update(level);
             await Task.CompletedTask;
         }
+
+        public async Task<AgencyLevel> GetLevelByIdAsync(long levelId)
+        {
+            return await _context.AgencyLevels.FirstOrDefaultAsync(x => x.LevelId == levelId);
+        }
     }
 
 }

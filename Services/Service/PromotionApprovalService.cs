@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.Models;
 using Repo.IRepository;
+using Repo.Repository;
 using Services.IService;
 
 namespace Services.Service
@@ -28,15 +29,23 @@ namespace Services.Service
             if (request == null || request.Status != "Pending")
                 throw new Exception("Yêu cầu thăng hạng không hợp lệ hoặc đã được duyệt.");
 
+            // ✅ Lấy LevelId từ SuggestedLevelId
+            long suggestedLevelId = request.SuggestedLevelId;
+
+            // ✅ Lấy DiscountPercentage từ bảng AgencyLevel
+            var levelInfo = await _levelRepo.GetLevelByIdAsync(suggestedLevelId);
+            if (levelInfo == null)
+                throw new Exception($"Không tìm thấy thông tin cho LevelId = {suggestedLevelId}.");
+
             // ✅ Lấy bản ghi cấp hiện tại của đại lý
             var agencyLevel = await _levelRepo.GetLatestLevelByAgencyIdAsync(request.AgencyId);
             if (agencyLevel == null)
                 throw new Exception("Không tìm thấy bản ghi cấp của đại lý.");
 
-            // ✅ Cập nhật cấp & cộng thêm 5% chiết khấu
-            agencyLevel.LevelId = request.SuggestedLevelId;
+            // ✅ Cập nhật cấp & gán DiscountPercentage
+            agencyLevel.LevelId = suggestedLevelId;
+            agencyLevel.OrderDiscount = levelInfo.DiscountPercentage.GetValueOrDefault();
             agencyLevel.ChangeDate = DateTime.Now;
-            agencyLevel.OrderDiscount += 5; // cộng thêm 5%
 
             await _levelRepo.UpdateAsync(agencyLevel);
 
@@ -50,8 +59,6 @@ namespace Services.Service
             await _levelRepo.SaveAsync();
             await _promotionRepo.SaveChangesAsync();
         }
-
-
     }
 
 }
