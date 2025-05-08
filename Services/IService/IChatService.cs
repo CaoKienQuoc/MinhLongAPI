@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO;
 using BusinessObject.Models;
 
 namespace Services.IService
@@ -11,5 +12,6 @@ namespace Services.IService
     {
         Task SaveMessageAsync(ChatMessage message);
         Task<List<ChatMessage>> GetChatHistoryAsync(Guid user1, Guid user2);
+        Task<List<ChatMessageDto>> GetAllMessagesAsync();
     }
 }

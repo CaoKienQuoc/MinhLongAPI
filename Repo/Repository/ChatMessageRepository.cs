@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO;
 using BusinessObject.Models;
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,27 @@ namespace Repo.Repository
         public ChatMessageRepository(MinhLongDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<List<ChatMessageDto>> GetAllMessagesAsync()
+        {
+            return await _context.ChatMessages
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .Select(m => new ChatMessageDto
+                {
+                    ChatMessageId = m.ChatMessageId,
+                    SenderId = m.SenderId,
+                    ReceiverId = m.ReceiverId,
+                    SenderName = m.Sender.AgencyAccount != null ? m.Sender.AgencyAccount.AgencyName : m.Sender.Employee.FullName,
+                    ReceiverName = m.Receiver.AgencyAccount != null ? m.Receiver.AgencyAccount.AgencyName : m.Receiver.Employee.FullName,
+                    MessageText = m.MessageText,
+                    FileUrl = m.FileUrl,
+                    Timestamp = m.Timestamp,
+                    IsRead = m.IsRead
+                })
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
         }
 
         public async Task AddMessageAsync(ChatMessage message)
