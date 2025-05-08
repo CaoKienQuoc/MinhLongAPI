@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class FixDB : Migration
+    public partial class UpdateDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -216,6 +216,35 @@ namespace DataAccessLayer.Migrations
                         principalTable: "Role",
                         principalColumn: "RoleId",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatMessage",
+                columns: table => new
+                {
+                    ChatMessageId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    SenderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReceiverId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    MessageText = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    FileUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMessage", x => x.ChatMessageId);
+                    table.ForeignKey(
+                        name: "FK_ChatMessage_User_ReceiverId",
+                        column: x => x.ReceiverId,
+                        principalTable: "User",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ChatMessage_User_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "User",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -634,6 +663,52 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AgencyPromotionRequest",
+                columns: table => new
+                {
+                    AgencyPromotionRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    AgencyId = table.Column<long>(type: "bigint", nullable: false),
+                    CurrentLevelId = table.Column<int>(type: "int", nullable: false),
+                    SuggestedLevelId = table.Column<int>(type: "int", nullable: false),
+                    TotalScore = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ReviewedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReviewedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AgencyPromotionRequest", x => x.AgencyPromotionRequestId);
+                    table.ForeignKey(
+                        name: "FK_AgencyPromotionRequest_AgencyAccount_AgencyId",
+                        column: x => x.AgencyId,
+                        principalTable: "AgencyAccount",
+                        principalColumn: "AgencyId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AgencyScoreHistory",
+                columns: table => new
+                {
+                    AgencyScoreHistoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    AgencyId = table.Column<long>(type: "bigint", nullable: false),
+                    ScoreChange = table.Column<int>(type: "int", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AgencyScoreHistory", x => x.AgencyScoreHistoryId);
+                    table.ForeignKey(
+                        name: "FK_AgencyScoreHistory_AgencyAccount_AgencyId",
+                        column: x => x.AgencyId,
+                        principalTable: "AgencyAccount",
+                        principalColumn: "AgencyId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Contract",
                 columns: table => new
                 {
@@ -707,6 +782,7 @@ namespace DataAccessLayer.Migrations
                     OrderCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Discount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     FinalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
@@ -896,7 +972,10 @@ namespace DataAccessLayer.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RejectedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    RejectedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1473,6 +1552,16 @@ namespace DataAccessLayer.Migrations
                 column: "LevelId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AgencyPromotionRequest_AgencyId",
+                table: "AgencyPromotionRequest",
+                column: "AgencyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AgencyScoreHistory_AgencyId",
+                table: "AgencyScoreHistory",
+                column: "AgencyId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Batch_ImportTransactionDetailId",
                 table: "Batch",
                 column: "ImportTransactionDetailId");
@@ -1481,6 +1570,16 @@ namespace DataAccessLayer.Migrations
                 name: "IX_Batch_ProductId",
                 table: "Batch",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessage_ReceiverId",
+                table: "ChatMessage",
+                column: "ReceiverId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessage_SenderId",
+                table: "ChatMessage",
+                column: "SenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Contract_AgencyId",
@@ -1889,6 +1988,15 @@ namespace DataAccessLayer.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AgencyAccountLevel");
+
+            migrationBuilder.DropTable(
+                name: "AgencyPromotionRequest");
+
+            migrationBuilder.DropTable(
+                name: "AgencyScoreHistory");
+
+            migrationBuilder.DropTable(
+                name: "ChatMessage");
 
             migrationBuilder.DropTable(
                 name: "Contract");

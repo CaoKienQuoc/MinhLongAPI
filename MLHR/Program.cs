@@ -17,6 +17,7 @@ using Hangfire;
 using System.Runtime.InteropServices;
 using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.SignalR;
+using MLHR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,7 +86,8 @@ builder.Services.AddAuthentication(options =>
             var path = context.HttpContext.Request.Path;
 
             if (!string.IsNullOrEmpty(accessToken) &&
-                path.StartsWithSegments("/hubs/notifications"))
+               (path.StartsWithSegments("/hubs/notifications") ||
+                 path.StartsWithSegments("/chatHub")))
             {
                 context.Token = accessToken;
             }
@@ -197,6 +199,9 @@ builder.Services.AddScoped<IAgencyScoreHistoryRepository, AgencyScoreRepository>
 builder.Services.AddScoped<IPromotionApprovalService, PromotionApprovalService>();
 builder.Services.AddScoped<IAgencyPromotionRequestRepository, AgencyPromotionRequestRepository>();
 
+builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+builder.Services.AddScoped<IChatService, ChatService>();
+
 builder.Services.AddMemoryCache(); // hoặc services.AddMemoryCache() nếu dùng Startup
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 
@@ -223,11 +228,6 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 var pdfTools = new PdfTools();
 var converter = new SynchronizedConverter(pdfTools);
 builder.Services.AddSingleton<IConverter>(converter);
-
-
-/*var pdfTools = new PdfTools();
-var converter = new SynchronizedConverter(pdfTools);
-builder.Services.AddSingleton<IConverter>(converter);*/
 
 // 🔹 Đăng ký các service khác
 builder.Services.AddScoped<PdfService>();
@@ -258,6 +258,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAllOrigins",
         builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });*/
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -274,6 +276,22 @@ builder.Services.AddCors(options =>
     });
 });
 
+/*builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", builder =>
+    {
+        builder
+            .WithOrigins(
+                "http://localhost:5214",
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://127.0.0.1:5500"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // ✅ Cho phép gửi token/cookie
+    });
+});*/
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
@@ -281,12 +299,7 @@ builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 
 var app = builder.Build();
 
-// ✅ Cấu hình Middleware cho Swagger (chỉ trong môi trường Development)
 
-
-//134
-app.UseSwagger();
-app.UseSwaggerUI();
 
 app.UseStaticFiles(); // Cho phép truy cập /uploads/ từ trình duyệt nếu cần
 
@@ -295,11 +308,9 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-/*// ✅ Bật CORS
-app.UseCors("AllowAllOrigins");*/
-
+// ✅ Bật CORS
 app.UseCors("AllowFrontend");
-
+app.MapControllers();
 
 app.UseAuthentication();
 // ✅ Bật Authorization
@@ -312,10 +323,15 @@ RecurringJob.AddOrUpdate<IPaymentHistoryService>(
     Cron.Daily() // 🕒 Gửi mỗi ngày - bạn có thể test nhanh bằng Cron.Minutely
 );
 
+//134
+app.UseSwagger();
+app.UseSwaggerUI();
+
 // ✅ Kích hoạt API Controllers
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers(); // 🟢 Cần có dòng này!
+    endpoints.MapHub<ChatHub>("/chatHub");
     endpoints.MapHub<NotificationHub>("/hubs/notifications"); // Định tuyến cho hub
 });
 

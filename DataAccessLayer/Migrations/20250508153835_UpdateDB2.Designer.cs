@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250504110604_FixDB")]
-    partial class FixDB
+    [Migration("20250508153835_UpdateDB2")]
+    partial class UpdateDB2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -157,6 +157,72 @@ namespace DataAccessLayer.Migrations
                     b.ToTable("AgencyLevel", (string)null);
                 });
 
+            modelBuilder.Entity("BusinessObject.Models.AgencyPromotionRequest", b =>
+                {
+                    b.Property<Guid>("AgencyPromotionRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<long>("AgencyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentLevelId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ReviewedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SuggestedLevelId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalScore")
+                        .HasColumnType("int");
+
+                    b.HasKey("AgencyPromotionRequestId");
+
+                    b.HasIndex("AgencyId");
+
+                    b.ToTable("AgencyPromotionRequest", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.AgencyScoreHistory", b =>
+                {
+                    b.Property<Guid>("AgencyScoreHistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<long>("AgencyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ScoreChange")
+                        .HasColumnType("int");
+
+                    b.HasKey("AgencyScoreHistoryId");
+
+                    b.HasIndex("AgencyId");
+
+                    b.ToTable("AgencyScoreHistory", (string)null);
+                });
+
             modelBuilder.Entity("BusinessObject.Models.Batch", b =>
                 {
                     b.Property<long>("BatchId")
@@ -214,6 +280,43 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("Batch", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ChatMessage", b =>
+                {
+                    b.Property<Guid>("ChatMessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<string>("FileUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MessageText")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("ReceiverId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ChatMessageId");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("ChatMessage", (string)null);
                 });
 
             modelBuilder.Entity("BusinessObject.Models.Contract", b =>
@@ -734,6 +837,10 @@ namespace DataAccessLayer.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("OrderId");
 
@@ -1278,6 +1385,15 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("RejectedBy")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ReturnRequestCode")
@@ -1980,6 +2096,28 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Level");
                 });
 
+            modelBuilder.Entity("BusinessObject.Models.AgencyPromotionRequest", b =>
+                {
+                    b.HasOne("BusinessObject.Models.AgencyAccount", "Agency")
+                        .WithMany("PromotionRequests")
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.AgencyScoreHistory", b =>
+                {
+                    b.HasOne("BusinessObject.Models.AgencyAccount", "Agency")
+                        .WithMany("ScoreHistories")
+                        .HasForeignKey("AgencyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Agency");
+                });
+
             modelBuilder.Entity("BusinessObject.Models.Batch", b =>
                 {
                     b.HasOne("BusinessObject.Models.ImportTransactionDetail", "ImportTransactionDetail")
@@ -1997,6 +2135,25 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("ImportTransactionDetail");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ChatMessage", b =>
+                {
+                    b.HasOne("BusinessObject.Models.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.Contract", b =>
@@ -2741,6 +2898,10 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("AgencyAccountLevels");
 
                     b.Navigation("Contracts");
+
+                    b.Navigation("PromotionRequests");
+
+                    b.Navigation("ScoreHistories");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.AgencyLevel", b =>

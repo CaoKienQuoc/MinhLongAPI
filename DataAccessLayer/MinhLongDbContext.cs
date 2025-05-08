@@ -80,6 +80,7 @@ namespace DataAccessLayer
         public DbSet<Notification> Notification { get; set; }
         public DbSet<AgencyScoreHistory> AgencyScoreHistory { get; set; }
         public DbSet<AgencyPromotionRequest> AgencyPromotionRequest { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -134,6 +135,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<Notification>().ToTable("Notification");
             modelBuilder.Entity<AgencyScoreHistory>().ToTable("AgencyScoreHistory");
             modelBuilder.Entity<AgencyPromotionRequest>().ToTable("AgencyPromotionRequest");
+            modelBuilder.Entity<ChatMessage>().ToTable("ChatMessage");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -205,6 +207,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<RegisterAccountContract>().Property(wr => wr.ContractId).ValueGeneratedOnAdd();
             modelBuilder.Entity<AgencyScoreHistory>().Property(wr => wr.AgencyScoreHistoryId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<AgencyPromotionRequest>().Property(wr => wr.AgencyPromotionRequestId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ChatMessage>().Property(wr => wr.ChatMessageId).HasDefaultValueSql("NEWID()");
 
             // 🔥 **Cấu hình quan hệ nhiều - nhiều**
             modelBuilder.Entity<UserRole>()
@@ -811,6 +814,18 @@ namespace DataAccessLayer
                 .WithMany(u => u.Notifications)
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(cm => cm.Sender)
+                .WithMany()
+                .HasForeignKey(cm => cm.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(cm => cm.Receiver)
+                .WithMany()
+                .HasForeignKey(cm => cm.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
     }
