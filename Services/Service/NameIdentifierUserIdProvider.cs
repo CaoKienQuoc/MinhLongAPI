@@ -12,9 +12,8 @@ namespace Services.Service
     {
         public string GetUserId(HubConnectionContext connection)
         {
-            // ✅ Bắt đúng "UserId" từ token payload của bạn
+            // ✅ Bắt theo "UserId" từ token
             var userId = connection.User?.FindFirst("UserId")?.Value;
-
             Console.WriteLine($"🔗 GetUserId called, UserId: {userId}");
             return userId;
         }

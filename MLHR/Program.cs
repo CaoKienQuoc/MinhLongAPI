@@ -73,6 +73,7 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key),
         RoleClaimType = ClaimTypes.Role, // ✅ Đảm bảo Role đọc đúng
+        NameClaimType = "UserId",
         ClockSkew = TimeSpan.Zero // ✅ Không cho phép thời gian trễ
     };
 
