@@ -130,6 +130,7 @@ namespace Repo.Repository
                 .Include(o => o.RequestProduct)
                     .ThenInclude(rp => rp.AgencyAccount)
                     .ThenInclude(aa => aa.AgencyAccountLevels)
+                .Where(o => o.RequestProduct.AgencyId == agencyId)
                 .ToListAsync();
         }
 

@@ -82,7 +82,7 @@ namespace Services.Service
         {
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
-                throw new Exception("User not found");
+                throw new Exception("Không tìm thấy User!");
 
             var dto = new UserDetailDto
             {
@@ -143,48 +143,48 @@ namespace Services.Service
             // ✅ Kiểm tra Email hợp lệ (chỉ khi có dữ liệu)
             if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains("@"))
             {
-                throw new ArgumentException("Invalid email! Must contain '@'!");
+                throw new ArgumentException("Email không hợp lệ! Phải chứa ký tự '@'!");
             }
             if (string.IsNullOrWhiteSpace(request.Password))
             {
-                throw new ArgumentException("Password cannot be empty!");
+                throw new ArgumentException("Mật khẩu không được để trống!");
             }
 
             // ✅ Kiểm tra độ dài tối thiểu 8 ký tự
             if (request.Password.Length < 8)
             {
-                throw new ArgumentException("Password must be at least 8 characters long!");
+                throw new ArgumentException("Mật khẩu phải có ít nhất 8 ký tự!");
             }
 
             // ✅ Kiểm tra có ít nhất một chữ cái (a-z hoặc A-Z)
             if (!request.Password.Any(char.IsLetter))
             {
-                throw new ArgumentException("Password must contain at least one letter (a-z, A-Z)!");
+                throw new ArgumentException("Mật khẩu phải chứa ít nhất một chữ cái (a-z, A-Z)!");
             }
 
             // ✅ Kiểm tra có ít nhất một ký tự đặc biệt
             if (!Regex.IsMatch(request.Password, @"[\W_]"))  // `\W` đại diện cho ký tự không phải chữ cái hoặc số
             {
-                throw new ArgumentException("Password must contain at least one special character (@, #, $, etc.)!");
+                throw new ArgumentException("Mật khẩu phải chứa ít nhất một ký tự đặc biệt (@, #, $, v.v.)!");
             }
 
 
             // ✅ Kiểm tra số điện thoại hợp lệ (chỉ khi có dữ liệu)
             if (string.IsNullOrWhiteSpace(request.Phone) || !Regex.IsMatch(request.Phone, @"^0\d{9}$"))
             {
-                throw new ArgumentException("Invalid phone number! Must be 10 digits and start with '0'.");
+                throw new ArgumentException("Số điện thoại không hợp lệ! Phải có 10 chữ số và bắt đầu bằng '0'.");
             }
 
             // ✅ Kiểm tra UserType hợp lệ
             if (string.IsNullOrWhiteSpace(request.UserType) ||
                 (request.UserType.ToUpper() != "EMPLOYEE" && request.UserType.ToUpper() != "AGENCY"))
             {
-                throw new ArgumentException("UserType must be either 'EMPLOYEE' or 'AGENCY'!");
+                throw new ArgumentException("UserType phải là 'EMPLOYEE' hoặc 'AGENCY'!");
             }
 
             if (request.Username.Equals("admin"))
             {
-                throw new ArgumentException("username cannot be admin!");
+                throw new ArgumentException("Không thể đặt tên người dùng là admin");
             }
 
 
@@ -194,25 +194,25 @@ namespace Services.Service
             {
                 if (string.IsNullOrWhiteSpace(request.FullName))
                 {
-                    throw new ArgumentException("FullName is required for EMPLOYEE.");
+                    throw new ArgumentException("FullName là cần thiết đối với EMPLOYEE.");
                 }
 
                 // Regex pattern: Bắt đầu bằng chữ cái in hoa, chỉ chứa chữ cái và khoảng trắng
                 string namePattern = @"^[\p{Lu}][\p{L}\s]*$";
                 if (!Regex.IsMatch(request.FullName, namePattern))
                 {
-                    throw new ArgumentException("FullName must start with an uppercase letter and contain only letters and spaces.");
+                    throw new ArgumentException("FullName phải bắt đầu bằng chữ cái viết hoa và chỉ chứa chữ cái và khoảng trắng.");
                 }
 
                 if (string.IsNullOrWhiteSpace(request.Position) ||
                     (request.Position.ToUpper() != "STAFF" && request.Position.ToUpper() != "MANAGER"))
                 {
-                    throw new ArgumentException("Position must be 'STAFF' or 'MANAGER' for EMPLOYEE.");
+                    throw new ArgumentException("Position phải là 'STAFF' hoặc 'MANAGER' đối với EMPLOYEE.");
                 }
                 if (string.IsNullOrWhiteSpace(request.Department) ||
                     (request.Department.ToUpper() != "WAREHOUSE MANAGER" && request.Department.ToUpper() != "SALES MANAGER" && request.Department.ToUpper() != "ACCOUNTANT MANAGER" && request.Department.ToUpper() != "WAREHOUSE PLANNER"))
                 {
-                    throw new ArgumentException("Department must be 'WAREHOUSE MANAGER' or 'SALES MANAGER' or 'ACCOUNTANT MANAGER' or 'WAREHOUSE PLANNER' for EMPLOYEE.");
+                    throw new ArgumentException("Department phải là 'WAREHOUSE MANAGER' hoặc 'SALES MANAGER' hoặc 'ACCOUNTANT MANAGER' hoặc 'WAREHOUSE PLANNER' đối với EMPLOYEE.");
                 }
 
                 // ✅ Nếu là Employee thì AgencyName có thể null
@@ -226,7 +226,7 @@ namespace Services.Service
 
                 if (string.IsNullOrWhiteSpace(request.AgencyName))
                 {
-                    throw new ArgumentException("AgencyName is required for AGENCY.");
+                    throw new ArgumentException("AgencyName là cần thiết đối với AGENCY.");
                 }
 
                 // ✅ Nếu là Agency thì FullName, Position, Department có thể null
@@ -317,11 +317,11 @@ namespace Services.Service
         {
             var registerUser = await _userRepository.GetRegisterAccountByIdAsync(registerId);
             if (registerUser == null)
-                throw new KeyNotFoundException($"RegisterAccount with ID {registerId} not found.");
+                throw new KeyNotFoundException($"RegisterAccount với ID {registerId} không tìm thấy.");
 
             var approved = await _userRepository.ApproveUserAsync(registerId);
             if (!approved)
-                throw new Exception("Failed to approve user.");
+                throw new Exception("Không thể phê duyệt người dùng.");
 
             // Gọi lại để lấy thông tin đã cập nhật
             registerUser = await _userRepository.GetRegisterAccountByIdAsync(registerId);
@@ -330,7 +330,7 @@ namespace Services.Service
             {
                 var agencyAccount = await _agencyAccountRepository.GetByUsernameAsync(registerUser.Username);
                 if (agencyAccount == null)
-                    throw new Exception($"AgencyAccount not found for Username: {registerUser.Username}");
+                    throw new Exception($"AgencyAccount không tìm thấy với Username: {registerUser.Username}");
 
                 // 💡 Tìm nhân viên SALES MANAGER có thể quản lý
                 var salesManagers = await _userRepository.GetEmployeesByRoleAsync("SALES MANAGER");
@@ -348,7 +348,7 @@ namespace Services.Service
                 }
 
                 if (assignedManager == null)
-                    throw new Exception("No SALES MANAGER available to manage the agency.");
+                    throw new Exception("Không có SALES MANAGER hiện tại có thể quản lý Đại lý");
 
                 agencyAccount.ManagedByEmployeeId = assignedManager.EmployeeId;
                 await _agencyAccountRepository.UpdateAsync(agencyAccount);
@@ -357,7 +357,7 @@ namespace Services.Service
                 // Gán level mặc định
                 var defaultLevel = await _agencyLevelRepository.GetByIdAsync(3);
                 if (defaultLevel == null)
-                    throw new Exception("Default Agency Level (LevelId = 3) not found.");
+                    throw new Exception("Cấp đại lý 3 (LevelId = 3) không tìm thấy.");
 
                 var agencyAccountLevel = new AgencyAccountLevel
                 {
@@ -396,7 +396,7 @@ namespace Services.Service
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Unsupported UserType: {registerUser.UserType}");
+                    throw new InvalidOperationException($"Không hỗ trợ UserType: {registerUser.UserType}");
             }
 
             return true;
@@ -409,7 +409,7 @@ namespace Services.Service
             var user = await _userRepository.GetUserByEmailAsync(email);
             if (user == null)
             {
-                throw new ArgumentException("User not found.");
+                throw new ArgumentException("User không tìm thấy.");
             }
 
             // ✅ Nếu bạn dùng Session hoặc Refresh Token, xóa token tại đây
@@ -425,7 +425,7 @@ namespace Services.Service
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
-                throw new ArgumentException("User not found.");
+                throw new ArgumentException("User không tìm thấy.");
             }
 
             // ✅ 2. Cập nhật thông tin User (Email, Phone)
@@ -441,21 +441,21 @@ namespace Services.Service
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
                 // ✅ Kiểm tra độ dài phải đúng 9 ký tự
-                if (request.Password.Length != 9)
+                if (request.Password.Length != 8)
                 {
-                    throw new ArgumentException("Password must be exactly 9 characters long.");
+                    throw new ArgumentException("Mật khẩu phải có ít nhất 8 ký tự!");
                 }
 
                 // ✅ Kiểm tra có ít nhất một ký tự đặc biệt
                 if (!Regex.IsMatch(request.Password, @"[!@#$%^&*]"))
                 {
-                    throw new ArgumentException("Password must contain at least one special character (!@#$%^&*).");
+                    throw new ArgumentException("Mật khẩu phải chứa ít nhất một ký tự đặc biệt (@, #, $, v.v.)!");
                 }
 
                 // ✅ Kiểm tra có ít nhất một chữ cái viết hoa
                 if (!Regex.IsMatch(request.Password, @"[A-Z]"))
                 {
-                    throw new ArgumentException("Password must contain at least one uppercase letter.");
+                    throw new ArgumentException("Mật khẩu phải chứa ít nhất một chữ cái (a-z, A-Z)!");
                 }
 
                 // ✅ Hash mật khẩu trước khi lưu
@@ -471,7 +471,7 @@ namespace Services.Service
             {
                 var employee = await _userRepository.GetEmployeeByUserIdAsync(userId);
                 if (employee == null)
-                    throw new ArgumentException("Employee record not found.");
+                    throw new ArgumentException("Employee không tìm thấy.");
 
                 if (!string.IsNullOrWhiteSpace(request.FullName))
                     employee.FullName = request.FullName.Trim();
@@ -487,7 +487,7 @@ namespace Services.Service
             {
                 var agency = await _userRepository.GetAgencyAccountByUserIdAsync(userId);
                 if (agency == null)
-                    throw new ArgumentException("Agency account not found.");
+                    throw new ArgumentException("Agency account không tìm thấy.");
 
                 if (!string.IsNullOrWhiteSpace(request.AgencyName))
                     agency.AgencyName = request.AgencyName.Trim();
@@ -506,7 +506,7 @@ namespace Services.Service
             {
                 var address = await _userRepository.GetAddressByIdAsync(addressId);
                 if (address == null)
-                    throw new ArgumentException("Address not found.");
+                    throw new ArgumentException("Không tìm thấy địa chỉ.");
 
                 var (province, district, ward) = await _userRepository.GetLocationIdsAsync(request.ProvinceName, request.DistrictName, request.WardName);
 
@@ -529,7 +529,7 @@ namespace Services.Service
             var user = await _userRepository.GetUserByEmailAsync(request.Email);
             if (user == null)
             {
-                throw new ArgumentException("Email not found.");
+                throw new ArgumentException("Không tìm thấy Email.");
             }
 
             // ✅ Tạo mật khẩu mới ngẫu nhiên
@@ -541,7 +541,7 @@ namespace Services.Service
             await _userRepository.UpdateUserAsync(user);
 
             // ✅ Gửi email chứa mật khẩu mới
-            await SendEmailAsync(user.Email, "Password Reset", $"Your new password: {newPassword}");
+            await SendEmailAsync(user.Email, "Password đã thay đổi", $"Password mới của bạn là: {newPassword}");
 
             return true;
         }
@@ -570,7 +570,7 @@ namespace Services.Service
             }
             catch (Exception ex)
             {
-                throw new Exception("Error sending email: " + ex.Message);
+                throw new Exception("Lỗi không gửi được email: " + ex.Message);
             }
         }
 
@@ -581,31 +581,31 @@ namespace Services.Service
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
-                throw new ArgumentException("User not found.");
+                throw new ArgumentException("User không tìm thấy.");
             }
 
             // ✅ 2. Kiểm tra mật khẩu cũ có đúng không (Không hash)
             if (request.OldPassword != user.Password)
             {
-                throw new ArgumentException("Old password is incorrect.");
+                throw new ArgumentException("Mật khẩu cũ không đúng!");
             }
 
             // ✅ 3. Kiểm tra mật khẩu mới không được trùng với mật khẩu cũ
             if (request.NewPassword == user.Password)
             {
-                throw new ArgumentException("New password cannot be the same as the old password.");
+                throw new ArgumentException("Mật khẩu mới không được phép trùng với mật khẩu cũ");
             }
 
             // ✅ 4. Kiểm tra độ mạnh của mật khẩu mới
             if (!IsValidPassword(request.NewPassword))
             {
-                throw new ArgumentException("New password must be at least 9 characters long, contain at least one uppercase letter, and one special character.");
+                throw new ArgumentException("Mật khẩu mới phải có ít nhất 9 ký tự, chứa ít nhất một chữ cái viết hoa và một ký tự đặc biệt.");
             }
 
             // ✅ 5. Kiểm tra mật khẩu mới có khớp với xác nhận mật khẩu không
             if (request.NewPassword != request.ConfirmPassword)
             {
-                throw new ArgumentException("New password and confirm password do not match.");
+                throw new ArgumentException("Mật khẩu mới và xác nhận mật khẩu không khớp.");
             }
 
             // ✅ 6. Cập nhật mật khẩu vào database (Không hash)
@@ -629,19 +629,19 @@ namespace Services.Service
             // ✅ Kiểm tra roleId hợp lệ
             var validRoles = new List<int> { 3, 4, 5 };
             if (!validRoles.Contains(newRoleId))
-                throw new ArgumentException("RoleId must be 3 (Warehouse), 4 (Sales), or 5 (Accountant)");
+                throw new ArgumentException("RoleId phải là 3 (Warehouse), 4 (Sales), or 5 (Accountant)");
 
             var employee = await _userRepository.GetEmployeeByUserIdAsync(userId);
             if (employee == null)
-                throw new ArgumentException("Employee not found.");
+                throw new ArgumentException("Employee không tìm thấy.");
 
             var userRole = await _userRepository.GetUserRoleByUserIdAsync(userId);
             if (userRole == null)
-                throw new ArgumentException("UserRole not found.");
+                throw new ArgumentException("UserRole không tìm thấy.");
 
             // ✅ Không được đổi sang cùng role hiện tại
             if (userRole.RoleId == newRoleId)
-                throw new ArgumentException("New role is the same as the current role.");
+                throw new ArgumentException("New role giống với current role.");
 
             // ✅ Đổi Role
             userRole.RoleId = newRoleId;
@@ -674,16 +674,16 @@ namespace Services.Service
             var user = await _userRepository.GetUserByUsernameAsync(request.userName);
             if (user == null)
             {
-                throw new ArgumentException("Your Account Need To Active");
+                throw new ArgumentException("Tài Khoản của bạn cần phải được kích hoạt!");
             }
             if (user == null || request.Password != user.Password)
             {
-                throw new ArgumentException("Invalid username or password.");
+                throw new ArgumentException("Tên người dùng hoặc mật khẩu không hợp lệ.");
             }
 
             if (user.Status == false)
             {
-                throw new ArgumentException("Your Account Cannot Login!");
+                throw new ArgumentException("Tài khoản của bạn không thể đăng nhập!");
             }
 
 
@@ -785,7 +785,7 @@ namespace Services.Service
             var employee = await _userRepository.GetByUserIdAsync(userId);
             if (employee == null)
             {
-                throw new Exception("Employee not found for the given user.");
+                throw new Exception("Employee không tìm thấy.");
             }
 
             var agencies = await _agencyAccountRepository.GetAgenciesManagedByEmployeeIdAsync(employee.EmployeeId);

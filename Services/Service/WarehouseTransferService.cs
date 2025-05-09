@@ -46,10 +46,10 @@ namespace Services.Service
             var transferRequest = await _transferRepo.GetByIdAsync(transferRequestId);
 
             if (transferRequest == null || transferRequest.TransferProducts == null || !transferRequest.TransferProducts.Any())
-                throw new InvalidOperationException("Transfer request not found or invalid.");
+                throw new InvalidOperationException("Yêu cầu điều phối không tìm thấy hoặc không hợp lệ.");
 
             if (transferRequest.Status == "Approved")
-                throw new InvalidOperationException("Transfer request has already been approved.");
+                throw new InvalidOperationException("Yêu cầu điều phối đã được phê duyệt.");
 
             // ✅ Tạo phiếu xuất kho điều phối từ kho phụ
             var exportReceipt = new ExportWarehouseReceipt
