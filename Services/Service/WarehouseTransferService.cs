@@ -124,7 +124,7 @@ namespace Services.Service
                     UserId = userId.Value,
                     Title = "Phiếu điều phối",
                     Message = message,
-                    Url = $"/transfer-requests/{transferRequestId}"
+                    Url = $"/warehouse/transfer-request"
                 };
 
                 await _notificationRepository.AddAsync(notification);

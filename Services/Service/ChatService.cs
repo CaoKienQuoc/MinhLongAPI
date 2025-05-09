@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO;
 using BusinessObject.Models;
 using Repo.IRepository;
 using Repo.Repository;
@@ -18,6 +19,12 @@ namespace Services.Service
         {
             _repository = repository;
         }
+
+        public async Task<List<ChatMessageDto>> GetAllMessagesAsync()
+        {
+            return await _repository.GetAllMessagesAsync();
+        }
+
 
         public async Task SaveMessageAsync(ChatMessage message)
         {

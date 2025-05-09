@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO;
 using BusinessObject.Models;
 
 namespace Repo.IRepository
@@ -13,5 +14,7 @@ namespace Repo.IRepository
         Task<List<ChatMessage>> GetMessagesAsync(Guid user1, Guid user2);
         Task DeleteOldMessagesAsync(DateTime olderThan);
         Task SaveChangesAsync();
+
+        Task<List<ChatMessageDto>> GetAllMessagesAsync();
     }
 }

@@ -234,7 +234,7 @@ namespace Services.Service
                 UserId = userId.Value,
                 Title = "Yêu cầu xuất kho",
                 Message = message,
-                Url = $"/export-requests/{code}"
+                Url = $"/warehouse/view-export"
             };
 
             await _notificationRepository.AddAsync(notification);
