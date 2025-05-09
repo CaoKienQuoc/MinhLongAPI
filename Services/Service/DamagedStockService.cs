@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
 using Microsoft.Extensions.Configuration;
 using Repo.IRepository;
+using Repo.Repository;
 using Services.IService;
 
 namespace Services.Service
@@ -100,5 +102,9 @@ namespace Services.Service
             );
         }
 
+        public async Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId)
+        {
+            return await _damagedRepo.GetByUserWarehouseAsync(userId);
+        }
     }
 }

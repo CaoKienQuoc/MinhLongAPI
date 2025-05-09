@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
 using DataAccessLayer;
@@ -55,6 +56,27 @@ namespace Repo.Repository
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId)
+        {
+            return await _context.DamagedStocks
+                .Include(ds => ds.Warehouse)
+                .Include(ds => ds.Product)
+                .Where(ds => ds.Warehouse.UserId == userId)
+                .Select(ds => new GetDamagedStockDto
+                {
+                    DamagedStockId = ds.DamagedStockId,
+                    WarehouseId = ds.WarehouseId,
+                    WarehouseName = ds.Warehouse.WarehouseName,
+                    ProductId = ds.ProductId,
+                    ProductName = ds.Product.ProductName,
+                    Quantity = ds.Quantity,
+                    CreatedAt = ds.CreatedAt,
+                    Reason = ds.Reason,
+                    Status = ds.Status
+                })
+                .ToListAsync();
         }
     }
 
