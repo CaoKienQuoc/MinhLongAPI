@@ -17,7 +17,6 @@ using Hangfire;
 using System.Runtime.InteropServices;
 using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.SignalR;
-using MLHR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 

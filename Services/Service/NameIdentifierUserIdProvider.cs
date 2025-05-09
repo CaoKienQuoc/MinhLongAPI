@@ -12,7 +12,11 @@ namespace Services.Service
     {
         public string GetUserId(HubConnectionContext connection)
         {
-            return connection.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            // ✅ Bắt đúng "UserId" từ token payload của bạn
+            var userId = connection.User?.FindFirst("UserId")?.Value;
+
+            Console.WriteLine($"🔗 GetUserId called, UserId: {userId}");
+            return userId;
         }
     }
 }
