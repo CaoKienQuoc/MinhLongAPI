@@ -60,20 +60,20 @@ namespace Services.Service
         {
             var random = new Random();
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
-                ?? throw new InvalidOperationException("RequestExport not found.");
+                ?? throw new InvalidOperationException("Không tìm thấy RequestExport.");
 
             if (requestExport.Status == "Requested" || requestExport.Status == "Approved")
-                throw new InvalidOperationException("This request has already been processed.");
+                throw new InvalidOperationException("Yêu cầu này đã được xử lý.");
 
             if (requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
-                throw new InvalidOperationException("No product details in request.");
+                throw new InvalidOperationException("Không có chi tiết sản phẩm trong yêu cầu.");
 
             var order = await _orderRepo.GetOrderByIdAsync(requestExport.OrderId);
-            if (order == null) throw new InvalidOperationException("Order not found.");
+            if (order == null) throw new InvalidOperationException("Không tìm thấy Order");
 
             var tempStockExports = await _tempExportRepo.GetByOrderIdAsync(order.OrderId);
             if (tempStockExports == null || !tempStockExports.Any())
-                throw new InvalidOperationException("No temporary stock exports found.");
+                throw new InvalidOperationException("Không tìm thấy kho xuất tạm nào.");
 
             var exportDetails = new List<ExportWarehouseReceiptDetail>();
             var transferRequests = new List<WarehouseTransferRequest>();

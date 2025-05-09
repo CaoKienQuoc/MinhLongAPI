@@ -75,6 +75,7 @@ namespace Services.Service
             };
 
             _warehouseRepo.AddWarehouse(warehouse);
+
         }
 
         public void UpdateWarehouse(Guid userId, int warehouseId, string warehousName, string street, string province, string district, string ward, string note)

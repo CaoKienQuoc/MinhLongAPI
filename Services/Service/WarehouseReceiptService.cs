@@ -55,7 +55,7 @@ namespace Services.Service
             var random = new Random();
             var allowedTypes = new HashSet<string> { "ImportCoordination", "ImportProduction" };
             if (!allowedTypes.Contains(request.ImportType))
-                throw new Exception("ImportType is invalid! Only accepted: ImportCoordination, ImportProduction");
+                throw new Exception("ImportType không hợp lệ. Chỉ chấp nhận ImportCoordination hoặc ImportProduction.");
 
             var warehouseUserId = await _warehouseRepository.GetUserIdByWarehouseIdAsync(request.WarehouseId);
             if (warehouseUserId != currentUserId)
@@ -68,7 +68,7 @@ namespace Services.Service
             if (request.ImportType == "ImportCoordination")
             {
                 if (request.OrderId == null || request.OrderId == Guid.Empty)
-                    throw new Exception("OrderId is required for ImportCoordination.");
+                    throw new Exception("OrderId là cần thiết đối với ImportCoordination.");
 
                 var tempExports = await _tempExportRepo.GetByOrderIdAsync(request.OrderId.Value);
                 if (tempExports == null || !tempExports.Any())
