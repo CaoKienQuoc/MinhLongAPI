@@ -305,7 +305,7 @@ namespace Services.Service
                         UserId = saleUserId.Value,
                         Title = "Đơn hàng mới",
                         Message = message,
-                        Url = $"/orders/{order.OrderId}" // hoặc custom path
+                        Url = $"/sales/export"
                     };
 
                     await _notificationRepository.AddAsync(notification);
