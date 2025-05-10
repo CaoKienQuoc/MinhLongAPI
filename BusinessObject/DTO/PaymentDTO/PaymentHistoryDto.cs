@@ -32,7 +32,10 @@
         public string DebtStatus { get; set; } // 👈 Trạng thái nợ
 
         public string TransactionReference { get; set; }
+        // ---- Thêm vào
+        public Guid UserId { get; set; }
+        public string UserEmail { get; set; } // Địa chỉ email của user
     }
 
 
-    }
+}

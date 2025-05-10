@@ -92,7 +92,8 @@ namespace Services.Service
                     UpdatedAt = ph.UpdatedAt,
                     TransactionReference = ph.PaymentTransactions?.FirstOrDefault()?.TransactionReference ?? "N/A",
                     DueDate = dueDate,
-                    DebtStatus = GetDebtStatus(dueDate)
+                    DebtStatus = GetDebtStatus(dueDate),
+                    UserId = ph.UserId,
                 };
             }).ToList();
         }
