@@ -12,8 +12,8 @@ namespace Repo.IRepository
     {
         List<Warehouse> GetAllWarehouses();
         Warehouse GetWarehouseByUserId(Guid userId);
-        Warehouse GetWarehouseById(int warehouseId);
-        Task<Warehouse> GetWarehouseByIdAsync(int warehouseId);
+        Warehouse GetWarehouseById(long warehouseId);
+        Task<Warehouse> GetWarehouseByIdAsync(long warehouseId);
         void AddWarehouse(Warehouse warehouse);
         void UpdateWarehouse(Warehouse warehouse);
         Task DeleteWarehouseAsync(Warehouse warehouse);

@@ -52,7 +52,7 @@ namespace MLHR.Controllers
 
         [Authorize(Roles = "3")]
         [HttpPut("warehouses/{warehouseId}")]
-        public IActionResult UpdateWarehouse(int warehouseId, [FromBody] WarehouseUpdateRequest request)
+        public IActionResult UpdateWarehouse(long warehouseId, [FromBody] WarehouseUpdateRequest request)
         {
             var roleId = int.Parse(User.FindFirst(ClaimTypes.Role)?.Value ?? "0");
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());

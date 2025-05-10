@@ -22,7 +22,7 @@ namespace MLHR.Controllers
         public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto dto)
         {
             if (dto == null || dto.MemberIds == null || !dto.MemberIds.Any())
-                return BadRequest(new { error = "MemberIds cannot be empty" });
+                return BadRequest(new { error = "Bạn Chưa Đăng Nhập!" });
 
             try
             {
@@ -39,16 +39,15 @@ namespace MLHR.Controllers
         }
 
 
-
         [HttpGet("rooms")]
         public async Task<IActionResult> GetMyRooms()
         {
             var claim = User.FindFirst("UserId");
             if (claim == null)
-                return Unauthorized(new { error = "Missing UserId claim" });
+                return Unauthorized(new { error = "Bạn Chưa Đăng Nhập!" });
 
             if (!Guid.TryParse(claim.Value, out var userId))
-                return BadRequest(new { error = "Invalid UserId claim format" });
+                return BadRequest(new { error = "Bạn Chưa Đăng Nhập!" });
 
             var rooms = await _chatService.GetUserRoomsAsync(userId);
             return Ok(rooms);
@@ -62,10 +61,10 @@ namespace MLHR.Controllers
             // 1) Kiểm tra claim UserId (đảm bảo đã authentication)
             var claim = User.FindFirst("UserId");
             if (claim == null)
-                return Unauthorized(new { error = "Missing UserId claim" });
+                return Unauthorized(new { error = "Bạn Chưa Đăng Nhập!" });
 
             if (!Guid.TryParse(claim.Value, out var userId))
-                return BadRequest(new { error = "Invalid UserId claim format" });
+                return BadRequest(new { error = "Bạn Chưa Đăng Nhập!" });
 
             try
             {
@@ -89,13 +88,33 @@ namespace MLHR.Controllers
 
         // GET /api/chat/rooms/{roomId}/messages
         [HttpGet("rooms/{roomId:guid}/messages")]
-        public async Task<IActionResult> GetMessages(Guid roomId, [FromQuery] int skip = 0, [FromQuery] int take = 50)
+        public async Task<IActionResult> GetMessages(Guid roomId, int skip = 0, int take = 200)
         {
-            var msgs = await _chatService.GetRoomMessagesAsync(roomId, skip, take);
-            return Ok(msgs);
+            // 1) Lấy userId từ JWT
+            var claim = User.FindFirst("UserId");
+            if (claim == null || !Guid.TryParse(claim.Value, out var userId))
+                return Unauthorized(new { error = "Bạn Chưa Đăng Nhập!" });
+
+            try
+            {
+                // 2) Kiểm tra user có trong room không
+                var isMember = await _chatService.IsUserInRoomAsync(roomId, userId);
+                if (!isMember)
+                    return Forbid();  // hoặc NotFound tuỳ chính sách
+
+                // 3) Lấy messages
+                var dtos = await _chatService.GetMessagesAsync(roomId, skip, take);
+                return Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+                // 4) Bắt và trả lỗi 500
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
+
     }
 
-    
+
 
 }

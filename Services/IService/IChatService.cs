@@ -16,7 +16,9 @@ namespace Services.IService
         // IChatService.cs
         Task<ChatRoomDto> GetRoomByIdAsync(Guid roomId);
 
-        Task<List<ChatMessage>> GetRoomMessagesAsync(Guid roomId, int skip = 0, int take = 50);
+        Task<IEnumerable<ChatMessageDto>> GetMessagesAsync(Guid roomId, int skip = 0, int take = 200);
         Task<ChatMessage> SaveMessageAsync(ChatMessage message);
+
+        Task<bool> IsUserInRoomAsync(Guid roomId, Guid userId);
     }
 }

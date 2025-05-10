@@ -78,7 +78,7 @@ namespace Services.Service
 
         }
 
-        public void UpdateWarehouse(Guid userId, int warehouseId, string warehousName, string street, string province, string district, string ward, string note)
+        public void UpdateWarehouse(Guid userId, long warehouseId, string warehousName, string street, string province, string district, string ward, string note)
         {
             // Tìm Warehouse của User
             var warehouse = _warehouseRepo.GetWarehouseById(warehouseId);
@@ -117,7 +117,7 @@ namespace Services.Service
         }
 
 
-        public async Task<bool> DeleteWarehouseAsync(int warehouseId)
+        public async Task<bool> DeleteWarehouseAsync(long warehouseId)
         {
             var warehouse = await _warehouseRepo.GetWarehouseByIdAsync(warehouseId);
             if (warehouse == null)

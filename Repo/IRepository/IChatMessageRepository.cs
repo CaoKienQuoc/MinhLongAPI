@@ -11,6 +11,6 @@ namespace Repo.IRepository
     public interface IChatMessageRepository
     {
         Task<ChatMessage> AddAsync(ChatMessage message);
-        Task<List<ChatMessage>> GetByRoomAsync(Guid roomId, int skip = 0, int take = 50);
+        Task<List<ChatMessage>> GetByRoomAsync(Guid roomId, int skip = 0, int take = 200);
     }
 }

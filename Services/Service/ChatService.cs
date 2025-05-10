@@ -71,7 +71,6 @@ namespace Services.Service
 
             return dtos;
         }
-
         public async Task<ChatRoomDto> GetRoomByIdAsync(Guid roomId)
         {
             // Lấy entity room kèm members và messages
@@ -97,8 +96,31 @@ namespace Services.Service
 
 
 
-        public Task<List<ChatMessage>> GetRoomMessagesAsync(Guid roomId, int skip = 0, int take = 50) =>
-            _msgRepo.GetByRoomAsync(roomId, skip, take);
+        public async Task<IEnumerable<ChatMessageDto>> GetMessagesAsync(Guid roomId, int skip = 0, int take = 50)
+        {
+            var messages = await _msgRepo.GetByRoomAsync(roomId, skip, take);
+
+            // Map to DTO
+            return messages.Select(m => new ChatMessageDto
+            {
+                ChatMessageId = m.ChatMessageId,
+                ChatRoomId = m.ChatRoomId.Value,
+                SenderId = m.SenderId,
+                SenderName = m.Sender?.Username,   // hoặc m.Sender.Email tuỳ UI
+                MessageText = m.MessageText,
+                FileUrl = m.FileUrl,
+                Timestamp = m.Timestamp,
+                IsRead = m.IsRead
+            });
+        }
+
+        public async Task<bool> IsUserInRoomAsync(Guid roomId, Guid userId)
+        {
+            var room = await _roomRepo.GetByIdAsync(roomId);
+            if (room == null) return false;
+            // room.Members đã được include trong GetByIdAsync
+            return room.Members.Any(m => m.UserId == userId);
+        }
 
         public Task<ChatMessage> SaveMessageAsync(ChatMessage message) =>
             _msgRepo.AddAsync(message);

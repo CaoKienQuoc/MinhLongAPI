@@ -23,14 +23,13 @@ namespace Repo.Repository
             return message;
         }
 
-        public Task<List<ChatMessage>> GetByRoomAsync(Guid roomId, int skip = 0, int take = 50) =>
-            _context.ChatMessages
-                .Where(m => m.ChatRoomId == roomId)
-                .OrderBy(m => m.Timestamp)
-                .Skip(skip)
-                .Take(take)
-                .Include(m => m.Sender)
-                .ToListAsync();
+        public Task<List<ChatMessage>> GetByRoomAsync(Guid roomId, int skip = 0, int take = 200) =>
+        _context.ChatMessages
+            .Where(m => m.ChatRoomId == roomId)
+            .Include(m => m.Sender)
+            .OrderBy(m => m.Timestamp)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
     }
-
 }

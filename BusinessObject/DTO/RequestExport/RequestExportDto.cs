@@ -14,6 +14,8 @@ namespace BusinessObject.DTO.RequestExport
         public string AgencyName { get; set; }
         public string ApprovedByName { get; set; }
 
+        public long WarehouseId { get; set; }
+        public string WarehouseName { get; set; }
         public DateTime RequestDate { get; set; }
         //public long RequestedBy { get; set; }
         //public long? ApprovedBy { get; set; }
