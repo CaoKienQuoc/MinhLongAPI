@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250508132939_UpdateDB")]
+    [Migration("20250510145425_UpdateDB")]
     partial class UpdateDB
     {
         /// <inheritdoc />
@@ -289,8 +289,10 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWID()");
 
+                    b.Property<Guid?>("ChatRoomId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("FileUrl")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -302,7 +304,7 @@ namespace DataAccessLayer.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<Guid>("ReceiverId")
+                    b.Property<Guid?>("ReceiverId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("SenderId")
@@ -317,7 +319,61 @@ namespace DataAccessLayer.Migrations
 
                     b.HasIndex("SenderId");
 
+                    b.HasIndex("ChatRoomId", "Timestamp");
+
                     b.ToTable("ChatMessage", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ChatRoom", b =>
+                {
+                    b.Property<Guid>("ChatRoomId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("ChatRoomId");
+
+                    b.HasIndex("RoomName")
+                        .IsUnique();
+
+                    b.ToTable("ChatRoom", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ChatRoomMember", b =>
+                {
+                    b.Property<Guid>("ChatRoomMemberId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<Guid>("ChatRoomId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ChatRoomMemberId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ChatRoomId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ChatRoomMember", (string)null);
                 });
 
             modelBuilder.Entity("BusinessObject.Models.Contract", b =>
@@ -2140,21 +2196,46 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("BusinessObject.Models.ChatMessage", b =>
                 {
+                    b.HasOne("BusinessObject.Models.ChatRoom", "ChatRoom")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChatRoomId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("BusinessObject.Models.User", "Receiver")
-                        .WithMany()
+                        .WithMany("ReceivedMessages")
                         .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BusinessObject.Models.User", "Sender")
-                        .WithMany()
+                        .WithMany("SentMessages")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("ChatRoom");
+
                     b.Navigation("Receiver");
 
                     b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ChatRoomMember", b =>
+                {
+                    b.HasOne("BusinessObject.Models.ChatRoom", "ChatRoom")
+                        .WithMany("Members")
+                        .HasForeignKey("ChatRoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BusinessObject.Models.User", "User")
+                        .WithMany("ChatRoomMemberships")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChatRoom");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.Contract", b =>
@@ -2910,6 +2991,13 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("AgencyAccountLevels");
                 });
 
+            modelBuilder.Entity("BusinessObject.Models.ChatRoom", b =>
+                {
+                    b.Navigation("Members");
+
+                    b.Navigation("Messages");
+                });
+
             modelBuilder.Entity("BusinessObject.Models.District", b =>
                 {
                     b.Navigation("Addresses");
@@ -3029,12 +3117,18 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("AgencyAccount")
                         .IsRequired();
 
+                    b.Navigation("ChatRoomMemberships");
+
                     b.Navigation("Employee")
                         .IsRequired();
 
                     b.Navigation("Notifications");
 
                     b.Navigation("PaymentHistories");
+
+                    b.Navigation("ReceivedMessages");
+
+                    b.Navigation("SentMessages");
 
                     b.Navigation("UserRoles");
                 });

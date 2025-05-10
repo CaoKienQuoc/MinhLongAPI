@@ -81,6 +81,8 @@ namespace DataAccessLayer
         public DbSet<AgencyScoreHistory> AgencyScoreHistory { get; set; }
         public DbSet<AgencyPromotionRequest> AgencyPromotionRequest { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<ChatRoom> ChatRooms { get; set; }
+        public DbSet<ChatRoomMember> ChatRoomMembers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -136,6 +138,8 @@ namespace DataAccessLayer
             modelBuilder.Entity<AgencyScoreHistory>().ToTable("AgencyScoreHistory");
             modelBuilder.Entity<AgencyPromotionRequest>().ToTable("AgencyPromotionRequest");
             modelBuilder.Entity<ChatMessage>().ToTable("ChatMessage");
+            modelBuilder.Entity<ChatRoom>().ToTable("ChatRoom");
+            modelBuilder.Entity<ChatRoomMember>().ToTable("ChatRoomMember");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -208,6 +212,8 @@ namespace DataAccessLayer
             modelBuilder.Entity<AgencyScoreHistory>().Property(wr => wr.AgencyScoreHistoryId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<AgencyPromotionRequest>().Property(wr => wr.AgencyPromotionRequestId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<ChatMessage>().Property(wr => wr.ChatMessageId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ChatRoom>().Property(wr => wr.ChatRoomId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ChatRoomMember>().Property(wr => wr.ChatRoomMemberId).HasDefaultValueSql("NEWID()");
 
             // 🔥 **Cấu hình quan hệ nhiều - nhiều**
             modelBuilder.Entity<UserRole>()
@@ -815,17 +821,84 @@ namespace DataAccessLayer
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // ————————————————————————————
+            // ChatRoom
+            // ————————————————————————————
+            modelBuilder.Entity<ChatRoom>()
+                .ToTable("ChatRoom")
+                .HasKey(r => r.ChatRoomId);
+            modelBuilder.Entity<ChatRoom>()
+                .Property(r => r.ChatRoomId)
+                .HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ChatRoom>()
+                .HasIndex(r => r.RoomName)
+                .IsUnique();
+
+            // ————————————————————————————
+            // ChatRoomMember (1 ChatRoom ⇄ N Member, 1 User ⇄ N Member)
+            // ————————————————————————————
+            modelBuilder.Entity<ChatRoomMember>()
+                .ToTable("ChatRoomMember")
+                .HasKey(m => m.ChatRoomMemberId);
+            modelBuilder.Entity<ChatRoomMember>()
+                .Property(m => m.ChatRoomMemberId)
+                .HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ChatRoomMember>()
+                .HasOne(m => m.ChatRoom)
+                .WithMany(r => r.Members)
+                .HasForeignKey(m => m.ChatRoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<ChatRoomMember>()
+                .HasOne(m => m.User)
+                .WithMany(u => u.ChatRoomMemberships)
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // mỗi user chỉ join 1 lần vào 1 room
+            modelBuilder.Entity<ChatRoomMember>()
+                .HasIndex(m => new { m.ChatRoomId, m.UserId })
+                .IsUnique();
+
+            // ————————————————————————————
+            // ChatMessage
+            // ————————————————————————————
             modelBuilder.Entity<ChatMessage>()
-                .HasOne(cm => cm.Sender)
-                .WithMany()
-                .HasForeignKey(cm => cm.SenderId)
+                .ToTable("ChatMessage")
+                .HasKey(m => m.ChatMessageId);
+            modelBuilder.Entity<ChatMessage>()
+                .Property(m => m.ChatMessageId)
+                .HasDefaultValueSql("NEWID()");
+
+            // Quan hệ với ChatRoom (nullable để hỗ trợ cả 1‑1 và group)
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.ChatRoom)
+                .WithMany(r => r.Messages)
+                .HasForeignKey(m => m.ChatRoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<ChatMessage>()
+                .Property(m => m.ChatRoomId)
+                .IsRequired(false);
+
+            // Quan hệ Sender (bắt buộc)
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.Sender)
+                .WithMany(u => u.SentMessages)
+                .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Quan hệ Receiver (nullable, chỉ dùng cho chat 1‑1)
             modelBuilder.Entity<ChatMessage>()
-                .HasOne(cm => cm.Receiver)
-                .WithMany()
-                .HasForeignKey(cm => cm.ReceiverId)
+                .HasOne(m => m.Receiver)
+                .WithMany(u => u.ReceivedMessages)
+                .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ChatMessage>()
+                .Property(m => m.ReceiverId)
+                .IsRequired(false);
+
+            // Tối ưu: index theo phòng và thời gian
+            modelBuilder.Entity<ChatMessage>()
+                .HasIndex(m => new { m.ChatRoomId, m.Timestamp });
+
 
         }
     }

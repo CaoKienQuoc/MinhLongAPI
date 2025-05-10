@@ -1,79 +1,99 @@
-﻿using BusinessObject.Models;
-using Microsoft.AspNetCore.SignalR;
-using Services.IService;
+﻿using System;
 using System.Collections.Concurrent;
-using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using BusinessObject.Models;
+using Microsoft.AspNetCore.SignalR;
+using Services.IService;  // namespace của IChatService
 
 namespace MLHR.Hubs
 {
     public class ChatHub : Hub
     {
-        // Map UserId -> ConnectionId
+        // Map từ UserId → ConnectionId để có thể gửi message trực tiếp nếu cần
         private static readonly ConcurrentDictionary<Guid, string> UserConnections
             = new ConcurrentDictionary<Guid, string>();
 
         private readonly IChatService _chatService;
+
         public ChatHub(IChatService chatService)
         {
             _chatService = chatService;
         }
 
+        // Khi client connect lên hub
         public override Task OnConnectedAsync()
         {
-            var userIdStr = Context.UserIdentifier;
-            if (Guid.TryParse(userIdStr, out var userGuid))
+            if (Guid.TryParse(Context.UserIdentifier, out var userId))
             {
-                UserConnections[userGuid] = Context.ConnectionId;
-                Console.WriteLine($"✅ Connected: UserId={userGuid}, ConnId={Context.ConnectionId}");
+                UserConnections[userId] = Context.ConnectionId;
+                Console.WriteLine($"✅ Connected: User={userId}, ConnId={Context.ConnectionId}");
             }
             return base.OnConnectedAsync();
         }
 
+        // Khi client disconnect khỏi hub
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            var userIdStr = Context.UserIdentifier;
-            if (Guid.TryParse(userIdStr, out var userGuid))
+            if (Guid.TryParse(Context.UserIdentifier, out var userId))
             {
-                UserConnections.TryRemove(userGuid, out _);
-                Console.WriteLine($"❌ Disconnected: UserId={userGuid}");
+                UserConnections.TryRemove(userId, out _);
+                Console.WriteLine($"❌ Disconnected: User={userId}");
             }
             return base.OnDisconnectedAsync(exception);
         }
 
-        // Thêm method để client join nhóm
-        public Task JoinGroup(string groupName)
+        /// <summary>
+        /// Client gọi để join vào một room cụ thể.
+        /// FE sẽ invoke: connection.invoke("JoinRoom", roomId);
+        /// </summary>
+        public Task JoinRoom(Guid roomId)
         {
-            Console.WriteLine($"🔗 {Context.ConnectionId} joining group {groupName}");
+            var groupName = roomId.ToString();
+            Console.WriteLine($"🔗 Connection {Context.ConnectionId} joining room {groupName}");
             return Groups.AddToGroupAsync(Context.ConnectionId, groupName);
         }
 
-        // Gửi tin nhắn đến đúng group, đồng thời vẫn log & lưu DB
-        public async Task SendMessageToGroup(string groupName, Guid senderId, Guid receiverId, string message)
+        /// <summary>
+        /// Client gọi để gửi tin nhắn vào room.
+        /// FE invoke: connection.invoke("SendMessage", roomId, senderId, messageText, fileUrl);
+        /// </summary>
+        public async Task SendMessage(Guid roomId, Guid senderId, string message, string fileUrl = null)
         {
-            Console.WriteLine($"🟢 SendMessageToGroup: grp={groupName}, sender={senderId}, recv={receiverId}, msg={message}");
+            // Validate input
+            if (roomId == Guid.Empty)
+                throw new HubException("RoomId is required.");
+            if (senderId == Guid.Empty)
+                throw new HubException("SenderId is required.");
+            /*if (receiverId == Guid.Empty)
+                throw new HubException("SenderId is required.");*/
+            if (string.IsNullOrWhiteSpace(message) && string.IsNullOrWhiteSpace(fileUrl))
+                throw new HubException("Either message text or fileUrl must be provided.");
 
-            if (senderId == Guid.Empty || receiverId == Guid.Empty)
-                throw new HubException("Sender or Receiver ID is empty");
-            if (string.IsNullOrWhiteSpace(message))
-                throw new HubException("Message cannot be empty");
-
-            // Lưu message vào DB
+            // 1) Lưu tin nhắn xuống DB
             var chatMessage = new ChatMessage
             {
+                ChatRoomId = roomId,
                 SenderId = senderId,
-                ReceiverId = receiverId,
+                //ReceiverId = receiverId,
                 MessageText = message,
+                FileUrl = fileUrl,
                 Timestamp = DateTime.UtcNow,
                 IsRead = false
             };
-            await _chatService.SaveMessageAsync(chatMessage);
+            var saved = await _chatService.SaveMessageAsync(chatMessage);
 
-            // Gửi đến tất cả connection trong group (thường chỉ có 2: sender+receiver)
-            await Clients.Group(groupName).SendAsync("ReceiveMessage", new
+            // 2) Broadcast cho tất cả client đang trong room
+            var payload = new
             {
-                senderId,
-                message
-            });
+                saved.ChatMessageId,
+                saved.ChatRoomId,
+                saved.SenderId,
+                saved.MessageText,
+                saved.FileUrl,
+                saved.Timestamp
+            };
+            await Clients.Group(roomId.ToString())
+                         .SendAsync("ReceiveMessage", payload);
         }
     }
 }

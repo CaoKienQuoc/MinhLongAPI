@@ -10,11 +10,7 @@ namespace Repo.IRepository
 {
     public interface IChatMessageRepository
     {
-        Task AddMessageAsync(ChatMessage message);
-        Task<List<ChatMessage>> GetMessagesAsync(Guid user1, Guid user2);
-        Task DeleteOldMessagesAsync(DateTime olderThan);
-        Task SaveChangesAsync();
-
-        Task<List<ChatMessageDto>> GetAllMessagesAsync();
+        Task<ChatMessage> AddAsync(ChatMessage message);
+        Task<List<ChatMessage>> GetByRoomAsync(Guid roomId, int skip = 0, int take = 50);
     }
 }

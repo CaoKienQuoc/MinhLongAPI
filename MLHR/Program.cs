@@ -201,6 +201,7 @@ builder.Services.AddScoped<IPromotionApprovalService, PromotionApprovalService>(
 builder.Services.AddScoped<IAgencyPromotionRequestRepository, AgencyPromotionRequestRepository>();
 
 builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+builder.Services.AddScoped<IChatRoomRepository, ChatRoomRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
 
 builder.Services.AddMemoryCache(); // hoặc services.AddMemoryCache() nếu dùng Startup

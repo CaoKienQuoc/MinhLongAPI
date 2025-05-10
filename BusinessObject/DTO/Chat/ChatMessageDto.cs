@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BusinessObject.DTO
+namespace BusinessObject.DTO.Chat
 {
     public class ChatMessageDto
     {

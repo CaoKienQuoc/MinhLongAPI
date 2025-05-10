@@ -28,6 +28,19 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ChatRoom",
+                columns: table => new
+                {
+                    ChatRoomId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    RoomName = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatRoom", x => x.ChatRoomId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OTPEmails",
                 columns: table => new
                 {
@@ -223,16 +236,23 @@ namespace DataAccessLayer.Migrations
                 columns: table => new
                 {
                     ChatMessageId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    ChatRoomId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     SenderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ReceiverId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReceiverId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     MessageText = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    FileUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    FileUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsRead = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ChatMessage", x => x.ChatMessageId);
+                    table.ForeignKey(
+                        name: "FK_ChatMessage_ChatRoom_ChatRoomId",
+                        column: x => x.ChatRoomId,
+                        principalTable: "ChatRoom",
+                        principalColumn: "ChatRoomId",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ChatMessage_User_ReceiverId",
                         column: x => x.ReceiverId,
@@ -245,6 +265,33 @@ namespace DataAccessLayer.Migrations
                         principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatRoomMember",
+                columns: table => new
+                {
+                    ChatRoomMemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    ChatRoomId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    JoinedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatRoomMember", x => x.ChatRoomMemberId);
+                    table.ForeignKey(
+                        name: "FK_ChatRoomMember_ChatRoom_ChatRoomId",
+                        column: x => x.ChatRoomId,
+                        principalTable: "ChatRoom",
+                        principalColumn: "ChatRoomId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChatRoomMember_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1572,6 +1619,11 @@ namespace DataAccessLayer.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatMessage_ChatRoomId_Timestamp",
+                table: "ChatMessage",
+                columns: new[] { "ChatRoomId", "Timestamp" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ChatMessage_ReceiverId",
                 table: "ChatMessage",
                 column: "ReceiverId");
@@ -1580,6 +1632,23 @@ namespace DataAccessLayer.Migrations
                 name: "IX_ChatMessage_SenderId",
                 table: "ChatMessage",
                 column: "SenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatRoom_RoomName",
+                table: "ChatRoom",
+                column: "RoomName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatRoomMember_ChatRoomId_UserId",
+                table: "ChatRoomMember",
+                columns: new[] { "ChatRoomId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatRoomMember_UserId",
+                table: "ChatRoomMember",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Contract_AgencyId",
@@ -1999,6 +2068,9 @@ namespace DataAccessLayer.Migrations
                 name: "ChatMessage");
 
             migrationBuilder.DropTable(
+                name: "ChatRoomMember");
+
+            migrationBuilder.DropTable(
                 name: "Contract");
 
             migrationBuilder.DropTable(
@@ -2057,6 +2129,9 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "AgencyLevel");
+
+            migrationBuilder.DropTable(
+                name: "ChatRoom");
 
             migrationBuilder.DropTable(
                 name: "ExportWarehouseReceipt");

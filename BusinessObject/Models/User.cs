@@ -41,5 +41,9 @@ namespace BusinessObject.Models
         public ICollection<PaymentHistory> PaymentHistories { get; set; }
         public ICollection<Notification> Notifications { get; set; }
 
+        public ICollection<ChatRoomMember> ChatRoomMemberships { get; set; }
+        public ICollection<ChatMessage> SentMessages { get; set; }
+        public ICollection<ChatMessage> ReceivedMessages { get; set; }
+
     }
 }
