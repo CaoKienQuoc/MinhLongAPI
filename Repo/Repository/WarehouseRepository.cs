@@ -34,10 +34,10 @@ namespace Repo.Repository
                .FirstOrDefault(w => w.UserId == userId);
 
 
-        public Warehouse GetWarehouseById(int warehouseId)
+        public Warehouse GetWarehouseById(long warehouseId)
             => _context.Warehouses.Find(warehouseId);
 
-        public async Task<Warehouse> GetWarehouseByIdAsync(int warehouseId)
+        public async Task<Warehouse> GetWarehouseByIdAsync(long warehouseId)
         {
             return await _context.Warehouses
                 .Include(w => w.Address) // Load Address để đảm bảo xóa Cascade

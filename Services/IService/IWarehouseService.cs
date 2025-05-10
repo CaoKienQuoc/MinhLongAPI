@@ -13,8 +13,8 @@ namespace Services.IService
         IEnumerable<WarehouseInfoDto> GetAllWarehouseInfo();
         Warehouse GetWarehouseByUserId(Guid userId);
         void CreateWarehouse(Guid userId, string warehousName, string street, string province, string district, string ward, string note);
-        void UpdateWarehouse(Guid userId, int warehouseId, string warehousName, string street, string province, string district, string ward, string note);
-        Task<bool> DeleteWarehouseAsync(int warehouseId);
+        void UpdateWarehouse(Guid userId, long warehouseId, string warehousName, string street, string province, string district, string ward, string note);
+        Task<bool> DeleteWarehouseAsync(long warehouseId);
 
         Task<IEnumerable<WarehouseProductDto>> GetProductsByWarehouseIdAsync(long warehouseId, string sortBy = null);
         Task<WarehouseProductDto> GetProductByIdAsync(long warehouseProductId);
