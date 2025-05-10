@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.DTO.Product;
+using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using Repo.IRepository;
@@ -43,9 +44,52 @@ namespace Services.Service
             return await _batchRepository.GetAllAsync();
         }
 
-        public async Task<bool> UpdateBatchAsync(Batch batch)
+        public async Task<Batch> UpdateBatchAsync(UpdateBatchDto dto, Guid userId, long batchId)
         {
-            return await _batchRepository.UpdateAsync(batch);
+            // 1. Lấy batch
+            var batch = await _batchRepository.GetByIdAsync(batchId)
+                        ?? throw new KeyNotFoundException($"Batch {batchId} not found");
+
+            // 2. ProductId nếu client gửi
+            if (dto.ProductId.HasValue)
+            {
+                if (!await _productRepository.ExistsAsync(dto.ProductId.Value))
+                    throw new ArgumentException($"Product {dto.ProductId.Value} not found");
+                batch.ProductId = dto.ProductId.Value;
+            }
+
+            // 3. Quantity nếu client gửi
+            if (dto.Quantity.HasValue)
+            {
+                batch.Quantity = dto.Quantity.Value;
+            }
+
+            // 4. UnitCost nếu client gửi
+            if (dto.UnitCost.HasValue)
+            {
+                if (batch.Status != "CALCULATING_PRICE")
+                    throw new InvalidOperationException(
+                        $"Cannot update UnitCost when status = {batch.Status}");
+                batch.UnitCost = dto.UnitCost.Value;
+            }
+
+            // 5. DateOfManufacture nếu client gửi
+            if (dto.DateOfManufacture.HasValue)
+            {
+                batch.DateOfManufacture = dto.DateOfManufacture.Value;
+
+                // Lấy DefaultExpiration
+                int? daysNullable = await _productRepository.GetDefaultExpirationAsync(batch.ProductId);
+                int defaultExpiration = daysNullable ?? 720;
+
+                batch.ExpiryDate = batch.DateOfManufacture
+                    .AddDays(defaultExpiration)
+                    .AddDays(1);
+            }
+
+            // 6. Lưu
+            await _batchRepository.SaveChangesAsync();
+            return batch;
         }
 
         public async Task<IEnumerable<Batch>> GetBatchesByProductIdAsync(long productId)

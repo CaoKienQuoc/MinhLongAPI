@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BusinessObject.DTO.Product;
+using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 
 namespace Services.IService
@@ -12,7 +13,7 @@ namespace Services.IService
     {
         Task<Batch> GetBatchByIdAsync(long batchId);
         Task<IEnumerable<Batch>> GetAllBatchesAsync();
-        Task<bool> UpdateBatchAsync(Batch batch);
+        Task<Batch> UpdateBatchAsync(UpdateBatchDto dto, Guid userId, long batchId);
         Task<IEnumerable<Batch>> GetBatchesByProductIdAsync(long productId);
 
         Task<(bool Success, string Message, object? Data)> UpdateProfitMarginAsync(long batchId, decimal profitMarginPercent);

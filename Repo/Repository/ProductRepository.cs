@@ -140,6 +140,17 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public Task<bool> ExistsAsync(long productId) =>
+        _context.Products
+                .AsNoTracking()
+                .AnyAsync(p => p.ProductId == productId);
+
+        public Task<int?> GetDefaultExpirationAsync(long productId) =>
+    _context.Products
+            .AsNoTracking()
+            .Where(p => p.ProductId == productId)
+            .Select(p => p.DefaultExpiration)
+            .FirstOrDefaultAsync();  // trả về int? tương ứng
 
     }
 }

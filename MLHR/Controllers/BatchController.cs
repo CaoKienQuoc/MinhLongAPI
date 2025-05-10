@@ -1,4 +1,5 @@
 ﻿using BusinessObject.DTO;
+using BusinessObject.DTO.Warehouse;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -77,6 +78,43 @@ namespace MLHR.Controllers
                 return BadRequest("Batch không tồn tại hoặc không phải trạng thái EXPIRED.");
 
             return Ok("Nhập huỷ thành công.");
+        }
+
+        [HttpPut("batches/{batchId}")]
+        public async Task<IActionResult> UpdateBatch(
+        long batchId,
+        [FromBody] UpdateBatchDto dto)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Lấy userId từ JWT nếu cần track
+            var claim = User.FindFirst("UserId");
+            if (claim == null || !Guid.TryParse(claim.Value, out var userId))
+                return Unauthorized();
+
+            try
+            {
+                var updated = await _batchService.UpdateBatchAsync(dto, userId, batchId);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException knf)
+            {
+                return NotFound(knf.Message);
+            }
+            catch (ArgumentException ae)
+            {
+                return BadRequest(ae.Message);
+            }
+            catch (InvalidOperationException ioe)
+            {
+                return Conflict(ioe.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

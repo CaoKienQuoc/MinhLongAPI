@@ -29,5 +29,12 @@ namespace Repo.IRepository
         Task<List<Product>> GetListByIdsAsync(List<long> productIds);
 
 
+        Task<bool> ExistsAsync(long productId);
+
+        // Lấy giá trị DefaultExpiration của product
+        // IProductRepository.cs
+        Task<int?> GetDefaultExpirationAsync(long productId);
+
+
     }
 }
