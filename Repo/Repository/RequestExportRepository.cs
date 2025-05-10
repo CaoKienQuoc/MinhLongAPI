@@ -36,6 +36,9 @@ namespace Repo.Repository
                 .Include(re => re.RequestedByAgency)
                     .ThenInclude(aa => aa.ManagedByEmployee)
                         .ThenInclude(emp => emp.User)
+                .Include(re => re.Order)
+                .ThenInclude(red => red.TemporaryStockExports)
+                .ThenInclude(red => red.Warehouse)
                 .Where(re => re.RequestedByAgency.ManagedByEmployee != null &&
                              re.RequestedByAgency.ManagedByEmployee.UserId == salesUserId)
                 .ToListAsync();
@@ -49,6 +52,9 @@ namespace Repo.Repository
                 .Include(re => re.RequestedByAgency)
                     .ThenInclude(aa => aa.ManagedByEmployee)
                         .ThenInclude(emp => emp.User)
+                .Include(re => re.Order)
+                .ThenInclude(red => red.TemporaryStockExports)
+                .ThenInclude(red => red.Warehouse)
                 .Where(re => re.RequestExportId == requestId &&
                              re.RequestedByAgency.ManagedByEmployee != null &&
                              re.RequestedByAgency.ManagedByEmployee.UserId == salesUserId)

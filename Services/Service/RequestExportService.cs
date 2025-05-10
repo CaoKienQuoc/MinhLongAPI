@@ -125,6 +125,8 @@ namespace Services.Service
                 RequestDate = requestExport.RequestDate,
                 Status = requestExport.Status,
                 Note = requestExport.Note,
+                WarehouseId = requestExport.Order?.TemporaryStockExports?.FirstOrDefault()?.WarehouseId ?? 0,
+                WarehouseName = requestExport.Order?.TemporaryStockExports?.FirstOrDefault()?.Warehouse?.WarehouseName ?? "Unknown",
                 RequestExportCode = requestExport.RequestExportCode,
 
                 RequestExportDetails = requestExport.RequestExportDetails != null
@@ -185,6 +187,8 @@ namespace Services.Service
                 Status = re.Status,
                 Note = re.Note,
                 RequestExportCode = re.RequestExportCode,
+                WarehouseId = re.Order?.TemporaryStockExports?.FirstOrDefault()?.WarehouseId ?? 0,
+                WarehouseName = re.Order?.TemporaryStockExports?.FirstOrDefault()?.Warehouse?.WarehouseName ?? "Unknown",
                 RequestExportDetails = re.RequestExportDetails.Select(red => new RequestExportDetailDto
                 {
                     RequestExportDetailId = red.RequestItemId,
@@ -222,6 +226,8 @@ namespace Services.Service
                 RequestDate = re.RequestDate,
                 Status = re.Status,
                 Note = re.Note,
+                WarehouseId = re.Order?.TemporaryStockExports?.FirstOrDefault()?.WarehouseId ?? 0,
+                WarehouseName = re.Order?.TemporaryStockExports?.FirstOrDefault()?.Warehouse?.WarehouseName ?? "Unknown",
                 RequestExportCode = re.RequestExportCode,
                 RequestExportDetails = re.RequestExportDetails.Select(red => new RequestExportDetailDto
                 {
