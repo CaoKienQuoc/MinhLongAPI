@@ -41,6 +41,50 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<List<ChatMessageDto>> GetMessagesBySenderAsync(Guid senderId)
+        {
+            return await _context.ChatMessages
+                .Where(m => m.SenderId == senderId)
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .Select(m => new ChatMessageDto
+                {
+                    ChatMessageId = m.ChatMessageId,
+                    SenderId = m.SenderId,
+                    ReceiverId = m.ReceiverId,
+                    SenderName = m.Sender.AgencyAccount != null ? m.Sender.AgencyAccount.AgencyName : m.Sender.Employee.FullName,
+                    ReceiverName = m.Receiver.AgencyAccount != null ? m.Receiver.AgencyAccount.AgencyName : m.Receiver.Employee.FullName,
+                    MessageText = m.MessageText,
+                    FileUrl = m.FileUrl,
+                    Timestamp = m.Timestamp,
+                    IsRead = m.IsRead
+                })
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
+        }
+
+        public async Task<List<ChatMessageDto>> GetMessagesByReceiverAsync(Guid receiverId)
+        {
+            return await _context.ChatMessages
+                .Where(m => m.ReceiverId == receiverId)
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .Select(m => new ChatMessageDto
+                {
+                    ChatMessageId = m.ChatMessageId,
+                    SenderId = m.SenderId,
+                    ReceiverId = m.ReceiverId,
+                    SenderName = m.Sender.AgencyAccount != null ? m.Sender.AgencyAccount.AgencyName : m.Sender.Employee.FullName,
+                    ReceiverName = m.Receiver.AgencyAccount != null ? m.Receiver.AgencyAccount.AgencyName : m.Receiver.Employee.FullName,
+                    MessageText = m.MessageText,
+                    FileUrl = m.FileUrl,
+                    Timestamp = m.Timestamp,
+                    IsRead = m.IsRead
+                })
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
+        }
+
         public async Task AddMessageAsync(ChatMessage message)
         {
             await _context.ChatMessages.AddAsync(message);

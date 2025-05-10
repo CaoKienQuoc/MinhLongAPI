@@ -45,5 +45,15 @@ namespace Services.Service
         {
             return await _repository.GetMessagesAsync(user1, user2);
         }
+
+        public async Task<List<ChatMessageDto>> GetMessagesBySenderAsync(Guid senderId)
+        {
+            return await _repository.GetMessagesBySenderAsync(senderId);
+        }
+
+        public async Task<List<ChatMessageDto>> GetMessagesByReceiverAsync(Guid receiverId)
+        {
+            return await _repository.GetMessagesByReceiverAsync(receiverId);
+        }
     }
 }

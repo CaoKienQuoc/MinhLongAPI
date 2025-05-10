@@ -13,5 +13,7 @@ namespace Services.IService
         Task SaveMessageAsync(ChatMessage message);
         Task<List<ChatMessage>> GetChatHistoryAsync(Guid user1, Guid user2);
         Task<List<ChatMessageDto>> GetAllMessagesAsync();
+        Task<List<ChatMessageDto>> GetMessagesBySenderAsync(Guid senderId);
+        Task<List<ChatMessageDto>> GetMessagesByReceiverAsync(Guid receiverId);
     }
 }

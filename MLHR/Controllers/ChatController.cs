@@ -27,5 +27,33 @@ namespace MLHR.Controllers
                 return StatusCode(500, $"❌ Error in GetAllMessages: {ex.Message}");
             }
         }
+
+        [HttpGet("messages/sender/{senderId}")]
+        public async Task<IActionResult> GetMessagesBySender(Guid senderId)
+        {
+            try
+            {
+                var messages = await _chatService.GetMessagesBySenderAsync(senderId);
+                return Ok(messages);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"❌ Error in GetMessagesBySender: {ex.Message}");
+            }
+        }
+
+        [HttpGet("messages/receiver/{receiverId}")]
+        public async Task<IActionResult> GetMessagesByReceiver(Guid receiverId)
+        {
+            try
+            {
+                var messages = await _chatService.GetMessagesByReceiverAsync(receiverId);
+                return Ok(messages);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"❌ Error in GetMessagesByReceiver: {ex.Message}");
+            }
+        }
     }
 }

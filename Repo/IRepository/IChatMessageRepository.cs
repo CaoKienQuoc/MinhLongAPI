@@ -16,5 +16,8 @@ namespace Repo.IRepository
         Task SaveChangesAsync();
 
         Task<List<ChatMessageDto>> GetAllMessagesAsync();
+
+        Task<List<ChatMessageDto>> GetMessagesBySenderAsync(Guid senderId);
+        Task<List<ChatMessageDto>> GetMessagesByReceiverAsync(Guid receiverId);
     }
 }
