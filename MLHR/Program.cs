@@ -182,7 +182,7 @@ builder.Services.AddScoped<IContractService, ContractService>();
 
 builder.Services.AddScoped<IReturnWarehouseReceiptRepository, ReturnWarehouseReceiptRepository>();
 
-builder.Services.AddHostedService<ExpiredBatchBackgroundService>();
+builder.Services.AddHostedService<BackGroundService>();
 
 builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
 builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
