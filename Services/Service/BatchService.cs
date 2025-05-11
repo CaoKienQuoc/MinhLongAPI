@@ -229,30 +229,38 @@ namespace Services.Service
         }
 
 
-        public async Task<bool> CancelExpiredBatchAsync(long batchId)
+        public async Task<bool> CancelExpiredBatchAsync(long batchId, string? reason = null)
         {
             var batch = await _batchRepository.GetExpiredBatchByIdAsync(batchId);
-            if (batch == null) return false;
+            if (batch == null)
+                return false;
 
             var importDetail = await _warehouseReceiptRepo.GetImportTransactionDetailByIdAsync(batch.ImportTransactionDetailId);
-            if (importDetail == null) return false;
+            if (importDetail == null)
+                return false;
 
             var importTransaction = await _warehouseReceiptRepo.GetImportTransactionByIdAsync(importDetail.ImportTransactionId);
-            if (importTransaction == null) return false;
+            if (importTransaction == null)
+                return false;
 
+            // ✅ Sử dụng lý do được truyền vào, nếu không có thì dùng mặc định "Expired"
             var cancelReceipt = new DamagedStock
             {
                 BatchId = batch.BatchId,
                 ProductId = batch.ProductId,
                 Quantity = batch.Quantity,
                 WarehouseId = importTransaction.WarehouseId,
-                Reason = "Expired",
+                Reason = reason ?? "Expired",
                 CreatedAt = DateTime.Now,
                 Status = "ExportCancel"
             };
 
+            // ✅ Lưu vào bảng DamagedStock
             await _damegedStockRepo.AddAsync(cancelReceipt);
+
+            // ✅ Cập nhật trạng thái Batch
             batch.Status = "CANCELED";
+            await _batchRepository.UpdateAsync(batch);
             await _damegedStockRepo.SaveChangesAsync();
 
             return true;
