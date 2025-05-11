@@ -62,7 +62,14 @@ namespace Repo.Repository
             return current; // Nếu không có thì trả về 0
         }
 
+        public async Task<int?> GetPaymentTermByLevelIdAsync(long levelId)
+        {
+            var agencyLevel = await _context.AgencyLevels
+                                            .AsNoTracking()
+                                            .FirstOrDefaultAsync(al => al.LevelId == levelId);
 
+            return agencyLevel?.PaymentTerm;
+        }
     }
 
 }
