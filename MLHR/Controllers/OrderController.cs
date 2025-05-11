@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using BusinessObject.DTO.Order;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.IService;
 using Services.Service;
@@ -92,7 +93,6 @@ namespace MLHR.Controllers
         }
 
 
-        // API lấy danh sách Order dựa trên AgencyId của user đang đăng nhập
         [HttpGet("my-orders")]
         public async Task<IActionResult> GetOrdersForLoggedInAgency()
         {
@@ -102,12 +102,8 @@ namespace MLHR.Controllers
                 return Unauthorized(new { message = "User is not associated with any agency" });
             }
 
-            var orders = await _orderService.GetOrdersByAgencyIdAsync(agencyId.Value);
-
-            if (orders == null || !orders.Any())
-            {
-                return NotFound(new { message = "No orders found for this agency" });
-            }
+            // ✅ Trả về mảng rỗng nếu không có đơn
+            var orders = await _orderService.GetOrdersByAgencyIdAsync(agencyId.Value) ?? new List<OrderDto>();
 
             return Ok(orders);
         }

@@ -21,8 +21,11 @@ namespace Services.Service
         public async Task<List<Notification>> GetNotificationsForUserAsync(Guid userId)
         {
             var notifications = await _notificationRepository.GetNotificationsByUserIdAsync(userId);
+
+            // ✅ Ưu tiên chưa đọc lên đầu, sau đó sắp xếp theo CreatedAt (mới nhất trước)
             return notifications
-                .OrderByDescending(n => n.CreatedAt)
+                .OrderBy(n => n.IsRead)  // Chưa đọc (false) sẽ lên trước (0 < 1)
+                .ThenByDescending(n => n.CreatedAt)
                 .ToList();
         }
 
