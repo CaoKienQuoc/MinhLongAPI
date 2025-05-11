@@ -142,21 +142,31 @@ namespace Services.Service
 
         private string GetDebtStatus(DateTime dueDate, string paymentStatus)
         {
-            // 1) Nếu đã thanh toán xong thì luôn Free
+            // 1) Nếu đã thanh toán xong thì luôn DebtFree
             if (string.Equals(paymentStatus, "PAID", StringComparison.OrdinalIgnoreCase))
                 return "DebtFree";
 
-            // 2) Ngược lại tính ngày còn lại đến dueDate
-            var vietnamNow = DateTime.UtcNow.AddHours(7).Date;
-            var daysLeft = (dueDate.Date - vietnamNow).TotalDays;
+            // 2) Lấy giờ Việt Nam hiện tại (giữ luôn phần giờ)
+            var vietnamNow = DateTime.UtcNow.AddHours(7);
+
+            // 3) Xác định thời điểm hết hạn: 0:01 AM ngày tiếp theo sau dueDate
+            DateTime expirationThreshold = dueDate.Date               // chuyển dueDate về 00:00 cùng ngày
+                                      .AddDays(1)                     // cộng thêm 1 ngày → 00:00 ngày hôm sau
+                                      .AddMinutes(1);                 // cộng thêm 1 phút → 00:01
+
+            // 4) Nếu đã vượt qua ngưỡng 0:01 ngày hôm sau thì gọi là OverDue
+            if (vietnamNow >= expirationThreshold)
+                return "OverDue";
+
+            // 5) Còn lại, tính số ngày còn lại (chỉ so sánh về phần Date để đánh giá StillValid / NearDue)
+            var daysLeft = (dueDate.Date - vietnamNow.Date).TotalDays;
 
             if (daysLeft > 10)
                 return "StillValid";
-            else if (daysLeft >= 0)   // từ 0 đến 10 ngày
+            else // 0 <= daysLeft <= 10
                 return "NearDue";
-            else
-                return "OverDue";
         }
+
 
 
         public async Task SendDebtRemindersAsync()
