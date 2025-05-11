@@ -45,6 +45,9 @@ namespace Repo.Repository
                 .Include(r => r.Details)  // ensure you have nav prop Details
                 .ThenInclude(d => d.Product)
                 .Include(r => r.ReturnRequest)
+                    .ThenInclude(req => req.Details)
+                    .ThenInclude(d => d.Images)
+                .Include(r => r.ReturnRequest)
                 .ThenInclude(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
@@ -65,7 +68,10 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
                 .Include(r => r.ReturnRequest)
-                .ThenInclude(r => r.Order)
+                    .ThenInclude(req => req.Details)
+                    .ThenInclude(d => d.Images)
+                .Include(r => r.ReturnRequest)
+                    .ThenInclude(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
@@ -79,6 +85,14 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Product) // Include thêm Product cho mỗi Detail
                     .Include(r => r.ReturnRequest)
+                    .ThenInclude(req => req.Details)
+                    .ThenInclude(d => d.Images)
+                .Include(r => r.ReturnRequest)
+                    .ThenInclude(r => r.Order)
+                    .ThenInclude(r => r.RequestProduct)
+                    .ThenInclude(r => r.AgencyAccount)
+                    .ThenInclude(r => r.User)
+                    .OrderByDescending(r => r.ReceiptDate)
                 .ToListAsync();
         }
 

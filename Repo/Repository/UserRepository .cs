@@ -249,6 +249,26 @@ namespace Repo.Repository
             _context.Users.Update(user);
             return await _context.SaveChangesAsync() > 0;
         }*/
+
+
+        public async Task<List<User>> GetUsersWithAgencyDetailsAsync()
+        {
+            return await _context.Users
+                .Include(u => u.AgencyAccount)
+                    .ThenInclude(a => a.Address)
+                    .ThenInclude(a => a.Ward)
+                    .ThenInclude(a => a.District)
+                    .ThenInclude(a => a.Province)
+                .Include(u => u.AgencyAccount)
+                    .ThenInclude(a => a.Contracts)
+                .Include(u => u.Employee)
+                    .ThenInclude(a => a.Address)
+                    .ThenInclude(a => a.Ward)
+                    .ThenInclude(a => a.District)
+                    .ThenInclude(a => a.Province)
+                .ToListAsync();
+        }
+
         public async Task<Employee> GetEmployeeByUserIdAsync(Guid userId)
         {
             return await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);

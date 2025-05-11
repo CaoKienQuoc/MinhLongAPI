@@ -23,7 +23,7 @@ namespace Services.IService
         Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
         Task<bool> ChangeEmployeeRoleAsync(Guid userId, int newRoleId);
         Task<object> LoginAsync(LoginRequest request);
-        Task<PagedResult<User>> GetUsersAsync();
+        Task<PagedResult<UserDto>> GetUsersAsync();
         Task<List<RegisterAccountWithContractsDto>> GetRegisterAccount();
         Task<long?> GetAgencyIdByUserId(Guid userId);
         Task<long?> GetEmployeeIdByUserId(Guid userId);

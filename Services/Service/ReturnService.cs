@@ -423,14 +423,27 @@ namespace Services.Service
                 WarehouseId = r.WarehouseId,
                 Note = r.Note,
                 Status = r.Status,
-                Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
+                Details = r.Details?.Select(d =>
                 {
-                    ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
-                    ProductName = d.Product.ProductName,
-                    Quantity = d.Quantity,
-                    BatchId = d.BatchId,
-                    Reason = d.Reason
-                }).ToList()
+                    // 🔗 Kết nối từ ReturnRequestDetail để lấy hình ảnh
+                    var relatedRequestDetail = r.ReturnRequest.Details
+                        .FirstOrDefault(reqDetail => reqDetail.ProductId == d.ProductId);
+
+                    return new ReturnWarehouseReceiptDetailDto
+                    {
+                        ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
+                        ProductName = d.Product.ProductName,
+                        Quantity = d.Quantity,
+                        BatchId = d.BatchId,
+                        Reason = d.Reason,
+                        Images = relatedRequestDetail?.Images?.Select(img => new ReturnRequestImageDto
+                        {
+                            ReturnRequestImageId = img.ReturnRequestImageId,
+                            ImageUrl = img.ImageUrl
+                        }).ToList() ?? new List<ReturnRequestImageDto>()
+                    };
+                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
+
             }).ToList();
         }
 
@@ -451,14 +464,26 @@ namespace Services.Service
                 WarehouseId = r.WarehouseId,
                 Note = r.Note,
                 Status = r.Status,
-                Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
+                Details = r.Details?.Select(d =>
                 {
-                    ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
-                    ProductName = d.Product.ProductName,
-                    Quantity = d.Quantity,
-                    BatchId = d.BatchId,
-                    Reason = d.Reason
-                }).ToList()
+                    // 🔗 Kết nối từ ReturnRequestDetail để lấy hình ảnh
+                    var relatedRequestDetail = r.ReturnRequest.Details
+                        .FirstOrDefault(reqDetail => reqDetail.ProductId == d.ProductId);
+
+                    return new ReturnWarehouseReceiptDetailDto
+                    {
+                        ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
+                        ProductName = d.Product.ProductName,
+                        Quantity = d.Quantity,
+                        BatchId = d.BatchId,
+                        Reason = d.Reason,
+                        Images = relatedRequestDetail?.Images?.Select(img => new ReturnRequestImageDto
+                        {
+                            ReturnRequestImageId = img.ReturnRequestImageId,
+                            ImageUrl = img.ImageUrl
+                        }).ToList() ?? new List<ReturnRequestImageDto>()
+                    };
+                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
             };
         }
 
@@ -481,14 +506,26 @@ namespace Services.Service
                 WarehouseId = r.WarehouseId,
                 Note = r.Note,
                 Status = r.Status,
-                Details = r.Details?.Select(d => new ReturnWarehouseReceiptDetailDto
+                Details = r.Details?.Select(d =>
                 {
-                    ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
-                    ProductName = d.Product?.ProductName, // 🔥 thêm ? để tránh lỗi nếu Product null
-                    Quantity = d.Quantity,
-                    BatchId = d.BatchId,
-                    Reason = d.Reason
-                }).ToList()
+                    // 🔗 Kết nối từ ReturnRequestDetail để lấy hình ảnh
+                    var relatedRequestDetail = r.ReturnRequest.Details
+                        .FirstOrDefault(reqDetail => reqDetail.ProductId == d.ProductId);
+
+                    return new ReturnWarehouseReceiptDetailDto
+                    {
+                        ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
+                        ProductName = d.Product.ProductName,
+                        Quantity = d.Quantity,
+                        BatchId = d.BatchId,
+                        Reason = d.Reason,
+                        Images = relatedRequestDetail?.Images?.Select(img => new ReturnRequestImageDto
+                        {
+                            ReturnRequestImageId = img.ReturnRequestImageId,
+                            ImageUrl = img.ImageUrl
+                        }).ToList() ?? new List<ReturnRequestImageDto>()
+                    };
+                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
             }).ToList();
 
             return result;

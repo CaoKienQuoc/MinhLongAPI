@@ -155,27 +155,44 @@ namespace MLHR.Controllers
         [HttpGet("user")]
         public async Task<IActionResult> GetUsers()
         {
-            var pagedUsers = await _userService.GetUsersAsync();
-
-            var result = new
+            try
             {
-                Users = pagedUsers.Items.Select(u => new
-                {
-                    UserId = u.UserId,
-                    Username = u.Username,
-                    Password = u.Password,
-                    UserType = u.UserType,
-                    Phone = u.Phone,
-                    Email = u.Email,
-                    Status = u.Status,
-                    Employee = u.Employee != null ? new
-                    {
-                        Department = u.Employee.Department
-                    } : null
-                })
-            };
+                var pagedUsers = await _userService.GetUsersAsync();
 
-            return Ok(result);
+                var result = new
+                {
+                    Users = pagedUsers.Items.Select(u => new
+                    {
+                        UserId = u.UserId,
+                        Username = u.UserName,
+                        Email = u.Email,
+                        Phone = u.Phone,
+                        Status = u.Status,
+                        VerifyEmail = u.VerifyEmail,
+                        UserType = u.UserType,
+                        FullName = u.FullName,
+                        Position = u.Position,
+                        Department = u.Department,
+                        AgencyName = u.AgencyName,
+                        Address = u.Address,
+                        Contracts = u.Contracts.Select(c => new
+                        {
+                            ContractId = c.ContractId,
+                            FileName = c.FileName,
+                            FilePath = c.FilePath,
+                            FileType = c.FileType,
+                            CreatedAt = c.CreatedAt
+                        }).ToList()
+                    }),
+                    TotalItems = pagedUsers.TotalItems
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
 

@@ -46,10 +46,10 @@ namespace Services.Service
         }
 
 
-        public async Task<PagedResult<User>> GetUsersAsync()
+        public async Task<PagedResult<UserDto>> GetUsersAsync()
         {
             int totalItems = await _userRepository.GetTotalUsersAsync(); // Tổng số user
-            var allUsers = await _userRepository.GetUsersAsync(); // Lấy toàn bộ user
+            var allUsers = await _userRepository.GetUsersWithAgencyDetailsAsync(); // Lấy toàn bộ user
 
             // Loại bỏ admin trước khi phân trang
             var filteredUsers = allUsers
@@ -58,16 +58,42 @@ namespace Services.Service
 
             int totalFilteredItems = filteredUsers.Count; // Tổng số user sau khi lọc admin
 
-            /*// Tính tổng số trang thực tế
-            int totalPages = (int)Math.Ceiling();*/
 
-            // Xác định số user cần lấy cho trang hiện tại
-            List<User> usersToReturn = filteredUsers
-                .ToList();
-
-            return new PagedResult<User>
+            // ✅ Chuyển đổi sang DTO
+            List<UserDto> userDtos = filteredUsers.Select(u => new UserDto
             {
-                Items = usersToReturn,
+                UserId = u.UserId,
+                UserName = u.Username,
+                Email = u.Email,
+                Phone = u.Phone,
+                Status = u.Status,
+                VerifyEmail = u.VerifyEmail,
+                UserType = u.UserType,
+
+                FullName = u.Employee?.FullName,
+                Position = u.Employee?.Position,
+                Department = u.Employee?.Department,
+                AgencyName = u.AgencyAccount?.AgencyName,
+
+                // ✅ Lấy địa chỉ tùy theo loại người dùng
+                Address = u.Employee != null ?
+            $"{u.Employee.Address?.Street}, {u.Employee.Address?.Ward?.WardName}, {u.Employee.Address?.District?.DistrictName}, {u.Employee.Address?.Province?.ProvinceName}"
+            :
+            $"{u.AgencyAccount?.Address?.Street}, {u.AgencyAccount?.Address?.Ward?.WardName}, {u.AgencyAccount?.Address?.District?.DistrictName}, {u.AgencyAccount?.Address?.Province?.ProvinceName}",
+
+                Contracts = u.AgencyAccount?.Contracts.Select(c => new ContractDto
+                {
+                    ContractId = c.ContractId,
+                    FileName = c.FileName,
+                    FilePath = c.FilePath,
+                    FileType = c.FileType,
+                    CreatedAt = c.CreatedAt
+                }).ToList() ?? new List<ContractDto>()
+            }).ToList();
+
+            return new PagedResult<UserDto>
+            {
+                Items = userDtos,
                 TotalItems = totalFilteredItems, // ✅ Cập nhật lại số lượng sau khi lọc
             };
         }
