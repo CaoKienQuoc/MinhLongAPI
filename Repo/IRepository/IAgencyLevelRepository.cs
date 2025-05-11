@@ -14,7 +14,7 @@ namespace Repo.IRepository
         Task AddAsync(AgencyLevel level);
         Task UpdateAsync(AgencyLevel level);
         Task DeleteAsync(long id);
-
+        Task<int?> GetPaymentTermByLevelIdAsync(long levelId);
         Task<long> GetCurrentLevelByAgencyIdAsync(long agencyId);
 
     }

@@ -101,8 +101,8 @@ namespace Services.Service
                 var returnurlfail = _configuration["PayOS:ReturnUrlFail"];
 
                 // ✅ returnUrl chỉ cần OrderId
-                //string returnUrl = $"http://localhost:5214/api/Payment/paymentconfirm" +
-                string returnUrl = $"https://minhlong.mlhr.org/api/Payment/paymentconfirm" +
+                string returnUrl = $"http://localhost:5214/api/Payment/paymentconfirm" +
+                //string returnUrl = $"https://minhlong.mlhr.org/api/Payment/paymentconfirm" +
                    $"?orderCode={orderCode}" +
                    $"&accountId={accountId}" +
                    $"&amount={request.Price}"+
@@ -338,6 +338,23 @@ namespace Services.Service
                     var statusFlag = paidAmount >= totalOrderAmount ? "PAID" : "PARTIALLY_PAID";
                     newRemainingDebt = paidAmount >= totalOrderAmount ? 0 : totalOrderAmount - paidAmount;
 
+                    // 1) Lấy AgencyAccountLevel (có LevelId)
+                    var accountLevel = await _paymentRepository
+                        .GetAgencyAccountLevelByAgencyIdAsync(agency.AgencyId);
+                    if (accountLevel == null)
+                        throw new Exception("AgencyAccountLevel not found.");
+
+                    long levelId = accountLevel.LevelId;
+
+                    // 2) Lấy số ngày PaymentTerm từ AgencyLevelRepository
+                    var paymentTermDays = await _agencyLevelRepository
+                        .GetPaymentTermByLevelIdAsync(levelId)
+                        ?? throw new Exception($"Không tìm thấy PaymentTerm cho level {levelId}");
+
+                    // 3) Tính DueDate = ngày thanh toán đầu + paymentTermDays
+                    DateTime firstPaymentDate = DateTime.Now;
+                    DateTime computedDueDate = firstPaymentDate.AddDays(paymentTermDays);
+
                     existingHistory = new PaymentHistory
                     {
                         OrderId = order.OrderId,
@@ -345,13 +362,13 @@ namespace Services.Service
                         PaymentDate = DateTime.Now,
                         Status = statusFlag,
                         TotalAmountPayment = totalOrderAmount,
-                        RemainingDebtAmount = newRemainingDebt,
+                        RemainingDebtAmount = newRemainingDebt, 
                         PaymentAmount = paidAmount,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,  
                         SerieNumber = $"SER-{DateTime.Now.Ticks}",
                         UserId = userId.Value,
-                        DueDate = DateTime.Now.AddMonths(3)
+                        DueDate = computedDueDate
                     };
 
                     // ❗ KHÔNG gán PaymentHistoryId ở đây

@@ -102,11 +102,12 @@ namespace Repo.Repository
                                  .FirstOrDefaultAsync(t => t.PaymentHistoryId == paymentHistoryId);
         }
 
-        public async Task<AgencyAccountLevel?> GetAgencyAccountLevelByAgencyIdAsync(long agencyId)
-        {
-            return await _context.AgencyAccountLevels
-                                 .FirstOrDefaultAsync(a => a.AgencyId == agencyId);
-        }
+            public async Task<AgencyAccountLevel?> GetAgencyAccountLevelByAgencyIdAsync(long agencyId)
+            {
+                return await _context.AgencyAccountLevels
+                                     .FirstOrDefaultAsync(a => a.AgencyId == agencyId);
+            }
+
 
         public async Task UpdateAgencyAccountLevelAsync(AgencyAccountLevel level)
         {

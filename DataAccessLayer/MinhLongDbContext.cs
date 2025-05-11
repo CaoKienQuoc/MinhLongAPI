@@ -899,7 +899,9 @@ namespace DataAccessLayer
             modelBuilder.Entity<ChatMessage>()
                 .HasIndex(m => new { m.ChatRoomId, m.Timestamp });
 
-
+            modelBuilder.Entity<RequestProduct>()
+            .Property(p => p.CreatedAt)
+            .ValueGeneratedNever();
         }
     }
 
