@@ -61,8 +61,8 @@ namespace Services.Service
                 CreatedAt = payment.CreatedAt,
                 UpdatedAt = payment.UpdatedAt,
                 TransactionReference = payment.PaymentTransactions?.FirstOrDefault()?.TransactionReference ?? "N/A", // 👈 Lấy TransactionReference
-                DueDate = dueDate,
-                DebtStatus = GetDebtStatus(dueDate)
+                DueDate = payment.DueDate,
+                DebtStatus = GetDebtStatus(payment.DueDate, payment.Status)
             };
         }
 
@@ -91,8 +91,8 @@ namespace Services.Service
                     CreatedAt = ph.CreatedAt,
                     UpdatedAt = ph.UpdatedAt,
                     TransactionReference = ph.PaymentTransactions?.FirstOrDefault()?.TransactionReference ?? "N/A",
-                    DueDate = dueDate,
-                    DebtStatus = GetDebtStatus(dueDate),
+                    DueDate = ph.DueDate,
+                    DebtStatus = GetDebtStatus(ph.DueDate, ph.Status),
                     UserId = ph.UserId,
                 };
             }).ToList();
@@ -122,13 +122,13 @@ namespace Services.Service
                     CreatedAt = ph.CreatedAt,
                     UpdatedAt = ph.UpdatedAt,
                     TransactionReference = ph.PaymentTransactions?.FirstOrDefault()?.TransactionReference ?? "N/A",
-                    DueDate = dueDate,
-                    DebtStatus = GetDebtStatus(dueDate)
+                    DueDate = ph.DueDate,
+                    DebtStatus = GetDebtStatus(ph.DueDate, ph.Status)
                 };
             }).ToList();
         }
 
-        private string GetDebtStatus(DateTime dueDate)
+        /*private string GetDebtStatus(DateTime dueDate)
         {
             var daysLeft = (dueDate - DateTime.UtcNow).TotalDays;
 
@@ -138,7 +138,26 @@ namespace Services.Service
                 return "NearDue";
             else
                 return "OverDue";
+        }*/
+
+        private string GetDebtStatus(DateTime dueDate, string paymentStatus)
+        {
+            // 1) Nếu đã thanh toán xong thì luôn Free
+            if (string.Equals(paymentStatus, "PAID", StringComparison.OrdinalIgnoreCase))
+                return "DebtFree";
+
+            // 2) Ngược lại tính ngày còn lại đến dueDate
+            var vietnamNow = DateTime.UtcNow.AddHours(7).Date;
+            var daysLeft = (dueDate.Date - vietnamNow).TotalDays;
+
+            if (daysLeft > 10)
+                return "StillValid";
+            else if (daysLeft >= 0)   // từ 0 đến 10 ngày
+                return "NearDue";
+            else
+                return "OverDue";
         }
+
 
         public async Task SendDebtRemindersAsync()
         {
