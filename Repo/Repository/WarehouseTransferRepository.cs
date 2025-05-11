@@ -89,6 +89,7 @@ namespace Repo.Repository
                 .Include(r => r.SourceWarehouse)            // 🔹 Kho nguồn
                 .Include(r => r.DestinationWarehouse)       // 🔸 Kho đích — thêm dòng này!
                 .Where(r => r.SourceWarehouseId == sourceWarehouseId)
+                .OrderByDescending(r => r.RequestDate)
                 .ToListAsync();
         }
 
@@ -100,6 +101,7 @@ namespace Repo.Repository
                 .Include(r => r.SourceWarehouse)            // 🔹 Kho nguồn — thêm dòng này!
                 .Include(r => r.DestinationWarehouse)       // 🔸 Kho đích
                 .Where(r => r.DestinationWarehouseId == destinationWarehouseId)
+                .OrderByDescending(r => r.RequestDate)
                 .ToListAsync();
         }
 
