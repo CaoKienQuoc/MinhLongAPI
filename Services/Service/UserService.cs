@@ -845,7 +845,7 @@ namespace Services.Service
             // Map sang DTO
             return new EmployeeDto
             {
-                EmployeeId = manager.EmployeeId,
+                UserId = manager.UserId,
                 FullName = manager.FullName
             };
         }

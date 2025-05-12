@@ -8,7 +8,7 @@ namespace BusinessObject.DTO.Warehouse
 {
     public class EmployeeDto
     {
-        public long EmployeeId { get; set; }
+        public Guid UserId { get; set; }     // Thêm UserId
         public string FullName { get; set; }
     }
 }
