@@ -77,7 +77,7 @@ namespace MLHR.Hubs
                 //ReceiverId = receiverId,
                 MessageText = message,
                 FileUrl = fileUrl,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTime.Now,
                 IsRead = false
             };
             var saved = await _chatService.SaveMessageAsync(chatMessage);
