@@ -23,10 +23,26 @@ namespace Repo.Repository
 
         public async Task<Batch?> GetLatestBatchByProductIdAsync(long productId)
         {
-            return await _context.Batches
+            /*return await _context.Batches
                 .Where(b => b.ProductId == productId)
                 .OrderByDescending(b => b.ExpiryDate)
                 .AsQueryable() // ✅ Chuyển về IQueryable trước khi gọi FirstOrDefaultAsync
+                .FirstOrDefaultAsync();*/
+
+            // ✅ Tính thời gian 6 tháng sau từ hiện tại
+            // ✅ Tính thời gian 6 tháng sau theo giờ Việt Nam
+            TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+            DateTime sixMonthsLater = vnNow.AddMonths(6);
+
+            // ✅ Lọc batch theo ProductId, Status và ExpiryDate
+            return await _context.Batches
+                .Where(b =>
+                    b.ProductId == productId &&
+                    b.Status == "ACTIVE" &&
+                    b.ExpiryDate > sixMonthsLater
+                )
+                .OrderBy(b => b.ExpiryDate) // ✅ Sắp xếp từ ngày gần hết hạn nhất
                 .FirstOrDefaultAsync();
         }
 

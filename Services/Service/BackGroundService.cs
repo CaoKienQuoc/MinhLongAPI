@@ -56,16 +56,19 @@ namespace Services.Service
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // 1) Tính thời điểm gửi debt reminder đầu tiên: 08:00 VN
-            var nowVn = DateTime.UtcNow.AddHours(7);
-            var nextDebtRun = new DateTime(nowVn.Year, nowVn.Month, nowVn.Day, 8, 0, 0);
-            if (nowVn > nextDebtRun)
+            // ✅ Tính giờ Việt Nam (UTC+7)
+            TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+
+            // ✅ Tính thời điểm gửi debt reminder đầu tiên: 08:00 VN
+            DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+            DateTime nextDebtRun = new DateTime(vnNow.Year, vnNow.Month, vnNow.Day, 8, 0, 0, DateTimeKind.Unspecified);
+            if (vnNow > nextDebtRun)
                 nextDebtRun = nextDebtRun.AddDays(1);
 
             // 2) Vòng lặp chung
             while (!stoppingToken.IsCancellationRequested)
             {
-                var vietnamNow = DateTime.UtcNow.AddHours(7);
+                vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
 
                 // 2.1) Cập nhật expired batches every 5 minutes
                 try
@@ -75,37 +78,37 @@ namespace Services.Service
                     //Batch
                     var batchService = scope.ServiceProvider.GetRequiredService<IBatchService>();
 
-                    var updatedCount = await batchService.UpdateExpiredBatchesAsync(vietnamNow);
+                    var updatedCount = await batchService.UpdateExpiredBatchesAsync(vnNow);
                     Console.WriteLine(
-                        $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] Expired batches updated: {updatedCount}"
+                        $"[{vnNow:yyyy-MM-dd HH:mm:ss}] Expired batches updated: {updatedCount}"
                     );
 
                     // 🔄 Cập nhật trạng thái ExpiredSoon nếu còn dưới 6 tháng
-                    var expiredSoonCount = await batchService.UpdateExpiredSoonBatchesAsync(vietnamNow);
+                    var expiredSoonCount = await batchService.UpdateExpiredSoonBatchesAsync(vnNow);
                     Console.WriteLine(
-                        $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] ExpiredSoon batches updated: {expiredSoonCount}"
+                        $"[{vnNow:yyyy-MM-dd HH:mm:ss}] ExpiredSoon batches updated: {expiredSoonCount}"
                     );
 
                     //WarehouseProduct
                     // ✅ WarehouseProduct Update
                     var warehouseProductService = scope.ServiceProvider.GetRequiredService<IWarehouseService>();
-                    var expiredProductCount = await warehouseProductService.UpdateExpiredWarehouseProductsAsync(vietnamNow);
+                    var expiredProductCount = await warehouseProductService.UpdateExpiredWarehouseProductsAsync(vnNow);
                     Console.WriteLine(
-                        $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] Expired warehouse products updated: {expiredProductCount}");
+                        $"[{vnNow:yyyy-MM-dd HH:mm:ss}] Expired warehouse products updated: {expiredProductCount}");
 
-                    var expiredSoonProductCount = await warehouseProductService.UpdateExpiredSoonWarehouseProductsAsync(vietnamNow);
+                    var expiredSoonProductCount = await warehouseProductService.UpdateExpiredSoonWarehouseProductsAsync(vnNow);
                     Console.WriteLine(
-                        $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] ExpiredSoon warehouse products updated: {expiredSoonProductCount}");
+                        $"[{vnNow:yyyy-MM-dd HH:mm:ss}] ExpiredSoon warehouse products updated: {expiredSoonProductCount}");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(
-                        $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] Error updating expired batches: {ex.Message}"
+                        $"[{vnNow:yyyy-MM-dd HH:mm:ss}] Error updating expired batches: {ex.Message}"
                     );
                 }
 
                 // 2.2) Gửi debt reminders vào 08:00 VN
-                if (vietnamNow >= nextDebtRun)
+                if (vnNow >= nextDebtRun)
                 {
                     try
                     {
@@ -120,11 +123,11 @@ namespace Services.Service
                         foreach (var payment in payments)
                         {
                             var dueDate = payment.PaymentDate.AddMonths(3);
-                            var daysLeft = (dueDate.Date - vietnamNow.Date).TotalDays;
+                            var daysLeft = (dueDate.Date - vnNow.Date).TotalDays;
 
                             if (daysLeft == 10)
                             {
-                                string cacheKey = $"DebtReminder:{payment.OrderId}:{vietnamNow:yyyy-MM-dd}";
+                                string cacheKey = $"DebtReminder:{payment.OrderId}:{vnNow:yyyy-MM-dd}";
                                 if (!await cacheService.ExistsAsync(cacheKey))
                                 {
                                     var email = payment.User?.Email;
@@ -147,13 +150,13 @@ namespace Services.Service
                         }
 
                         Console.WriteLine(
-                            $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] Debt reminders sent."
+                            $"[{vnNow:yyyy-MM-dd HH:mm:ss}] Debt reminders sent."
                         );
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine(
-                            $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] Error sending debt reminders: {ex.Message}"
+                            $"[{vnNow:yyyy-MM-dd HH:mm:ss}] Error sending debt reminders: {ex.Message}"
                         );
                     }
 
@@ -163,7 +166,7 @@ namespace Services.Service
 
                 // 2.3) Tính khoảng chờ: min(5 phút, thời gian đến nextDebtRun)
                 var timeToNextExpired = TimeSpan.FromMinutes(3);
-                var timeToDebt = nextDebtRun - vietnamNow;
+                var timeToDebt = nextDebtRun - vnNow;
                 var delay = timeToDebt < timeToNextExpired ? timeToDebt : timeToNextExpired;
 
                 // Tránh delay quá ngắn (<30s)
