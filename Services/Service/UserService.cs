@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using MailKit;
 using BusinessObject.DTO.Email;
 using Microsoft.AspNetCore.Http.HttpResults;
+using BusinessObject.DTO.Warehouse;
 
 namespace Services.Service
 {
@@ -827,6 +828,26 @@ namespace Services.Service
             }).ToList();
 
             return dtoList;
+        }
+
+        public async Task<EmployeeDto> GetSalesManagerByAgencyUserIdAsync(Guid userId)
+        {
+            // Lấy AgencyAccount dựa trên UserId của đại lý
+            var agencyAccount = await _agencyAccountRepository.GetByUserIdAsync(userId);
+            if (agencyAccount == null)
+                throw new Exception("Không tìm thấy đại lý!");
+
+            // Lấy nhân viên quản lý (ManagedByEmployee)
+            var manager = agencyAccount.ManagedByEmployee;
+            if (manager == null)
+                throw new Exception("Không tìm thấy nhân viên quản lý!");
+
+            // Map sang DTO
+            return new EmployeeDto
+            {
+                EmployeeId = manager.EmployeeId,
+                FullName = manager.FullName
+            };
         }
 
     }

@@ -26,6 +26,11 @@ namespace Repo.Repository
             _context.ChatRooms
                 .Where(r => r.ChatRoomId == roomId)
                 .Include(r => r.Members)
+                    .ThenInclude(r => r.User)
+                    .ThenInclude(u => u.Employee)
+                .Include(r => r.Members)
+                    .ThenInclude(r => r.User)
+                    .ThenInclude(u => u.AgencyAccount)
                 .Include(r => r.Messages)           // ← thêm dòng này
                 .FirstOrDefaultAsync();
 
@@ -35,7 +40,12 @@ namespace Repo.Repository
                             .Where(r =>                   // Lọc những room có member này
                                 r.Members.Any(m => m.UserId == userId)
                                     )
-                                .Include(r => r.Members)     // Include members trước khi ToListAsync
+                                .Include(r => r.Members)
+                    .ThenInclude(r => r.User)
+                    .ThenInclude(u => u.Employee)
+                                .Include(r => r.Members)
+                    .ThenInclude(r => r.User)
+                    .ThenInclude(u => u.AgencyAccount)    // Include members trước khi ToListAsync
                                 .Include(r=>r.Messages)
                                 .ToListAsync();
 
