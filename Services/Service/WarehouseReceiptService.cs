@@ -98,8 +98,7 @@ namespace Services.Service
             }
             else // ImportProduction
             {
-                var usedBatchCodes = new HashSet<string>();
-                var batchCodeDict = new Dictionary<long, string>();
+                string batchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
 
                 foreach (var b in request.Batches)
                 {
@@ -113,14 +112,7 @@ namespace Services.Service
 
                     string status = expiryDate < DateTime.Now ? "EXPIRED" : "CALCULATING_PRICE";
 
-                    string batchCode;
-                    do
-                    {
-                        batchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
-                    } while (usedBatchCodes.Contains(batchCode));
-
-                    // ✅ Thêm vào danh sách đã sử dụng
-                    usedBatchCodes.Add(batchCode);
+                    
 
                     processedBatches.Add(new BatchResponseDto
                     {

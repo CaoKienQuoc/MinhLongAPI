@@ -70,6 +70,13 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpGet("expired-soon/{warehouseId}")]
+        public async Task<IActionResult> GetExpiredSoonBatchesByWarehouse(long warehouseId)
+        {
+            var batches = await _batchService.GetExpiredSoonBatchesByWarehouseAsync(warehouseId);
+            return Ok(batches);
+        }
+
         [HttpPost("cancel-expired/{batchId}")]
         public async Task<IActionResult> CancelExpiredBatch(long batchId, [FromBody] CancelBatchDto dto)
         {

@@ -202,6 +202,22 @@ namespace Repo.Repository
             return false;
         }
 
+        public async Task<List<Batch>> GetExpiredSoonBatchesByWarehouseAsync(long warehouseId)
+        {
+            return await _context.Batches
+                .Include(b => b.ImportTransactionDetail)
+                .Include(b => b.Product)
+                .Where(b =>
+                    b.Status == "EXPIRED_SOON" &&
+                    _context.WarehouseProduct.Any(wp =>
+                        wp.BatchId == b.BatchId &&
+                        wp.WarehouseId == warehouseId
+                    )
+                )
+                .OrderBy(b => b.ExpiryDate)
+                .ToListAsync();
+        }
+
     }
 
 }

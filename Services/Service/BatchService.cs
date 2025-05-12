@@ -311,5 +311,28 @@ namespace Services.Service
             return allUpdated;
         }
 
+
+        public async Task<List<BatchDisplayDto>> GetExpiredSoonBatchesByWarehouseAsync(long warehouseId)
+        {
+            var batches = await _batchRepository.GetExpiredSoonBatchesByWarehouseAsync(warehouseId);
+
+            return batches
+               .Select(b => new BatchDisplayDto
+               {
+                   BatchId = b.BatchId,
+                   ProductId = b.ProductId,
+                   ProductName = b.Product.ProductName,
+                   BatchCode = b.BatchCode,
+                   UnitCost = b.UnitCost,
+                   Quantity = b.Quantity,
+                   DateOfManufacture = b.DateOfManufacture,
+                   ExpiryDate = b.ExpiryDate,
+                   TotalAmount = b.TotalAmount,
+                   SellingPrice = b.SellingPrice ?? 0,
+                   ProfitMarginPercent = b.ProfitMarginPercent,
+                   Status = b.Status
+               })
+               .ToList();
+        }
     }
 }

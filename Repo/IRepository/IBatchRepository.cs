@@ -37,6 +37,7 @@ namespace Repo.IRepository
         Task UpdateBatchAsync(Batch batch);
 
         Task<List<Batch>> GetBatchesByIdsAsync(List<long> batchIds);
+        Task<List<Batch>> GetExpiredSoonBatchesByWarehouseAsync(long warehouseId);
     }
 
 }

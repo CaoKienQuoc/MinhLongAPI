@@ -29,5 +29,6 @@ namespace Services.IService
         Task<bool> UpdateSoldOutStatusForAllBatchesAsync(IEnumerable<long> batchIds);
 
         Task<int> UpdateExpiredSoonBatchesAsync(DateTime nowVietnamTime);
+        Task<List<BatchDisplayDto>> GetExpiredSoonBatchesByWarehouseAsync(long warehouseId);
     }
 }
