@@ -98,6 +98,9 @@ namespace Services.Service
             }
             else // ImportProduction
             {
+                var usedBatchCodes = new HashSet<string>();
+                var batchCodeDict = new Dictionary<long, string>();
+
                 foreach (var b in request.Batches)
                 {
                     var product = await _productRepo.GetByIdAsync(b.ProductId);
@@ -110,9 +113,25 @@ namespace Services.Service
 
                     string status = expiryDate < DateTime.Now ? "EXPIRED" : "CALCULATING_PRICE";
 
+                    if (!batchCodeDict.ContainsKey(b.BatchId))
+                    {
+                        string batchCode;
+                        do
+                        {
+                            batchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
+                        } while (usedBatchCodes.Contains(batchCode));
+
+                        // Lưu batch code để dùng lại cho BatchId này
+                        batchCodeDict[b.BatchId] = batchCode;
+                        usedBatchCodes.Add(batchCode);
+                    }
+
+                    // ✅ Sử dụng BatchCode đã lưu
+                    string finalBatchCode = batchCodeDict[b.BatchId];
+
                     processedBatches.Add(new BatchResponseDto
                     {
-                        BatchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
+                        BatchCode = batchCode,
                         ProductId = b.ProductId,
                         Unit = b.Unit,
                         Quantity = b.Quantity,

@@ -147,7 +147,7 @@ namespace Repo.Repository
             return await _context.Batches
                     .Include(b => b.ImportTransactionDetail)
                     .Include(b => b.Product) // ✅ CHỈ THÊM DÒNG NÀY
-                    .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId)
+                    .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId && !b.SoldOut)
                     .ToListAsync();
 
         }
