@@ -16,17 +16,20 @@ namespace Services.Service
         private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
         private readonly IProductRepository _productRepository;
         private readonly IOrderRepository _orderRepository;
+        private readonly IBatchRepository _batchRepository;
 
         public InventoryService(
             IWarehouseProductRepository warehouseProductRepo,
             ITemporaryWarehouseExportRepository tempExportRepo,
             IProductRepository productRepository,
-            IOrderRepository orderRepository)
+            IOrderRepository orderRepository,
+            IBatchRepository  batchRepository)
         {
             _warehouseProductRepo = warehouseProductRepo;
             _tempExportRepo = tempExportRepo;
             _productRepository = productRepository;
             _orderRepository = orderRepository;
+            _batchRepository = batchRepository;
         }
 
 
@@ -59,6 +62,28 @@ namespace Services.Service
 
                 stock.Quantity -= (int)deductQuantity;
                 await _warehouseProductRepo.UpdateAsync(stock);
+
+                // 🔄 Cập nhật số lượng trong bảng Batch
+                var warehouseProducts = await _warehouseProductRepo.GetByBatchIdAsync(stock.BatchId);
+                if (warehouseProducts == null || !warehouseProducts.Any())
+                    throw new InvalidOperationException($"Không tìm thấy WarehouseProduct với BatchId {stock.BatchId}.");
+
+                // Tổng hợp số lượng từ tất cả WarehouseProduct có cùng BatchId
+                var totalBatchQuantity = warehouseProducts.Sum(wp => wp.Quantity);
+
+                // Kiểm tra số lượng trong Batch trước khi trừ
+                var batch = await _batchRepository.GetByIdAsync(stock.BatchId);
+                if (batch == null)
+                    throw new InvalidOperationException($"Không tìm thấy Batch với BatchId {stock.BatchId}.");
+
+                /*if (totalBatchQuantity < deductQuantity)
+                    throw new InvalidOperationException($"Batch {batch.BatchId} không đủ tồn kho. Thiếu {deductQuantity}.");*/
+
+                // Cập nhật số lượng của Batch
+                batch.Quantity = totalBatchQuantity;
+                await _batchRepository.UpdateAsync(batch);
+
+
 
                 var existingTemp = await _tempExportRepo.GetByConditionAsync(x =>
                     x.OrderId == orderId &&
