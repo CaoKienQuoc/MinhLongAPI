@@ -23,6 +23,6 @@ namespace Services.IService
 
         Task<int> UpdateExpiredBatchesAsync(DateTime nowVietnamTime);
 
-        Task<bool> CancelExpiredBatchAsync(long batchId);
+        Task<bool> CancelExpiredBatchAsync(long batchId, string? reason = null);
     }
 }

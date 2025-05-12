@@ -71,13 +71,25 @@ namespace MLHR.Controllers
         }
 
         [HttpPost("cancel-expired/{batchId}")]
-        public async Task<IActionResult> CancelExpiredBatch(long batchId)
+        public async Task<IActionResult> CancelExpiredBatch(long batchId, [FromBody] CancelBatchDto dto)
         {
-            var result = await _batchService.CancelExpiredBatchAsync(batchId);
-            if (!result)
-                return BadRequest("Batch không tồn tại hoặc không phải trạng thái EXPIRED.");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            return Ok("Nhập huỷ thành công.");
+            try
+            {
+                var reason = dto.Reason?.Trim();
+                var result = await _batchService.CancelExpiredBatchAsync(batchId, reason);
+
+                if (!result)
+                    return BadRequest("Batch không tồn tại hoặc không phải trạng thái EXPIRED.");
+
+                return Ok("Nhập huỷ thành công.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPut("batches/{batchId}")]

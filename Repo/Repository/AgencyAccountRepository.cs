@@ -28,7 +28,9 @@ namespace Repo.Repository
 
         public async Task<AgencyAccount> GetByUserIdAsync(Guid userId)
         {
-            return await _context.AgencyAccounts.FirstOrDefaultAsync(a => a.UserId == userId);
+            return await _context.AgencyAccounts
+                .Include(a => a.ManagedByEmployee)
+                .FirstOrDefaultAsync(a => a.UserId == userId);
         }
 
         public async Task<AgencyAccount?> GetByUsernameAsync(string username)

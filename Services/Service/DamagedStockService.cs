@@ -71,18 +71,25 @@ namespace Services.Service
             // 6) Map chi tiết thành DamagedStock
             var now = DateTime.UtcNow;
             var damagedStocks = receipt.Details
-                .Select(d => new DamagedStock
-                {
-                    ProductId = d.ProductId,
-                    WarehouseId = userWarehouseId,
-                    Quantity = d.Quantity,
-                    BatchId = d.BatchId,
-                    CreatedAt = now,
-                    Reason = "DefectiveGood",
-                    Status = "Return"
-                })
-                .ToList();
+         .Select(d =>
+         {
+             // Tìm ReturnRequestDetail tương ứng
+             var detail = returnReceipt.Details.FirstOrDefault(rd => rd.ProductId == d.ProductId);
+             if (detail == null)
+                 throw new Exception($"Không tìm thấy chi tiết trả hàng cho sản phẩm {d.ProductId}");
 
+             return new DamagedStock
+             {
+                 ProductId = d.ProductId,
+                 WarehouseId = userWarehouseId,
+                 Quantity = d.Quantity,
+                 BatchId = d.BatchId,
+                 CreatedAt = now,
+                 Reason = detail.Reason ?? "DefectiveGood",  // ✅ Lấy từ ReturnRequestDetail
+                 Status = "Return"
+             };
+         })
+         .ToList();
             // 6) Lưu vào bảng DamagedStock
             await _damagedRepo.AddRangeAsync(damagedStocks);
 

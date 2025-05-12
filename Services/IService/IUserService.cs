@@ -1,4 +1,5 @@
 ﻿using BusinessObject.DTO;
+using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,7 @@ namespace Services.IService
 
         Task<UserDetailDto> GetAgencyUserByIdAsync(Guid userId);
         Task<List<AgencyAccountDto>> GetAgenciesManagedByUserIdAsync(Guid userId);
+        Task<EmployeeDto> GetSalesManagerByAgencyUserIdAsync(Guid userId);
     }
 
 

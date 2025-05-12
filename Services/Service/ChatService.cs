@@ -58,15 +58,21 @@ namespace Services.Service
                 RoomName = r.RoomName,
                 CreatedAt = r.CreatedAt,
                 MemberCount = r.Members.Count,
-                MemberIds = r.Members.Select(m => m.UserId),
+                Members = r.Members.Select(m => new ChatRoomMemberDto
+                {
+                    UserId = m.UserId,
+                    Name = m.User.Employee != null ? m.User.Employee.FullName
+                          : m.User.AgencyAccount != null ? m.User.AgencyAccount.AgencyName
+                          : m.User.Username
+                }).ToList(),
                 LastMessage = r.Messages
-                                    .OrderByDescending(m => m.Timestamp)
-                                    .FirstOrDefault()
-                                    ?.MessageText,
+                        .OrderByDescending(m => m.Timestamp)
+                        .FirstOrDefault()
+                        ?.MessageText,
                 LastTimestamp = r.Messages
-                                    .OrderByDescending(m => m.Timestamp)
-                                    .FirstOrDefault()
-                                    ?.Timestamp
+                        .OrderByDescending(m => m.Timestamp)
+                        .FirstOrDefault()
+                        ?.Timestamp
             });
 
             return dtos;
@@ -88,7 +94,13 @@ namespace Services.Service
                 RoomName = room.RoomName,
                 CreatedAt = room.CreatedAt,
                 MemberCount = room.Members.Count,
-                MemberIds = room.Members.Select(m => m.UserId),
+                Members = room.Members.Select(m => new ChatRoomMemberDto
+                {
+                    UserId = m.UserId,
+                    Name = m.User.Employee != null ? m.User.Employee.FullName
+                          : m.User.AgencyAccount != null ? m.User.AgencyAccount.AgencyName
+                          : m.User.Username
+                }).ToList(),
                 LastMessage = last?.MessageText,
                 LastTimestamp = last?.Timestamp
             };

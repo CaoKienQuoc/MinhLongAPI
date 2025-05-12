@@ -72,7 +72,7 @@ namespace MLHR.Controllers
                 var roomDto = await _chatService.GetRoomByIdAsync(roomId);
 
                 // 3) Nếu không tìm thấy hoặc user không thuộc room thì trả về 404
-                if (roomDto == null || !roomDto.MemberIds.Contains(userId))
+                if (roomDto == null || !roomDto.Members.Any(m => m.UserId == userId))
                     return NotFound(new { error = "Chat room not found or access denied" });
 
                 return Ok(roomDto);

@@ -281,5 +281,28 @@ namespace MLHR.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [Authorize]
+        [HttpGet("agency/manager-by")]
+        public async Task<IActionResult> GetSalesManagerForAgency()
+        {
+            try
+            {
+                // Lấy UserId từ token
+                var userIdClaim = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized(new { message = "Bạn Chưa Đăng Nhập!" });
+
+                Guid userId = Guid.Parse(userIdClaim);
+
+                // Gọi service để lấy thông tin Sales Manager
+                var managerDto = await _userService.GetSalesManagerByAgencyUserIdAsync(userId);
+                return Ok(managerDto);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
