@@ -20,6 +20,8 @@ namespace Repo.IRepository
         Task<WarehouseProduct?> GetByProductAndBatchAsync(long productId, long batchId);
 
         Task AddAsync(WarehouseProduct entity);
+        Task<List<WarehouseProduct>> GetByProductIdAsync(long productId);
+        Task<WarehouseProduct?> GetByIdAsync(long warehouseProductId);
     }
 
 }

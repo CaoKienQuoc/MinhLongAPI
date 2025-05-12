@@ -52,28 +52,28 @@ namespace Services.Service
             var rooms = await _roomRepo.GetForUserAsync(userId);
 
             // Map sang DTO
-            var dtos = rooms.Select(r => new ChatRoomDto
+            var dtos = rooms.Select(r =>
             {
-                ChatRoomId = r.ChatRoomId,
-                RoomName = r.RoomName,
-                CreatedAt = r.CreatedAt,
-                MemberCount = r.Members.Count,
-                Members = r.Members.Select(m => new ChatRoomMemberDto
+                var lastMessage = r.Messages.OrderByDescending(m => m.Timestamp).FirstOrDefault();
+                return new ChatRoomDto
                 {
-                    UserId = m.UserId,
-                    Name = m.User.Employee != null ? m.User.Employee.FullName
-                          : m.User.AgencyAccount != null ? m.User.AgencyAccount.AgencyName
-                          : m.User.Username
-                }).ToList(),
-                LastMessage = r.Messages
-                        .OrderByDescending(m => m.Timestamp)
-                        .FirstOrDefault()
-                        ?.MessageText,
-                LastTimestamp = r.Messages
-                        .OrderByDescending(m => m.Timestamp)
-                        .FirstOrDefault()
-                        ?.Timestamp
-            });
+                    ChatRoomId = r.ChatRoomId,
+                    RoomName = r.RoomName,
+                    CreatedAt = r.CreatedAt,
+                    MemberCount = r.Members.Count,
+                    Members = r.Members.Select(m => new ChatRoomMemberDto
+                    {
+                        UserId = m.UserId,
+                        Name = m.User.Employee != null ? m.User.Employee.FullName
+                              : m.User.AgencyAccount != null ? m.User.AgencyAccount.AgencyName
+                              : m.User.Username
+                    }).ToList(),
+                    LastMessage = lastMessage?.MessageText,
+                    LastTimestamp = lastMessage?.Timestamp ?? DateTime.MinValue
+                };
+            })
+                    .OrderByDescending(r => r.LastTimestamp) // Sắp xếp theo thời gian tin nhắn mới nhất
+                    .ToList();
 
             return dtos;
         }
@@ -105,6 +105,7 @@ namespace Services.Service
                 LastTimestamp = last?.Timestamp
             };
         }
+
 
 
 

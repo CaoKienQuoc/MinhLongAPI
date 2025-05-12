@@ -266,5 +266,21 @@ namespace Services.Service
             return true;
         }
 
+        public async Task<bool> UpdateSoldOutStatusAsync(long batchId)
+        {
+            return await _batchRepository.UpdateSoldOutStatusAsync(batchId);
+        }
+
+        public async Task<bool> UpdateSoldOutStatusForAllBatchesAsync(IEnumerable<long> batchIds)
+        {
+            bool allUpdated = true;
+            foreach (var batchId in batchIds)
+            {
+                var updated = await _batchRepository.UpdateSoldOutStatusAsync(batchId);
+                if (!updated) allUpdated = false;
+            }
+            return allUpdated;
+        }
+
     }
 }

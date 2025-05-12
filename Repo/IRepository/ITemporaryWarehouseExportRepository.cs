@@ -32,5 +32,7 @@ namespace Repo.IRepository
         Task<List<TemporaryStockExport>> GetByWarehouseIdAsync(long warehouseId);
 
         Task<List<TemporaryStockExport>> GetByBatchIdsAsync(List<long> batchIds);
+
+        Task<List<(WarehouseProduct, Batch)>> GetWarehouseProductsAndBatchesByOrderIdAsync(Guid orderId);
     }
 }

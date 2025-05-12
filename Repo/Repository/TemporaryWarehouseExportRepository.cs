@@ -107,6 +107,20 @@ namespace Repo.Repository
                 .Where(t => batchIds.Contains(t.BatchId))
                 .ToListAsync();
         }
+
+        public async Task<List<(WarehouseProduct, Batch)>> GetWarehouseProductsAndBatchesByOrderIdAsync(Guid orderId)
+        {
+            return await _context.TemporaryStockExports
+                .Where(t => t.OrderId == orderId && !t.IsReverted)
+                .Include(t => t.Batch)
+                .Include(t => t.Batch.Product)
+                .Include(t => t.Warehouse)
+                .Select(t => new ValueTuple<WarehouseProduct, Batch>(
+                    _context.WarehouseProduct.FirstOrDefault(wp => wp.WarehouseProductId == t.WarehouseProductId),
+                    t.Batch
+                ))
+                .ToListAsync();
+        }
     }
 
 }

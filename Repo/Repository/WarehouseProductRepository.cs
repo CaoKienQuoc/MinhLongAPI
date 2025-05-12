@@ -32,6 +32,13 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<List<WarehouseProduct>> GetByProductIdAsync(long productId)
+        {
+            return await _context.WarehouseProduct
+                .Where(wp => wp.ProductId == productId)
+                .Include(wp => wp.Batch) // Đảm bảo Batch được load
+                .ToListAsync();
+        }
 
 
         public async Task UpdateAsync(WarehouseProduct entity)
@@ -69,6 +76,13 @@ namespace Repo.Repository
         public async Task AddAsync(WarehouseProduct entity)
         {
             await _context.WarehouseProduct.AddAsync(entity);
+        }
+
+        public async Task<WarehouseProduct?> GetByIdAsync(long warehouseProductId)
+        {
+            return await _context.WarehouseProduct
+                .Include(wp => wp.Batch)  // ✅ Include Batch để lấy thông tin Batch
+                .FirstOrDefaultAsync(wp => wp.WarehouseProductId == warehouseProductId);
         }
     }
 }

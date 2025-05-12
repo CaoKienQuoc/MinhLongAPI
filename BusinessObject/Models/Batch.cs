@@ -21,6 +21,8 @@ namespace BusinessObject.Models
         public DateTime ExpiryDate { get; set; }
         public string Unit{ get; set; }
 
+        public bool SoldOut { get; set; } = false;
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
 

@@ -32,7 +32,7 @@ namespace Repo.Repository
 
         public async Task<Batch> GetByIdAsync(long batchId)
         {
-            return await _context.Batches.FindAsync(batchId);
+            return await _context.Batches.FirstOrDefaultAsync(b => b.BatchId == batchId);
         }
 
         public async Task<IEnumerable<Batch>> GetAllAsync()
@@ -45,6 +45,13 @@ namespace Repo.Repository
             _context.Batches.Update(batch);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<List<Batch>> GetBatchesByIdsAsync(List<long> batchIds)
+        {
+            return await _context.Batches
+                .Where(b => batchIds.Contains(b.BatchId))
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Batch>> GetBatchesByProductIdAsync(long productId)
@@ -166,6 +173,33 @@ namespace Repo.Repository
         {
             _context.Batches.Remove(batch);
             await Task.CompletedTask; // hoặc bạn có thể bỏ nếu không async
+        }
+
+        public async Task UpdateBatchAsync(Batch batch)
+        {
+            _context.Batches.Update(batch);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> UpdateSoldOutStatusAsync(long batchId)
+        {
+            var batch = await _context.Batches.FindAsync(batchId);
+            if (batch == null) return false;
+
+            // Kiểm tra số lượng tồn trong WarehouseProduct
+            var warehouseProduct = await _context.WarehouseProduct
+                .Where(wp => wp.BatchId == batchId)
+                .ToListAsync();
+
+            if (warehouseProduct.All(wp => wp.Quantity == 0))
+            {
+                batch.SoldOut = true;
+                _context.Batches.Update(batch);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
         }
 
     }

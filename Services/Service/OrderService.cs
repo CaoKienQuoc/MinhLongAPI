@@ -25,6 +25,8 @@ namespace Services.Service
         private readonly IInventoryService _iventoryService;
         private readonly ITemporaryWarehouseExportRepository _tempExportRepo;
         private readonly INotificationRepository _notificationRepository;
+        private readonly IWarehouseProductRepository _warehouseProductRepo;
+        private readonly IBatchRepository _batchRepository;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -35,7 +37,9 @@ namespace Services.Service
             IPaymentHistoryRepository paymentHistoryRepository
             ,IInventoryService inventoryService,
             ITemporaryWarehouseExportRepository tempExportRepo,
-            INotificationRepository notificationRepository)
+            INotificationRepository notificationRepository,
+            IWarehouseProductRepository warehouseProductRepository,
+            IBatchRepository batchRepository)
         {
             _orderRepository = orderRepository;
             _exportRepository = exportRepository;
@@ -46,6 +50,8 @@ namespace Services.Service
             _iventoryService = inventoryService;
             _tempExportRepo = tempExportRepo;
             _notificationRepository = notificationRepository;
+            _warehouseProductRepo = warehouseProductRepository;
+            _batchRepository = batchRepository;
         }
         public async Task<List<OrderDto>> GetAllOrdersAsync()
         {
@@ -283,6 +289,45 @@ namespace Services.Service
                 await _orderRepository.UpdateOrderAsync(order);
                 await _orderRepository.SaveChangesAsync();
 
+                // ✅ Lấy TemporaryStockExports theo OrderId
+                var tempStockExports = await _tempExportRepo.GetByOrderIdAsync(orderId);
+
+                var batchIdsToUpdate = new HashSet<long>();
+
+                foreach (var tempExport in tempStockExports)
+                {
+                    // ✅ Lấy WarehouseProduct liên quan
+                    var warehouseProduct = await _warehouseProductRepo.GetByIdAsync(tempExport.WarehouseProductId);
+                    if (warehouseProduct == null)
+                        continue;
+
+                    // ✅ Kiểm tra nếu WarehouseProduct đã hết hàng
+                    if (warehouseProduct.Quantity == 0)
+                    {
+                        var batch = await _batchRepository.GetByIdAsync(warehouseProduct.BatchId);
+                        if (batch != null && !batch.SoldOut)
+                        {
+                            batch.SoldOut = true;
+                            batchIdsToUpdate.Add(batch.BatchId);
+                        }
+                    }
+                }
+
+                // ✅ Cập nhật trạng thái SoldOut cho các Batch
+                if (batchIdsToUpdate.Any())
+                {
+                    var batchesToUpdate = await _batchRepository.GetBatchesByIdsAsync(batchIdsToUpdate.ToList());
+                    foreach (var batch in batchesToUpdate)
+                    {
+                        if (!batch.SoldOut)
+                        {
+                            batch.SoldOut = true;
+                            await _batchRepository.UpdateBatchAsync(batch);
+                        }
+                    }
+
+                    await _batchRepository.SaveChangesAsync();
+                }
 
 
                 var saleUserId = requestProduct.AgencyAccount?.ManagedByEmployee?.UserId;

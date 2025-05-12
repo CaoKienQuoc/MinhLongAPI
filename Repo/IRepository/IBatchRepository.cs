@@ -31,6 +31,12 @@ namespace Repo.IRepository
         Task<Batch> GetExpiredBatchByIdAsync(long batchId);
 
         Task DeleteAsync(Batch batch);
+
+        Task<bool> UpdateSoldOutStatusAsync(long batchId);
+
+        Task UpdateBatchAsync(Batch batch);
+
+        Task<List<Batch>> GetBatchesByIdsAsync(List<long> batchIds);
     }
 
 }

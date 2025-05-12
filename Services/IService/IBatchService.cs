@@ -24,5 +24,8 @@ namespace Services.IService
         Task<int> UpdateExpiredBatchesAsync(DateTime nowVietnamTime);
 
         Task<bool> CancelExpiredBatchAsync(long batchId, string? reason = null);
+
+        Task<bool> UpdateSoldOutStatusAsync(long batchId);
+        Task<bool> UpdateSoldOutStatusForAllBatchesAsync(IEnumerable<long> batchIds);
     }
 }
