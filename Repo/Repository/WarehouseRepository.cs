@@ -234,7 +234,16 @@ namespace Repo.Repository
             return warehouse.WarehouseId;
         }
 
-       
+        public IQueryable<WarehouseProduct> GetQueryable()
+        {
+            return _context.WarehouseProduct.AsQueryable();
+        }
+
+        public async Task UpdateRangeAsync(IEnumerable<WarehouseProduct> products)
+        {
+            _context.WarehouseProduct.UpdateRange(products);
+            await _context.SaveChangesAsync();
+        }
 
     }
 }

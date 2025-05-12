@@ -39,7 +39,8 @@ namespace Repo.IRepository
 
         Task<long> GetWarehouseIdByUserAsync(Guid userId);
 
-        
+        IQueryable<WarehouseProduct> GetQueryable();
+        Task UpdateRangeAsync(IEnumerable<WarehouseProduct> products);
 
     }
 }

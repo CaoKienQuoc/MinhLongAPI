@@ -71,6 +71,8 @@ namespace Services.Service
                 try
                 {
                     using var scope = _serviceScopeFactory.CreateScope();
+
+                    //Batch
                     var batchService = scope.ServiceProvider.GetRequiredService<IBatchService>();
 
                     var updatedCount = await batchService.UpdateExpiredBatchesAsync(vietnamNow);
@@ -83,6 +85,17 @@ namespace Services.Service
                     Console.WriteLine(
                         $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] ExpiredSoon batches updated: {expiredSoonCount}"
                     );
+
+                    //WarehouseProduct
+                    // ✅ WarehouseProduct Update
+                    var warehouseProductService = scope.ServiceProvider.GetRequiredService<IWarehouseService>();
+                    var expiredProductCount = await warehouseProductService.UpdateExpiredWarehouseProductsAsync(vietnamNow);
+                    Console.WriteLine(
+                        $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] Expired warehouse products updated: {expiredProductCount}");
+
+                    var expiredSoonProductCount = await warehouseProductService.UpdateExpiredSoonWarehouseProductsAsync(vietnamNow);
+                    Console.WriteLine(
+                        $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] ExpiredSoon warehouse products updated: {expiredSoonProductCount}");
                 }
                 catch (Exception ex)
                 {

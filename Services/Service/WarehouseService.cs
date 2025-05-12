@@ -1,5 +1,6 @@
 ﻿using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
+using Microsoft.EntityFrameworkCore;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
@@ -148,6 +149,39 @@ namespace Services.Service
         {
             return await _warehouseRepo.GetWarehousesByProductIdAsync(productId);
         }
+        public async Task<int> UpdateExpiredWarehouseProductsAsync(DateTime currentDate)
+        {
+            var expiredProducts = await _warehouseRepo.GetQueryable()
+                .Where(wp => wp.ExpirationDate < currentDate && wp.Status != "EXPIRED")
+                .ToListAsync();
 
+            foreach (var product in expiredProducts)
+            {
+                product.Status = "EXPIRED";
+            }
+
+            if (expiredProducts.Any())
+                await _warehouseRepo.UpdateRangeAsync(expiredProducts);
+
+            return expiredProducts.Count;
+        }
+
+        public async Task<int> UpdateExpiredSoonWarehouseProductsAsync(DateTime currentDate)
+        {
+            var thresholdDate = currentDate.AddMonths(6);
+            var expiredSoonProducts = await _warehouseRepo.GetQueryable()
+                .Where(wp => wp.ExpirationDate <= thresholdDate && wp.ExpirationDate > currentDate && wp.Status == "ACTIVE")
+                .ToListAsync();
+
+            foreach (var product in expiredSoonProducts)
+            {
+                product.Status = "EEXPIREDSOON";
+            }
+
+            if (expiredSoonProducts.Any())
+                await _warehouseRepo.UpdateRangeAsync(expiredSoonProducts);
+
+            return expiredSoonProducts.Count;
+        }
     }
 }

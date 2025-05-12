@@ -236,14 +236,14 @@ namespace Services.Service
                     (b.Status == "ACTIVE" || b.Status == "CALCULATING_PRICE") &&
                     b.ExpiryDate <= nowVietnamTime.AddMonths(6) &&
                     b.ExpiryDate > nowVietnamTime && // Chỉ lấy batch chưa hết hạn
-                    b.Status != "EXPIRED_SOON" && // Tránh cập nhật lại batch đã set "EXPIRED_SOON"
+                    b.Status != "EXPIREDSOON" && // Tránh cập nhật lại batch đã set "EXPIRED_SOON"
                     b.Status != "EXPIRED" // Tránh batch đã hết hạn
                 )
                 .ToListAsync();
 
             foreach (var batch in expiredSoonBatches)
             {
-                batch.Status = "EXPIRED_SOON";
+                batch.Status = "EXPIREDSOON";
                 //batch.UpdatedAt = DateTime.UtcNow; // ✅ Cập nhật thời gian nếu cần
             }
 

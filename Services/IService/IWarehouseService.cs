@@ -23,7 +23,8 @@ namespace Services.IService
 
         Task<List<ProductWarehouseSummaryDto>> GetWarehousesByProductIdAsync(long productId);
 
-
+        Task<int> UpdateExpiredWarehouseProductsAsync(DateTime currentDate);
+        Task<int> UpdateExpiredSoonWarehouseProductsAsync(DateTime currentDate);
 
     }
 }
