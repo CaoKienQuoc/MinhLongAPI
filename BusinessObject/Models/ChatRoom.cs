@@ -9,7 +9,7 @@ namespace BusinessObject.Models
     public class ChatRoom
     {
         public Guid ChatRoomId { get; set; } = Guid.NewGuid();
-        public string RoomName { get; set; }
+        public string? RoomName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<ChatRoomMember> Members { get; set; }
