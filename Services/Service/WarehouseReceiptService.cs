@@ -113,21 +113,14 @@ namespace Services.Service
 
                     string status = expiryDate < DateTime.Now ? "EXPIRED" : "CALCULATING_PRICE";
 
-                    if (!batchCodeDict.ContainsKey(b.BatchId))
+                    string batchCode;
+                    do
                     {
-                        string batchCode;
-                        do
-                        {
-                            batchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
-                        } while (usedBatchCodes.Contains(batchCode));
+                        batchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
+                    } while (usedBatchCodes.Contains(batchCode));
 
-                        // Lưu batch code để dùng lại cho BatchId này
-                        batchCodeDict[b.BatchId] = batchCode;
-                        usedBatchCodes.Add(batchCode);
-                    }
-
-                    // ✅ Sử dụng BatchCode đã lưu
-                    string finalBatchCode = batchCodeDict[b.BatchId];
+                    // ✅ Thêm vào danh sách đã sử dụng
+                    usedBatchCodes.Add(batchCode);
 
                     processedBatches.Add(new BatchResponseDto
                     {

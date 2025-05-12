@@ -19,6 +19,7 @@ using SkiaSharp;
 using System.Diagnostics;
 using BusinessObject.DTO.RequestExport;
 using BusinessObject.DTO.Product;
+using BusinessObject.DTO.Order;
 
 namespace Services.Service
 {
@@ -141,6 +142,11 @@ namespace Services.Service
         // ✅ Phiên bản hoàn chỉnh: xử lý cộng dồn đơn hàng và kho tạm đúng logic
         public async Task CreateRequestAsync(RequestProduct requestProduct, List<RequestProductDetail> requestDetails, Guid userId)
         {
+
+            // ✅ Sử dụng TimeZoneInfo để đảm bảo chính xác
+            TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+
             string requestCode = await _requestProductRepository.GenerateRequestCodeAsync();
 
             if (requestDetails == null || !requestDetails.Any())
@@ -229,7 +235,7 @@ namespace Services.Service
             else
             {
                 requestProduct.AgencyId = agencyId.Value;
-                requestProduct.CreatedAt = DateTime.Now;
+                requestProduct.CreatedAt = vnNow;
                 requestProduct.RequestStatus = "Pending";
                 requestProduct.RequestCode = requestCode;
 
@@ -253,6 +259,9 @@ namespace Services.Service
 
         public async Task ProcessOrderCreationAsync(Guid requestId)
         {
+            TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+
             string requestOrderCode = await _requestProductRepository.GenerateOrderCodeAsync();
             var requestProduct = await _requestProductRepository.GetRequestByIdAsync(requestId);
             if (requestProduct == null)
@@ -281,7 +290,7 @@ namespace Services.Service
                 order = new Order
                 {
                     OrderCode = requestOrderCode,
-                    OrderDate = DateTime.Now,
+                    OrderDate = vnNow,
                     Status = "WaitPaid",
                     RequestId = requestId,
                     Discount = discount * 100,
@@ -296,7 +305,7 @@ namespace Services.Service
             else
             {
                 order = existingOrder;
-                order.OrderDate = DateTime.Now;
+                order.OrderDate = vnNow;
             }
 
             decimal finalPrice = 0;
@@ -317,7 +326,7 @@ namespace Services.Service
                     existingDetail.UnitPrice = unitPrice;
                     existingDetail.TotalAmount = totalAmount;
                     existingDetail.Unit = detail.Unit;
-                    existingDetail.CreatedAt = DateTime.Now;
+                    existingDetail.CreatedAt = vnNow;
 
                     await _orderRepository.UpdateOrderDetailAsync(existingDetail);
                 }
@@ -331,7 +340,7 @@ namespace Services.Service
                         UnitPrice = unitPrice,
                         TotalAmount = totalAmount,
                         Unit = detail.Unit,
-                        CreatedAt = DateTime.Now
+                        CreatedAt = vnNow
                     });
                 }
 
@@ -352,6 +361,8 @@ namespace Services.Service
 
         public async Task<bool> CancelRequestAsync(Guid requestId, long approvedBy)
         {
+            TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
             var requestProduct = await _requestProductRepository.GetRequestByIdAsync(requestId);
 
             if (requestProduct == null)
@@ -365,7 +376,7 @@ namespace Services.Service
 
             requestProduct.RequestStatus = "Canceled";
             //requestProduct.ApprovedBy = approvedBy;
-            requestProduct.UpdatedAt = DateTime.Now;
+            requestProduct.UpdatedAt = vnNow;
 
             await _requestProductRepository.UpdateRequestAsync(requestProduct);
             await _requestProductRepository.SaveChangesAsync();

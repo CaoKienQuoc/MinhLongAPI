@@ -77,6 +77,12 @@ namespace Services.Service
                     Console.WriteLine(
                         $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] Expired batches updated: {updatedCount}"
                     );
+
+                    // 🔄 Cập nhật trạng thái ExpiredSoon nếu còn dưới 6 tháng
+                    var expiredSoonCount = await batchService.UpdateExpiredSoonBatchesAsync(vietnamNow);
+                    Console.WriteLine(
+                        $"[{vietnamNow:yyyy-MM-dd HH:mm:ss}] ExpiredSoon batches updated: {expiredSoonCount}"
+                    );
                 }
                 catch (Exception ex)
                 {
@@ -143,7 +149,7 @@ namespace Services.Service
                 }
 
                 // 2.3) Tính khoảng chờ: min(5 phút, thời gian đến nextDebtRun)
-                var timeToNextExpired = TimeSpan.FromMinutes(5);
+                var timeToNextExpired = TimeSpan.FromMinutes(3);
                 var timeToDebt = nextDebtRun - vietnamNow;
                 var delay = timeToDebt < timeToNextExpired ? timeToDebt : timeToNextExpired;
 

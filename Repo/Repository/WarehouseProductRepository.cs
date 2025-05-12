@@ -84,5 +84,12 @@ namespace Repo.Repository
                 .Include(wp => wp.Batch)  // ✅ Include Batch để lấy thông tin Batch
                 .FirstOrDefaultAsync(wp => wp.WarehouseProductId == warehouseProductId);
         }
+
+        public async Task<List<WarehouseProduct>> GetByBatchIdAsync(long batchId)
+        {
+            return await _context.WarehouseProduct
+                .Where(wp => wp.BatchId == batchId)
+                .ToListAsync();
+        }
     }
 }
