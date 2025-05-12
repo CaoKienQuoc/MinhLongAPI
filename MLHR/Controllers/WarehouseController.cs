@@ -118,7 +118,7 @@ namespace MLHR.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "6")]
+     
         [HttpGet("{warehouseId}/summary")]
         public async Task<IActionResult> GetProductSummary(long warehouseId)
         {
@@ -126,7 +126,7 @@ namespace MLHR.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "6")]
+       
         [HttpGet("product/{productId}/warehouses-summary")]
         public async Task<IActionResult> GetWarehousesByProductId(long productId)
         {
