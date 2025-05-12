@@ -10,7 +10,7 @@ namespace BusinessObject.DTO.Chat
     public class ChatRoomDto
     {
         public Guid ChatRoomId { get; set; }
-        public string RoomName { get; set; }
+        public Guid? RoomName { get; set; } = Guid.NewGuid();
         public DateTime CreatedAt { get; set; }
         public int MemberCount { get; set; }
       //  public IEnumerable<Guid> MemberIds { get; set; }

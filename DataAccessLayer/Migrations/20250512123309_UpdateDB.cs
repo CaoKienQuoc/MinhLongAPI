@@ -32,7 +32,7 @@ namespace DataAccessLayer.Migrations
                 columns: table => new
                 {
                     ChatRoomId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    RoomName = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoomName = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -1637,7 +1637,8 @@ namespace DataAccessLayer.Migrations
                 name: "IX_ChatRoom_RoomName",
                 table: "ChatRoom",
                 column: "RoomName",
-                unique: true);
+                unique: true,
+                filter: "[RoomName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChatRoomMember_ChatRoomId_UserId",

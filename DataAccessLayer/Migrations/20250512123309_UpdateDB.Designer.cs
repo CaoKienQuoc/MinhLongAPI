@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250512121758_FIxDb")]
-    partial class FIxDb
+    [Migration("20250512123309_UpdateDB")]
+    partial class UpdateDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -334,8 +334,8 @@ namespace DataAccessLayer.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("RoomName")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid?>("RoomName")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("ChatRoomId");
 

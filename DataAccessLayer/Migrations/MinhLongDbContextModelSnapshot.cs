@@ -331,8 +331,8 @@ namespace DataAccessLayer.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("RoomName")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid?>("RoomName")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("ChatRoomId");
 

@@ -9,7 +9,7 @@ namespace BusinessObject.DTO
     // DTOs
     public class CreateRoomDto
     {
-        public string RoomName { get; set; }
+        public Guid? RoomName { get; set; } = Guid.NewGuid();
         public List<Guid> MemberIds { get; set; }
     }
 }

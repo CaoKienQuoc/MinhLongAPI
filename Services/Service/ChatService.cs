@@ -23,7 +23,7 @@ namespace Services.Service
             _msgRepo = msgRepo;
         }
 
-        public async Task<ChatRoom> CreateRoomAsync(string roomName, IEnumerable<Guid> memberIds)
+        public async Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
         {
             // 1) Kiểm tra room đã tồn tại chưa (ví dụ cặp 2 thành viên)
             //    Giả sử bạn chỉ hỗ trợ 1-1 chat, bạn có thể tìm room có đúng 2 members đó
