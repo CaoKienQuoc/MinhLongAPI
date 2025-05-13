@@ -38,6 +38,11 @@ namespace Repo.IRepository
 
         Task<List<Batch>> GetBatchesByIdsAsync(List<long> batchIds);
         Task<List<Batch>> GetExpiredSoonBatchesByWarehouseAsync(long warehouseId);
+
+        Task<List<Batch>> GetExpiredSoonBatchesAsync();
+
+        Task<List<Batch>> GetExpiredSoonBatchesByCategoryAsync(long categoryId);
+        Task<List<Batch>> GetExpiredSoonBatchesByProductIdAsync(long productId);
     }
 
 }

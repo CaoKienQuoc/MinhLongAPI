@@ -234,6 +234,38 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<List<Batch>> GetExpiredSoonBatchesAsync()
+        {
+            return await _context.Batches
+                .Where(b => b.Status == "EXPIRED_SOON")
+                .Include(b => b.Product)
+                    .ThenInclude(p => p.Images)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<List<Batch>> GetExpiredSoonBatchesByCategoryAsync(long categoryId)
+        {
+            return await _context.Batches
+                .Where(b => b.Status == "EXPIRED_SOON" && b.Product.CategoryId == categoryId)
+                .Include(b => b.Product)
+                    .ThenInclude(p => p.Images)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<List<Batch>> GetExpiredSoonBatchesByProductIdAsync(long productId)
+        {
+            return await _context.Batches
+                .Where(b => b.ProductId == productId && b.Status == "EXPIRED_SOON")
+                .Include(b => b.Product)
+                    .ThenInclude(p => p.Images)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+
+
     }
 
 }

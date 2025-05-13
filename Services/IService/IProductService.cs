@@ -19,8 +19,9 @@ namespace Services.IService
 
         Task<int> GetAvailableStockAsync(long productId);
 
-        
+        Task<List<ProductResponseDto>> GetProductsFromExpiredBatchesAsync();
 
-
+        Task<List<ProductResponseDto>> GetProductsFromExpiredBatchesByCategoryAsync(long categoryId);
+        Task<ProductResponseDto?> GetProductDetailWithExpiredLogicAsync(long productId);
     }
 }

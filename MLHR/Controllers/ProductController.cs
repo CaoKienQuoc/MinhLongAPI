@@ -153,5 +153,31 @@ namespace MLHR.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [HttpGet("product/expired")]
+        public async Task<IActionResult> GetProductsFromExpiredBatches()
+        {
+            var products = await _service.GetProductsFromExpiredBatchesAsync();
+            return Ok(products);
+        }
+
+        [HttpGet("product/expired/category/{categoryId}")]
+        public async Task<IActionResult> GetProductsFromExpiredBatchesByCategory(long categoryId)
+        {
+            var products = await _service.GetProductsFromExpiredBatchesByCategoryAsync(categoryId);
+            return Ok(products);
+        }
+
+        [HttpGet("product/expired-detail/{productId}")]
+        public async Task<IActionResult> GetProductDetailWithExpiredLogic(long productId)
+        {
+            var product = await _service.GetProductDetailWithExpiredLogicAsync(productId);
+            if (product == null)
+                return NotFound(new { message = "Không tìm thấy sản phẩm hoặc không có lô EXPIRED_SOON." });
+
+            return Ok(product);
+        }
+
+
     }
 }

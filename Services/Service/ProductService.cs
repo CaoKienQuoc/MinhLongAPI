@@ -17,13 +17,17 @@ namespace Services.Service
         private readonly IImageService _imageService;
         private readonly IWarehouseProductRepository _warehouseProductRepository;
         private readonly ITemporaryWarehouseExportRepository _temporaryRepository;
+        private readonly IBatchRepository _batchRepository;
 
-        public ProductService(IProductRepository repository, IImageService imageService, IWarehouseProductRepository warehouseProductRepository, ITemporaryWarehouseExportRepository temporaryWarehouseExportRepository)
+
+        public ProductService(IProductRepository repository, IImageService imageService, IWarehouseProductRepository warehouseProductRepository,
+            ITemporaryWarehouseExportRepository temporaryWarehouseExportRepository, IBatchRepository batchRepository)
         {
             _repository = repository;
             _imageService = imageService;
             _warehouseProductRepository = warehouseProductRepository;
             _temporaryRepository = temporaryWarehouseExportRepository;
+            _batchRepository = batchRepository;
         }
 
         
@@ -182,6 +186,140 @@ namespace Services.Service
                 ProductName = p.ProductName,
                 Images = p.Images.Select(img => img.ImageUrl).ToList()
             }).ToList();
+        }
+
+        public async Task<List<ProductResponseDto>> GetProductsFromExpiredBatchesAsync()
+        {
+            var batches = await _batchRepository.GetExpiredSoonBatchesAsync();
+
+            var grouped = batches.GroupBy(b => b.ProductId);
+            var now = DateTime.Now;
+            var result = new List<ProductResponseDto>();
+
+            foreach (var group in grouped)
+            {
+                var product = group.First().Product;
+                var totalQty = group.Sum(b => b.Quantity);
+                var minExpiry = group.Min(b => b.ExpiryDate);
+                var monthsLeft = ((minExpiry.Year - now.Year) * 12) + minExpiry.Month - now.Month;
+
+                decimal? adjustedPrice = product.Price;
+                if (monthsLeft < 2) adjustedPrice *= 0.7m;
+                else if (monthsLeft < 4) adjustedPrice *= 0.8m;
+                else if (monthsLeft < 6) adjustedPrice *= 0.9m;
+
+                result.Add(new ProductResponseDto
+                {
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    ProductCode = product.ProductCode,
+                    Unit = product.Unit,
+                    Description = product.Description,
+                    CategoryId = product.CategoryId,
+                    Price = adjustedPrice,
+                    AvailableStock = totalQty,
+                    Images = product.Images.Select(i => i.ImageUrl).ToList()
+                });
+            }
+
+            return result.OrderByDescending(p => p.AvailableStock > 0).ToList();
+        }
+
+        public async Task<List<ProductResponseDto>> GetProductsFromExpiredBatchesByCategoryAsync(long categoryId)
+        {
+            var batches = await _batchRepository.GetExpiredSoonBatchesByCategoryAsync(categoryId);
+            var now = DateTime.Now;
+
+            // Group các batch theo Product
+            var grouped = batches
+                .GroupBy(b => b.ProductId)
+                .ToList();
+
+            var result = new List<ProductResponseDto>();
+
+            foreach (var group in grouped)
+            {
+                var product = group.First().Product;
+                var totalQty = group.Sum(b => b.Quantity);
+                var minExpiry = group.Min(b => b.ExpiryDate);
+
+                var monthsLeft = ((minExpiry.Year - now.Year) * 12) + minExpiry.Month - now.Month;
+
+                decimal? adjustedPrice = product.Price;
+
+                if (monthsLeft < 2)
+                {
+                    adjustedPrice *= 0.7m;
+                }
+                else if (monthsLeft < 4)
+                {
+                    adjustedPrice *= 0.8m;
+                }
+                else if (monthsLeft < 6)
+                {
+                    adjustedPrice *= 0.9m;
+                }
+
+                result.Add(new ProductResponseDto
+                {
+                    ProductId = product.ProductId,
+                    ProductCode = product.ProductCode,
+                    ProductName = product.ProductName,
+                    Unit = product.Unit,
+                    DefaultExpiration = product.DefaultExpiration,
+                    CategoryId = product.CategoryId,
+                    Description = product.Description,
+                    TaxId = product.TaxId,
+                    CreatedBy = product.CreatedBy,
+                    CreatedDate = product.CreatedDate,
+                    UpdatedBy = product.UpdatedBy,
+                    UpdatedDate = product.UpdatedDate,
+                    AvailableStock = totalQty,
+                    Price = adjustedPrice,
+                    Images = product.Images?.Select(i => i.ImageUrl).ToList() ?? new List<string>()
+                });
+            }
+
+            return result
+                .OrderByDescending(p => p.AvailableStock > 0)
+                .ToList();
+        }
+
+        public async Task<ProductResponseDto?> GetProductDetailWithExpiredLogicAsync(long productId)
+        {
+            var batches = await _batchRepository.GetExpiredSoonBatchesByProductIdAsync(productId);
+            var product = batches.FirstOrDefault()?.Product;
+
+            if (product == null) return null;
+
+            var totalQty = batches.Sum(b => b.Quantity);
+            var now = DateTime.Now;
+            var minExpiry = batches.Min(b => b.ExpiryDate);
+            var monthsLeft = ((minExpiry.Year - now.Year) * 12) + minExpiry.Month - now.Month;
+
+            decimal? adjustedPrice = product.Price;
+            if (monthsLeft < 2) adjustedPrice *= 0.7m;
+            else if (monthsLeft < 4) adjustedPrice *= 0.8m;
+            else if (monthsLeft < 6) adjustedPrice *= 0.9m;
+
+            return new ProductResponseDto
+            {
+                ProductId = product.ProductId,
+                ProductCode = product.ProductCode,
+                ProductName = product.ProductName,
+                Unit = product.Unit,
+                DefaultExpiration = product.DefaultExpiration,
+                CategoryId = product.CategoryId,
+                Description = product.Description,
+                TaxId = product.TaxId,
+                CreatedBy = product.CreatedBy,
+                CreatedDate = product.CreatedDate,
+                UpdatedBy = product.UpdatedBy,
+                UpdatedDate = product.UpdatedDate,
+                AvailableStock = totalQty,
+                Price = adjustedPrice,
+                Images = product.Images?.Select(i => i.ImageUrl).ToList() ?? new List<string>()
+            };
         }
 
     }
