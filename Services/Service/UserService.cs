@@ -818,10 +818,9 @@ namespace Services.Service
 
             // Gửi thông báo real-time SignalR
             await _hub.Clients.User(userId.ToString())
-                .SendAsync("ReceiveNotification", new
+                .SendAsync("UnActive", new
                 {
                     title = "Trạng thái tài khoản",
-                    message,
                     payload = userId
                 });
 
