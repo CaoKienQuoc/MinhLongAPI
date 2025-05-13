@@ -68,7 +68,7 @@ namespace Repo.Repository
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Images)
-                    .Include(r => r.Order)
+                .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
@@ -138,6 +138,7 @@ namespace Repo.Repository
         public async Task<IEnumerable<ReturnRequest>> GetByUserIdAsync(Guid userId)
         {
             return await _context.ReturnRequests
+                .Include(r => r.Order)
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
@@ -149,6 +150,7 @@ namespace Repo.Repository
         public async Task<ReturnRequest> GetByIdAndUserIdAsync(Guid returnRequestId, Guid userId)
         {
             return await _context.ReturnRequests
+                .Include(r => r.Order)
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Product)
                 .Include(r => r.Details)

@@ -31,7 +31,7 @@ namespace BusinessObject.DTO
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [NotMapped]
-        public List<IFormFile> ContractFiles { get; set; }
+        public List<IFormFile>? ContractFiles { get; set; }
     }
 
 }

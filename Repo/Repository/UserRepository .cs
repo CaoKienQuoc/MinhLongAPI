@@ -330,6 +330,11 @@ namespace Repo.Repository
             return await _context.Users.FindAsync(userId);
         }
 
+        public async Task<Employee> GetByEmployeeUserIdAsync(Guid userId)
+        {
+            return await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+        }
+
         public async Task<User> GetEmployeeByIdAsync(Guid userId)
         {
             return await _context.Users

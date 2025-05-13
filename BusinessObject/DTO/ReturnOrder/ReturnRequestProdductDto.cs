@@ -10,6 +10,7 @@ namespace BusinessObject.DTO.ReturnOrder
     {
         public Guid ReturnRequestId { get; set; }
         public Guid OrderId { get; set; }
+        public string OrderCode { get; set; }
         public DateTime CreatedAt { get; set; }
         public string ReturnRequestCode { get; set; }
         public string CreatedByUserName { get; set; }

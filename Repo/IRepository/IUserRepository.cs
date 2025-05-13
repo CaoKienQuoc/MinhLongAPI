@@ -22,6 +22,7 @@ namespace Repo.IRepository
         Task<bool> ApproveUserAsync(int registerId);
         // ✅ Tìm User theo UserId
         Task<User> GetUserByIdAsync(Guid userId);
+        Task<Employee> GetByEmployeeUserIdAsync(Guid userId);
         //Login
         Task<User> LoginAsync(string userName, string password);
         //Logout

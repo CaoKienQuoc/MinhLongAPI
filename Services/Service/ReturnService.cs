@@ -393,6 +393,7 @@ namespace Services.Service
             {
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
+                OrderCode = r.Order.OrderCode,
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
@@ -427,6 +428,7 @@ namespace Services.Service
             {
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
+                OrderCode = r.Order.OrderCode,
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
@@ -636,13 +638,14 @@ namespace Services.Service
 
         public async Task<IEnumerable<ReturnRequestProdductDto>> GetReturnRequestsByUserIdAsync(Guid userId)
         {
-            var requests = await _returnRepo.GetByUserIdAsync(userId);
+            var requests = await _returnRepo.GetByUserIdAsync(userId) ?? new List<ReturnRequest>(); ;
             var user = await _employeeRepo.GetByIdAsync(userId);
 
             return requests.Select(r => new ReturnRequestProdductDto
             {
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
+                OrderCode = r.Order?.OrderCode ?? "Unknown",
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = user?.Username ?? "Unknown",
                 Status = r.Status,
@@ -676,6 +679,7 @@ namespace Services.Service
             {
                 ReturnRequestId = request.ReturnRequestId,
                 OrderId = request.OrderId,
+                OrderCode = request.Order?.OrderCode ?? "Unknown",
                 CreatedAt = request.CreatedAt,
                 CreatedByUserName = user?.Username ?? "Unknown",
                 Status = request.Status,
