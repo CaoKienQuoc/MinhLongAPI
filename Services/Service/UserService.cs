@@ -18,6 +18,7 @@ using MailKit;
 using BusinessObject.DTO.Email;
 using Microsoft.AspNetCore.Http.HttpResults;
 using BusinessObject.DTO.Warehouse;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Services.Service
 {
@@ -31,10 +32,13 @@ namespace Services.Service
         private readonly IAgencyLevelRepository _agencyLevelRepository;
         private readonly IContractService _contractService;
         private readonly IContractRepository _contractRepository;
+        private readonly IHubContext<NotificationHub> _hub;
+        private readonly INotificationRepository _notificationRepository;
 
         public UserService(IUserRepository userRepository, JwtService jwtService, IEmailService mailService, 
             IAgencyAccountRepository agencyAccountRepository, IAgencyAccountLevelRepository agencyAccountLevelRepository, 
-            IAgencyLevelRepository agencyLevelRepository, IContractService contractService, IContractRepository contractRepository)
+            IAgencyLevelRepository agencyLevelRepository, IContractService contractService, IContractRepository contractRepository,
+            IHubContext<NotificationHub> hub, INotificationRepository notificationRepository)
         {
             _userRepository = userRepository;
             _jwtService = jwtService;
@@ -44,6 +48,8 @@ namespace Services.Service
             _agencyLevelRepository = agencyLevelRepository;
             _contractService = contractService;
             _contractRepository = contractRepository;
+            _hub = hub;
+            _notificationRepository = notificationRepository;
         }
 
 
@@ -803,6 +809,27 @@ namespace Services.Service
             string message = user.Status
                 ? "Tài khoản đã được kích hoạt."
                 : "Tài khoản đã bị vô hiệu hóa.";
+
+            // Gửi thông báo real-time SignalR
+            await _hub.Clients.User(userId.ToString())
+                .SendAsync("ReceiveNotification", new
+                {
+                    title = "Trạng thái tài khoản",
+                    message,
+                    payload = userId
+                });
+
+            // Lưu vào Notification
+            var notification = new Notification
+            {
+                UserId = userId,
+                Title = "Trạng thái tài khoản",
+                Message = message,
+                Url = $"/agency/profile"
+            };
+
+            await _notificationRepository.AddAsync(notification);
+            await _notificationRepository.SaveChangesAsync();
 
             return (true, message);
         }
