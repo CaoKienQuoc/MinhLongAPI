@@ -202,7 +202,10 @@ namespace Services.Service
             var body = template
                 .Replace("{WAREHOUSE}", warehouseName)
                 .Replace("{COUNT}", items.Count().ToString())
-                .Replace("{ITEMS}", itemListHtml);
+                .Replace("{ITEMS}", itemListHtml)
+                .Replace("{PROJECT_NAME}", _configuration["Project_MinhLong:PROJECT_NAME"])
+                .Replace("{EMAIL_ADDRESS}", _configuration["Project_MinhLong:EMAIL_ADDRESS"])
+                .Replace("{PHONE_NUMBER}", _configuration["Project_MinhLong:PHONE_NUMBER"]);
 
             // 4. Tạo email
             var emailHost = _configuration["EmailSetting:EmailHost"];
