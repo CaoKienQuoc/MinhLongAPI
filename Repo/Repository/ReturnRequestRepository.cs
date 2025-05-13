@@ -190,6 +190,25 @@ namespace Repo.Repository
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<Guid>> GetDetailIdsByReturnRequestIdAsync(Guid returnRequestId)
+        {
+            if (returnRequestId == Guid.Empty)
+                throw new ArgumentException("ReturnRequestId không hợp lệ.");
+
+            return await _context.ReturnRequestDetails
+                .Where(d => d.ReturnRequestId == returnRequestId)
+                .Select(d => d.ReturnRequestDetailId)
+                .ToListAsync();
+        }
+
+        public async Task<ReturnRequest> GetByOrderAndProductAsync(Guid orderId, long productId)
+        {
+            return await _context.ReturnRequests
+                .Include(r => r.Details)
+                .FirstOrDefaultAsync(r => r.OrderId == orderId && r.Details.Any(d => d.ProductId == productId));
+        }
+
     }
 
 }

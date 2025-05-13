@@ -130,6 +130,88 @@ namespace Services.Service
             return uploadedImages;
         }
 
+        public DateTime GetVietnamTime()
+        {
+            // Lấy múi giờ Việt Nam (GMT+7)
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+            return vietnamTime;
+        }
+
+        public async Task<List<ReturnRequestImage>> UploadReturnImagesAsync(ImageModel imageModel, Guid returnRequestDetailId)
+        {
+            if (imageModel.Files == null || imageModel.Files.Count == 0)
+                throw new Exception("No files uploaded.");
+
+            var uploadedImages = new List<ReturnRequestImage>();
+
+            foreach (var file in imageModel.Files)
+            {
+                // Kiểm tra kích thước file trước khi xử lý
+                if (file.Length > _maxFileSize)
+                {
+                    Console.WriteLine($"File {file.FileName} quá lớn ({file.Length / (1024 * 1024)}MB), đang xử lý giảm dung lượng...");
+
+                    // Giảm dung lượng ảnh
+                    using var resizedStream = ResizeAndCompressImage(file, _maxWidth, _maxHeight, _quality);
+
+                    if (resizedStream.Length > _maxFileSize)
+                        throw new Exception($"Sau khi nén, file {file.FileName} vẫn quá lớn ({resizedStream.Length / (1024 * 1024)}MB).");
+
+                    var uploadParams = new ImageUploadParams
+                    {
+                        File = new FileDescription(file.FileName, resizedStream),
+                        PublicId = Guid.NewGuid().ToString(),
+                        Overwrite = true
+                    };
+
+                    var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                    if (uploadResult.StatusCode != HttpStatusCode.OK)
+                        throw new Exception($"Upload thất bại: {uploadResult.Error?.Message}");
+
+                    var returnImage = new ReturnRequestImage
+                    {
+                        ReturnRequestDetailId = returnRequestDetailId,
+                        ImageUrl = uploadResult.SecureUrl.ToString(),
+                        PublicId = uploadResult.PublicId,
+                        UploadedAt = GetVietnamTime()
+                    };
+
+                    uploadedImages.Add(await _repo.AddReturnImageAsync(returnImage));
+                }
+                else
+                {
+                    // Nếu file nhỏ hơn giới hạn, upload trực tiếp
+                    using var stream = file.OpenReadStream();
+                    var uploadParams = new ImageUploadParams
+                    {
+                        File = new FileDescription(file.FileName, stream),
+                        PublicId = Guid.NewGuid().ToString(),
+                        Overwrite = true
+                    };
+
+                    var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                    if (uploadResult.StatusCode != HttpStatusCode.OK)
+                        throw new Exception($"Upload thất bại: {uploadResult.Error?.Message}");
+
+                    var returnImage = new ReturnRequestImage
+                    {
+                        ReturnRequestDetailId = returnRequestDetailId,
+                        ImageUrl = uploadResult.SecureUrl.ToString(),
+                        PublicId = uploadResult.PublicId,
+                        UploadedAt = GetVietnamTime(),
+                    };
+
+                    uploadedImages.Add(await _repo.AddReturnImageAsync(returnImage));
+                }
+            }
+
+            return uploadedImages;
+        }
+
+
         private Stream ResizeAndCompressImage(IFormFile file, int maxWidth, int maxHeight, int quality)
         {
             using var inputStream = file.OpenReadStream();

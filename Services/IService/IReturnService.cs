@@ -11,7 +11,7 @@ namespace Services.IService
 {
     public interface IReturnService
     {
-        Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, string? note, Guid userId, List<IFormFile> images);
+        Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, Guid userId, List<IFormFile> images);
         Task ApproveReturnRequestAsync(Guid returnRequestId, Guid warehouseUserId);
         Task<List<ReturnRequest>> GetPendingReturnsAsync();
 

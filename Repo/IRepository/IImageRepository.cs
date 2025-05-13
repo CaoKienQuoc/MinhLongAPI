@@ -16,8 +16,8 @@ namespace Repo.IRepository
         Task<Image> UpdateImageAsync(Image image);
         Task DeleteRangeAsync(List<Image> images);
         Task SaveChangesAsync();
-
-        Task<ReturnRequestImage> AddAsync(ReturnRequestImage image);
+        Task<ReturnRequestImage> UpdateReturnImageAsync(ReturnRequestImage image);
+        Task<ReturnRequestImage> AddReturnImageAsync(ReturnRequestImage image);
         Task<List<ReturnRequestImage>> AddRangeAsync(List<ReturnRequestImage> images);
     }
 }

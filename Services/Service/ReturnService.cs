@@ -47,9 +47,9 @@ namespace Services.Service
             _employeeRepo = employeeRepo;
         }
 
-        public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, string? note, Guid userId, List<IFormFile> images)
+        public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, Guid userId, List<IFormFile> images)
         {
-            string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
+            //string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
             // 🔎 Lấy đơn hàng và kiểm tra trạng thái
             var order = await _orderRepo.GetOrderByIdAsync(orderId);
             if (order == null)
@@ -72,21 +72,50 @@ namespace Services.Service
 
             if (quantity > availableQuantity)
                 throw new Exception($"Số lượng trả vượt quá số lượng còn lại. Số lượng còn lại có thể trả là {availableQuantity} sản phẩm cho đơn hàng này.");
+            // 🔎 Kiểm tra nếu đã có ReturnRequest cho sản phẩm này
+            var existingRequest = await _returnRepo.GetByOrderAndProductAsync(orderId, productId);
+            // Biến dùng chung cho upload ảnh
+            ImageModel imageModel = null;
+            List<ReturnRequestImage> uploadedImages = null;
 
+            // Nếu đã có ReturnRequest trước đó
+            if (existingRequest != null)
+            {
+                // ✅ Tìm chi tiết trả hàng của sản phẩm này
+                var existingDetail = existingRequest.Details.FirstOrDefault(d => d.OrderDetailId == orderDetailId);
 
-            // Upload ảnh lên Cloudinary hoặc thư mục lưu trữ
-            var imageModel = new ImageModel { Files = images };
-            var uploadedImages = await _imageService.UploadImagesAsync(imageModel, productId);
+                if (existingDetail != null)
+                {
+                    // Cập nhật số lượng trả hàng
+                    existingDetail.QuantityReturned += quantity;
+                    existingDetail.Reason += $"\nThêm lý do: {reason}";
+                    await _returnRepo.UpdateAsync(existingRequest);
 
+                    // ✅ Upload thêm ảnh nếu có
+                    if (images != null && images.Count > 0)
+                    {
+                        imageModel = new ImageModel { Files = images };
+                        uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, existingDetail.ReturnRequestDetailId);
+
+                        // Lưu ảnh mới vào database
+                        await _returnRepo.AddRangeAsync(uploadedImages);
+                    }
+
+                    return existingRequest;
+                }
+            }
+
+            // Tạo ReturnRequest mới nếu chưa có
+            string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
             // Tạo return request
             var returnRequest = new ReturnRequest
             {
                 OrderId = orderId,
                 CreatedByUserId = userId,
-                Note = note,
+                //Note = note,
                 Status = "Pending",
                 ReturnRequestCode = returnRequestCode,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = GetVietnamTime(),
                 
                 Details = new List<ReturnRequestDetail>
             {
@@ -102,20 +131,31 @@ namespace Services.Service
 
             var savedRequest = await _returnRepo.CreateAsync(returnRequest);
 
-            var detailId = savedRequest.Details.First().ReturnRequestDetailId;
+            /*// ✅ Lấy chính xác ReturnRequestDetailId sau khi lưu
+            var returnDetailId = savedRequest.Details.First().ReturnRequestDetailId;
 
-            var returnImages = uploadedImages.Select(img => new ReturnRequestImage
+            // Upload ảnh lên Cloudinary hoặc thư mục lưu trữ
+            var imageModel = new ImageModel { Files = images };
+            var uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, returnDetailId);*/
+
+            // ✅ Upload ảnh cho ReturnRequest mới
+            if (images != null && images.Count > 0)
             {
-                ReturnRequestDetailId = detailId,
-                ImageUrl = img.ImageUrl,
-                UploadedAt = DateTime.UtcNow
-            }).ToList();
-
-            await _returnRepo.AddRangeAsync(returnImages);
+                var returnDetailId = savedRequest.Details.First().ReturnRequestDetailId;
+                imageModel = new ImageModel { Files = images };
+                uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, returnDetailId);
+                await _returnRepo.AddRangeAsync(uploadedImages);
+            }
 
             return savedRequest;
         }
-
+        public DateTime GetVietnamTime()
+        {
+            // Lấy múi giờ Việt Nam (GMT+7)
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+            return vietnamTime;
+        }
 
         public async Task ApproveReturnRequestAsync(Guid returnRequestId, Guid userId)
         {
@@ -153,7 +193,7 @@ namespace Services.Service
                 CreatedBy = request.CreatedByUserId,
                 ApprovedBy = userId,
                 WarehouseId = warehouseId,
-                Note = request.Note,
+                //Note = request.Note,
                 ReceiptDate = DateTime.UtcNow,
                 Status = "Pending"
             };
@@ -227,7 +267,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                Note = r.Note,
+                //Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -257,7 +297,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                Note = r.Note,
+                //Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -294,7 +334,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                Note = r.Note,
+                //Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -328,7 +368,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                Note = r.Note,
+                //Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -359,7 +399,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                Note = r.Note,
+                //Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -389,7 +429,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 Status = r.Status,
                 ReturnRequestCode = r.ReturnRequestCode,
-                Note = r.Note,
+                //Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -421,7 +461,7 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
                 WarehouseId = r.WarehouseId,
-                Note = r.Note,
+                //Note = r.Note,
                 Status = r.Status,
                 Details = r.Details?.Select(d =>
                 {
@@ -462,7 +502,7 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
                 WarehouseId = r.WarehouseId,
-                Note = r.Note,
+                //Note = r.Note,
                 Status = r.Status,
                 Details = r.Details?.Select(d =>
                 {
@@ -504,7 +544,7 @@ namespace Services.Service
                 ReceiptCode = r.ReceiptCode,
                 ReceiptDate = r.ReceiptDate,
                 WarehouseId = r.WarehouseId,
-                Note = r.Note,
+                //Note = r.Note,
                 Status = r.Status,
                 Details = r.Details?.Select(d =>
                 {
@@ -544,7 +584,7 @@ namespace Services.Service
                 CreatedByUserName = user?.Username ?? "Unknown",
                 Status = r.Status,
                 ReturnRequestCode = r.ReturnRequestCode,
-                Note = r.Note,
+                //Note = r.Note,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -577,7 +617,7 @@ namespace Services.Service
                 CreatedByUserName = user?.Username ?? "Unknown",
                 Status = request.Status,
                 ReturnRequestCode = request.ReturnRequestCode,
-                Note = request.Note,
+                //Note = request.Note,
                 Details = request.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,

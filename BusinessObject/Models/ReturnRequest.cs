@@ -24,7 +24,7 @@ namespace BusinessObject.Models
         [Required]
         public string Status { get; set; } // Pending, Approved, Rejected, Imported
 
-        public string? Note { get; set; } // lý do chung (nếu có)
+        //public string? Note { get; set; } // lý do chung (nếu có)
 
         public Guid OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]

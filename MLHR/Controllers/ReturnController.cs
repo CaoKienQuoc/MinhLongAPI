@@ -43,7 +43,6 @@ namespace MLHR.Controllers
         [RequestSizeLimit(10_000_000)]
         public async Task<IActionResult> CreateReturnRequestWithImages(
     [FromForm] Guid orderId,
-    [FromForm] string? note,
     [FromForm] Guid orderDetailId,
     [FromForm] int quantity,
     [FromForm] string reason,
@@ -56,7 +55,7 @@ namespace MLHR.Controllers
             try
             {
                 var result = await _returnService.CreateReturnRequestWithImagesAsync(
-                    orderId, orderDetailId, quantity, reason, note, userId.Value, images
+                    orderId, orderDetailId, quantity, reason, userId.Value, images
                 );
 
                 return Ok(new

@@ -29,8 +29,9 @@ namespace Repo.IRepository
 
         Task<string> GenerateRequestReturnCodeAsync();
         Task<string> GenerateWarehouseReturnCodeAsync();
-
+        Task<List<Guid>> GetDetailIdsByReturnRequestIdAsync(Guid returnRequestId);
         Task UpdateAsync(ReturnRequest request);
+        Task<ReturnRequest> GetByOrderAndProductAsync(Guid orderId, long productId);
         Task SaveChangesAsync();
     }
 

@@ -888,6 +888,7 @@ namespace DataAccessLayer.Migrations
                     DateOfManufacture = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Unit = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SoldOut = table.Column<bool>(type: "bit", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     SellingPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
                     ProfitMarginPercent = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
@@ -1018,7 +1019,6 @@ namespace DataAccessLayer.Migrations
                     ReturnRequestCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RejectedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     RejectedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -1360,7 +1360,6 @@ namespace DataAccessLayer.Migrations
                     ApprovedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ReturnRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     WarehouseId = table.Column<long>(type: "bigint", nullable: false),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -1510,7 +1509,8 @@ namespace DataAccessLayer.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ReturnRequestDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PublicId = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

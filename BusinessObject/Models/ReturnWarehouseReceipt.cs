@@ -41,7 +41,7 @@ namespace BusinessObject.Models
         [ForeignKey(nameof(WarehouseId))]
         public Warehouse Warehouse { get; set; }
 
-        public string? Note { get; set; }
+        //public string? Note { get; set; }
         public string Status { get; set; } // Trạng thái phiếu nhập (Pending, Completed, Cancelled)
         public ICollection<ReturnWarehouseReceiptDetail> Details { get; set; }
     }

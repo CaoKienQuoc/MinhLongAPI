@@ -15,7 +15,7 @@ namespace BusinessObject.DTO.ReturnOrder
         public string CreatedByUserName { get; set; }
         public Guid ReturnRequestId { get; set; }
         public long WarehouseId { get; set; }
-        public string Note { get; set; }
+        //public string Note { get; set; }
         public string Status { get; set; }
         public string ReturnRequestCode { get; set; }
         public List<ReturnWarehouseReceiptDetailDto> Details { get; set; }

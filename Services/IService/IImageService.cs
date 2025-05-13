@@ -12,6 +12,8 @@ namespace Services.IService
     public interface IImageService
     {
         Task<List<Image>> UploadImagesAsync(ImageModel imageModel, long productId);
+        Task<List<ReturnRequestImage>> UploadReturnImagesAsync(ImageModel imageModel, Guid returnRequestDetailId);
+
         Task<List<Image>> UpdateImagesByProductIdAsync(long productId, ImageModel imageModel);
         Task DeleteImagesByProductIdAsync(long productId);
 

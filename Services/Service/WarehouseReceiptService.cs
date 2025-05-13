@@ -157,7 +157,7 @@ namespace Services.Service
                 WarehouseId = request.WarehouseId,
                 ImportType = request.ImportType,
                 Supplier = request.Supplier,
-                DateImport = DateTime.Now,
+                DateImport = request.DateImport,
                 TotalQuantity = totalQuantity,
                 TotalPrice = totalPrice,
                 BatchesJson = batchesJson,

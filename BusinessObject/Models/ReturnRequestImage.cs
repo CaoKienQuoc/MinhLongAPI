@@ -23,6 +23,8 @@ namespace BusinessObject.Models
         public string ImageUrl { get; set; }
 
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+
+        public string PublicId { get; set; }
     }
 
 }
