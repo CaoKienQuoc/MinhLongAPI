@@ -68,7 +68,7 @@ namespace Repo.Repository
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Images)
-                    .Include(r => r.Order)
+                .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
