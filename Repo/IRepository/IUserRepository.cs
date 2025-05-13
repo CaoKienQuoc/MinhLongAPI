@@ -50,7 +50,7 @@ namespace Repo.IRepository
         Task<OTPEmail> GetOTPEmailByEmail(string email);
         Task<User> GetUserByUserName(string userName);
         Task<string> GetAgencyNameByUserIdAsync(Guid userId);
-
+        Task<User> GetEmployeeByIdAsync(Guid userId);
         Task<AgencyAccountLevel?> GetLatestLevelByAgencyIdAsync(long agencyId);
 
         Task<List<Employee>> GetEmployeesByRoleAsync(string role);

@@ -6,6 +6,7 @@ using Services.IService;
 using Services.Service;
 using System.Security.Claims;
 using BusinessObject.DTO.Email;
+using BusinessObject.DTO.Order;
 
 namespace MLHR.Controllers
 {
@@ -15,11 +16,12 @@ namespace MLHR.Controllers
     {
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
-
-        public AuthController(IUserService userService, IEmailService emailService)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public AuthController(IUserService userService, IEmailService emailService, IHttpContextAccessor httpContextAccessor)
         {
             _userService = userService;
             _emailService = emailService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
@@ -203,18 +205,33 @@ namespace MLHR.Controllers
             return Ok(userDto);
         }
 
+        [HttpGet("my-info-warehouse")]
+        public async Task<IActionResult> GetMyInfor()
+        {
+            var userId = GetLoggedInUserId();
+            if (userId == null)
+                return Unauthorized(new { message = "Bạn chưa đăng nhập." });
+            var userDto = await _userService.GetEmployeeByIdAsync(userId);
+            return Ok(userDto);
+        }
 
 
-        /*   [HttpGet("user/{userId}")]
-           public async Task<ActionResult<UserDto>> GetProduct(Guid userId)
-           {
-               var user = await _userService.GetUserByIdAsync(userId);
-               if (user == null)
-               {
-                   return NotFound();
-               }
-               return Ok(user);
-           }*/
+        private Guid GetLoggedInUserId()
+        {
+            var claimsIdentity = _httpContextAccessor.HttpContext?.User.Identity as ClaimsIdentity;
+            if (claimsIdentity != null)
+            {
+                var userIdClaim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier); // hoặc "User Id" tùy theo setup JWT
+                if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return userId;
+                }
+            }
+
+            // Ném ra ngoại lệ nếu không tìm thấy userId
+            throw new InvalidOperationException("User  ID not found.");
+        }
+
 
         [HttpPut("{userId}/UnActive")]
         public async Task<IActionResult> UnActiveUser(Guid userId)

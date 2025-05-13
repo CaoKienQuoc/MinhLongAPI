@@ -329,6 +329,20 @@ namespace Repo.Repository
         {
             return await _context.Users.FindAsync(userId);
         }
+
+        public async Task<User> GetEmployeeByIdAsync(Guid userId)
+        {
+            return await _context.Users
+                .Where(u => u.UserId == userId)
+                .Include(u => u.Employee)
+                    .ThenInclude(e => e.Address)
+                        .ThenInclude(a => a.Ward)
+                            .ThenInclude(w => w.District)
+                                .ThenInclude(d => d.Province)
+                .FirstOrDefaultAsync();
+        }
+
+
         // Lấy thông tin RegisterAccount theo ID
         public async Task<RegisterAccount> GetRegisterAccountByIdAsync(int registerId)
         {
