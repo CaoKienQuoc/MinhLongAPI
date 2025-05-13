@@ -21,6 +21,8 @@ namespace BusinessObject.DTO
         public string AgencyLevelName { get; set; }
         public decimal? CreditLimit { get; set; }
 
+        public string? Position { get; set; }
+        public string? Department { get; set; }
         public List<ContractDto> Contracts { get; set; }
     }
 }

@@ -645,7 +645,7 @@ namespace Services.Service
             {
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
-                OrderCode = r.Order.OrderCode,
+                OrderCode = r.Order?.OrderCode ?? "Unknown",
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = user?.Username ?? "Unknown",
                 Status = r.Status,
@@ -679,7 +679,7 @@ namespace Services.Service
             {
                 ReturnRequestId = request.ReturnRequestId,
                 OrderId = request.OrderId,
-                OrderCode = request.Order.OrderCode,
+                OrderCode = request.Order?.OrderCode ?? "Unknown",
                 CreatedAt = request.CreatedAt,
                 CreatedByUserName = user?.Username ?? "Unknown",
                 Status = request.Status,

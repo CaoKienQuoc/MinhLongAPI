@@ -134,6 +134,8 @@ namespace Services.Service
                 VerifyEmail = user.VerifyEmail,
                 AgencyLevelName = null,
                 CreditLimit = null,
+                Position = null,
+                Department = null,
                 Contracts = new List<ContractDto>() // Luôn khởi tạo
             };
 
@@ -162,6 +164,17 @@ namespace Services.Service
                             CreatedAt = c.CreatedAt
                         }).ToList();
                     }
+
+                   
+                }
+            }
+            else if (user.UserType?.ToUpper() == "EMPLOYEE")
+            {
+                var employee = await _userRepository.GetByEmployeeUserIdAsync(userId);
+                if (employee != null)
+                {
+                    dto.Position = employee.Position;
+                    dto.Department = employee.Department;
                 }
             }
 
