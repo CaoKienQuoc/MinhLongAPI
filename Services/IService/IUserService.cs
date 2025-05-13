@@ -13,14 +13,9 @@ namespace Services.IService
     {
         Task<RegisterAccount> RegisterUserRequestAsync(RegisterRequest request);
         Task<bool> ApproveUserAsync(int registerId);
-        //Login
-        //Task<User> LoginAsync(string email, string password);
-        //Logout
         Task<bool> LogoutAsync(string email);
         Task<bool> UpdateUserAccountAsync(Guid userId, UpdateUserRequest request);
-
         Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request);
-
         Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
         Task<bool> ChangeEmployeeRoleAsync(Guid userId, int newRoleId);
         Task<object> LoginAsync(LoginRequest request);
@@ -31,10 +26,10 @@ namespace Services.IService
         Task<bool> CancelUserAsync(int registerId);
         Task<(bool IsSuccess, string Message)> UnActiveUser(Guid userId);
         Task<User> GetUserByIdAsync(Guid userId);
-
         Task<UserDetailDto> GetAgencyUserByIdAsync(Guid userId);
         Task<List<AgencyAccountDto>> GetAgenciesManagedByUserIdAsync(Guid userId);
         Task<EmployeeDto> GetSalesManagerByAgencyUserIdAsync(Guid userId);
+        Task<User> GetEmployeeByIdAsync(Guid userId);
     }
 
 

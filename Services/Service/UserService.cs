@@ -105,6 +105,12 @@ namespace Services.Service
             return user;
         }
 
+        public async Task<User> GetEmployeeByIdAsync(Guid userId)
+        {
+            var user = await _userRepository.GetEmployeeByIdAsync(userId);
+            return user;
+        }
+
         public async Task<UserDetailDto> GetAgencyUserByIdAsync(Guid userId)
         {
             var user = await _userRepository.GetUserByIdAsync(userId);
