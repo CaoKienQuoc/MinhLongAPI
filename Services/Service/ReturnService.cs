@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,6 +48,27 @@ namespace Services.Service
             _employeeRepo = employeeRepo;
         }
 
+        private string NormalizeString(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+
+            // Loại bỏ dấu tiếng Việt
+            var normalizedString = input.Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(c);
+                }
+            }
+
+            // Loại bỏ khoảng trắng thừa và chuyển về chữ thường
+            return sb.ToString().Replace(" ", "").ToLowerInvariant();
+        }
+
         public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, Guid userId, List<IFormFile> images)
         {
             //string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
@@ -72,6 +94,7 @@ namespace Services.Service
 
             if (quantity > availableQuantity)
                 throw new Exception($"Số lượng trả vượt quá số lượng còn lại. Số lượng còn lại có thể trả là {availableQuantity} sản phẩm cho đơn hàng này.");
+            
             // 🔎 Kiểm tra nếu đã có ReturnRequest cho sản phẩm này
             var existingRequest = await _returnRepo.GetByOrderAndProductAsync(orderId, productId);
             // Biến dùng chung cho upload ảnh
@@ -82,13 +105,21 @@ namespace Services.Service
             if (existingRequest != null)
             {
                 // ✅ Tìm chi tiết trả hàng của sản phẩm này
-                var existingDetail = existingRequest.Details.FirstOrDefault(d => d.OrderDetailId == orderDetailId);
+                //var existingDetail = existingRequest.Details.FirstOrDefault(d => d.OrderDetailId == orderDetailId);
+
+                // 🔍 Kiểm tra lý do đã tồn tại (không phân biệt dấu, khoảng trắng, chữ hoa/thường)
+                var normalizedReason = NormalizeString(reason);
+                var existingDetail = existingRequest.Details.FirstOrDefault(d =>
+                    d.OrderDetailId == orderDetailId &&
+                    d.ProductId == productId &&
+                    NormalizeString(d.Reason) == normalizedReason
+                );
+
 
                 if (existingDetail != null)
                 {
                     // Cập nhật số lượng trả hàng
                     existingDetail.QuantityReturned += quantity;
-                    existingDetail.Reason += $"\nThêm lý do: {reason}";
                     await _returnRepo.UpdateAsync(existingRequest);
 
                     // ✅ Upload thêm ảnh nếu có
@@ -98,7 +129,39 @@ namespace Services.Service
                         uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, existingDetail.ReturnRequestDetailId);
 
                         // Lưu ảnh mới vào database
-                        await _returnRepo.AddRangeAsync(uploadedImages);
+                        //await _returnRepo.AddRangeAsync(uploadedImages);
+                    }
+
+                    return existingRequest;
+                }
+                else
+                {
+                    // ✅ Tạo chi tiết trả hàng mới nếu lý do khác
+                    var newDetail = new ReturnRequestDetail
+                    {
+                        OrderDetailId = orderDetailId,
+                        ProductId = productId,
+                        QuantityReturned = quantity,
+                        Reason = reason
+                    };
+
+                    existingRequest.Details.Add(newDetail);
+                    await _returnRepo.UpdateAsync(existingRequest);
+                    await _returnRepo.SaveChangesAsync();
+
+                    // 🔄 Lấy chính xác ReturnRequestDetailId sau khi lưu
+                    var savedDetail = existingRequest.Details.LastOrDefault(d =>
+                        d.OrderDetailId == orderDetailId &&
+                        d.ProductId == productId &&
+                        d.Reason == reason
+                    );
+
+                    // ✅ Upload ảnh nếu có
+                    if (images != null && images.Count > 0)
+                    {
+                        imageModel = new ImageModel { Files = images };
+                        uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, savedDetail.ReturnRequestDetailId);
+                        //await _returnRepo.AddRangeAsync(uploadedImages);
                     }
 
                     return existingRequest;
