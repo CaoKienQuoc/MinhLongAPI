@@ -223,7 +223,7 @@ namespace Services.Service
 
             // ✅ Lưu chi tiết phiếu
             await _warehouseReceiptRepo.CreateReturnWarehouseReceiptDetailAsync(receiptDetails);
-            request.Reason = "Đã duyệt yêu cầu trả hàng";
+            //request.Reason = "Đã duyệt yêu cầu trả hàng";
             await _warehouseReceiptRepo.SaveChangesAsync();
         }
 
