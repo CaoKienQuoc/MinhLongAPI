@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateDB : Migration
+    public partial class UpdateDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -239,8 +239,7 @@ namespace DataAccessLayer.Migrations
                     ChatRoomId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     SenderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ReceiverId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    MessageText = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    FileUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    MessageText = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsRead = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -398,6 +397,27 @@ namespace DataAccessLayer.Migrations
                         column: x => x.DistrictId,
                         principalTable: "District",
                         principalColumn: "DistrictId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatMessageImage",
+                columns: table => new
+                {
+                    ImageId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    ChatMessageId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PublicId = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMessageImage", x => x.ImageId);
+                    table.ForeignKey(
+                        name: "FK_ChatMessageImage_ChatMessage_ChatMessageId",
+                        column: x => x.ChatMessageId,
+                        principalTable: "ChatMessage",
+                        principalColumn: "ChatMessageId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -1634,6 +1654,11 @@ namespace DataAccessLayer.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatMessageImage_ChatMessageId",
+                table: "ChatMessageImage",
+                column: "ChatMessageId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ChatRoom_RoomName",
                 table: "ChatRoom",
                 column: "RoomName",
@@ -2066,7 +2091,7 @@ namespace DataAccessLayer.Migrations
                 name: "AgencyScoreHistory");
 
             migrationBuilder.DropTable(
-                name: "ChatMessage");
+                name: "ChatMessageImage");
 
             migrationBuilder.DropTable(
                 name: "ChatRoomMember");
@@ -2132,7 +2157,7 @@ namespace DataAccessLayer.Migrations
                 name: "AgencyLevel");
 
             migrationBuilder.DropTable(
-                name: "ChatRoom");
+                name: "ChatMessage");
 
             migrationBuilder.DropTable(
                 name: "ExportWarehouseReceipt");
@@ -2160,6 +2185,9 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "ExportTransaction");
+
+            migrationBuilder.DropTable(
+                name: "ChatRoom");
 
             migrationBuilder.DropTable(
                 name: "Batch");

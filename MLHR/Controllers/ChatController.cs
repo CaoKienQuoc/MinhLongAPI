@@ -2,6 +2,7 @@
 using BusinessObject.Models;
 using Microsoft.AspNetCore.Mvc;
 using Services.IService;
+using Services.Service;
 
 namespace MLHR.Controllers
 {
@@ -11,11 +12,13 @@ namespace MLHR.Controllers
     public class ChatController : ControllerBase
     {
         private readonly IChatService _chatService;
+        private readonly IImageService _imageService;
         private readonly ILogger<ChatController> _logger;
-        public ChatController(IChatService chatService, ILogger<ChatController> logger)
+        public ChatController(IChatService chatService, ILogger<ChatController> logger, IImageService imageService)
         {
             _chatService = chatService;
             _logger = logger;
+            _imageService = imageService;
         }
 
         [HttpPost("rooms")]
@@ -113,8 +116,16 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImages([FromForm] List<IFormFile> files)
+        {
+            if (files == null || !files.Any())
+                return BadRequest("No files uploaded.");
+
+            var uploaded = await _imageService.UploadImagesAndReturnMetaAsync(files);
+
+            return Ok(uploaded); // List<ImageUploadResultDto>
+        }
+
     }
-
-
-
 }

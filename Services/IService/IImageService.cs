@@ -1,4 +1,5 @@
-﻿using BusinessObject.DTO.Product;
+﻿using BusinessObject.DTO.Chat;
+using BusinessObject.DTO.Product;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -16,7 +17,8 @@ namespace Services.IService
 
         Task<List<Image>> UpdateImagesByProductIdAsync(long productId, ImageModel imageModel);
         Task DeleteImagesByProductIdAsync(long productId);
+        Task SaveChatImageAsync(ChatMessageImage image);
+        Task<List<ImageUploadResultDto>> UploadImagesAndReturnMetaAsync(List<IFormFile> files);
 
-        Task<List<ReturnRequestImage>> UploadReturnRequestImagesAsync(Guid orderDetailId, Guid returnRequestDetailId, List<IFormFile> files);
     }
 }

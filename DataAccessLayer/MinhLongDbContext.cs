@@ -24,6 +24,8 @@ namespace DataAccessLayer
                 .AddJsonFile("appsettings.json")
                 .Build();
             optionsBuilder.UseSqlServer(configuration.GetConnectionString("ServerConnection"));
+            //optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+            
         }
 
 
@@ -83,6 +85,7 @@ namespace DataAccessLayer
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<ChatRoom> ChatRooms { get; set; }
         public DbSet<ChatRoomMember> ChatRoomMembers { get; set; }
+        public DbSet<ChatMessageImage> ChatMessageImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -140,6 +143,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<ChatMessage>().ToTable("ChatMessage");
             modelBuilder.Entity<ChatRoom>().ToTable("ChatRoom");
             modelBuilder.Entity<ChatRoomMember>().ToTable("ChatRoomMember");
+            modelBuilder.Entity<ChatMessageImage>().ToTable("ChatMessageImage");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -214,6 +218,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<ChatMessage>().Property(wr => wr.ChatMessageId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<ChatRoom>().Property(wr => wr.ChatRoomId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<ChatRoomMember>().Property(wr => wr.ChatRoomMemberId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<ChatMessageImage>().Property(wr => wr.ImageId).HasDefaultValueSql("NEWID()");
 
             // 🔥 **Cấu hình quan hệ nhiều - nhiều**
             modelBuilder.Entity<UserRole>()

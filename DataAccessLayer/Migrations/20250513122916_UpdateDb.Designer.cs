@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250513062856_UpdateDB")]
-    partial class UpdateDB
+    [Migration("20250513122916_UpdateDb")]
+    partial class UpdateDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -295,15 +295,10 @@ namespace DataAccessLayer.Migrations
                     b.Property<Guid?>("ChatRoomId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("FileUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
 
                     b.Property<string>("MessageText")
-                        .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
@@ -325,6 +320,34 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("ChatRoomId", "Timestamp");
 
                     b.ToTable("ChatMessage", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ChatMessageImage", b =>
+                {
+                    b.Property<Guid>("ImageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<Guid>("ChatMessageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ImageId");
+
+                    b.HasIndex("ChatMessageId");
+
+                    b.ToTable("ChatMessageImage", (string)null);
                 });
 
             modelBuilder.Entity("BusinessObject.Models.ChatRoom", b =>
@@ -2220,6 +2243,17 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("BusinessObject.Models.ChatMessageImage", b =>
+                {
+                    b.HasOne("BusinessObject.Models.ChatMessage", "ChatMessage")
+                        .WithMany("Images")
+                        .HasForeignKey("ChatMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChatMessage");
+                });
+
             modelBuilder.Entity("BusinessObject.Models.ChatRoomMember", b =>
                 {
                     b.HasOne("BusinessObject.Models.ChatRoom", "ChatRoom")
@@ -2990,6 +3024,11 @@ namespace DataAccessLayer.Migrations
             modelBuilder.Entity("BusinessObject.Models.AgencyLevel", b =>
                 {
                     b.Navigation("AgencyAccountLevels");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.ChatMessage", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.ChatRoom", b =>

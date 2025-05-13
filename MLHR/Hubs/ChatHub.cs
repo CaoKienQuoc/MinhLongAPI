@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Net;
 using System.Threading.Tasks;
 using BusinessObject.Models;
+using CloudinaryDotNet.Actions;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.SignalR;
 using Services.IService;  // namespace của IChatService
 
@@ -14,10 +17,12 @@ namespace MLHR.Hubs
             = new ConcurrentDictionary<Guid, string>();
 
         private readonly IChatService _chatService;
+        private readonly IImageService _imageService;
 
-        public ChatHub(IChatService chatService)
+        public ChatHub(IChatService chatService, IImageService imageService)
         {
             _chatService = chatService;
+            _imageService = imageService;
         }
 
         // Khi client connect lên hub
@@ -57,17 +62,15 @@ namespace MLHR.Hubs
         /// Client gọi để gửi tin nhắn vào room.
         /// FE invoke: connection.invoke("SendMessage", roomId, senderId, messageText, fileUrl);
         /// </summary>
-        public async Task SendMessage(Guid roomId, Guid senderId, string message, string fileUrl = null)
+        public async Task SendMessage(Guid roomId, Guid senderId, string message, List<string> fileUrls = null, List<string> publicIds = null)
         {
             // Validate input
             if (roomId == Guid.Empty)
                 throw new HubException("RoomId is required.");
             if (senderId == Guid.Empty)
                 throw new HubException("SenderId is required.");
-            /*if (receiverId == Guid.Empty)
-                throw new HubException("SenderId is required.");*/
-            if (string.IsNullOrWhiteSpace(message) && string.IsNullOrWhiteSpace(fileUrl))
-                throw new HubException("Either message text or fileUrl must be provided.");
+            if (string.IsNullOrWhiteSpace(message) && (fileUrls == null || !fileUrls.Any()))
+                throw new HubException("Message or at least one image is required.");
 
             // 1) Lưu tin nhắn xuống DB
             var chatMessage = new ChatMessage
@@ -76,24 +79,49 @@ namespace MLHR.Hubs
                 SenderId = senderId,
                 //ReceiverId = receiverId,
                 MessageText = message,
-                FileUrl = fileUrl,
-                Timestamp = DateTime.Now,
+                Timestamp = GetVietnamTime(),
                 IsRead = false
             };
             var saved = await _chatService.SaveMessageAsync(chatMessage);
 
-            // 2) Broadcast cho tất cả client đang trong room
+            var uploadedImages = new List<ChatMessageImage>();
+
+            if (fileUrls != null && fileUrls.Any())
+            {
+                for (int i = 0; i < fileUrls.Count; i++)
+                {
+                    var image = new ChatMessageImage
+                    {
+                        ChatMessageId = saved.ChatMessageId,
+                        ImageUrl = fileUrls[i],
+                        PublicId = publicIds != null && i < publicIds.Count ? publicIds[i] : null,
+                        UploadedAt = GetVietnamTime()
+                    };
+
+                    await _imageService.SaveChatImageAsync(image);
+                    uploadedImages.Add(image);
+                }
+            }
+
+            // 3) Broadcast cho tất cả client đang trong room
             var payload = new
             {
                 saved.ChatMessageId,
                 saved.ChatRoomId,
                 saved.SenderId,
                 saved.MessageText,
-                saved.FileUrl,
-                saved.Timestamp
+                saved.Timestamp,
+                Images = uploadedImages.Select(img => img.ImageUrl).ToList()
             };
             await Clients.Group(roomId.ToString())
                          .SendAsync("ReceiveMessage", payload);
         }
+
+        public DateTime GetVietnamTime()
+        {
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+        }
+
     }
 }

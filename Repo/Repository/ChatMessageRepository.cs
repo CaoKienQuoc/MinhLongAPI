@@ -27,6 +27,7 @@ namespace Repo.Repository
         _context.ChatMessages
             .Where(m => m.ChatRoomId == roomId)
             .Include(m => m.Sender)
+            .Include(m => m.Images)
             .OrderBy(m => m.Timestamp)
             .Skip(skip)
             .Take(take)

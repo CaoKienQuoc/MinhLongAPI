@@ -14,7 +14,7 @@ namespace BusinessObject.DTO.Chat
         public Guid SenderId { get; set; }
         public string SenderName { get; set; }    // hiển thị username
         public string MessageText { get; set; }
-        public string FileUrl { get; set; }
+        public List<string> ImageUrls { get; set; }
         public DateTime Timestamp { get; set; }
         public bool IsRead { get; set; }
     }

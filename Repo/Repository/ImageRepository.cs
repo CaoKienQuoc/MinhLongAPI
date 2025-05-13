@@ -109,6 +109,13 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
         }
 
-        
+        public async Task SaveChatImageAsync(ChatMessageImage image)
+        {
+            if (image == null)
+                throw new ArgumentNullException(nameof(image));
+
+            _context.ChatMessageImages.Add(image);
+            await _context.SaveChangesAsync();
+        }
     }
 }

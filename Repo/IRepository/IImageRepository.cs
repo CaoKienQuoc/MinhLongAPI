@@ -19,5 +19,8 @@ namespace Repo.IRepository
         Task<ReturnRequestImage> UpdateReturnImageAsync(ReturnRequestImage image);
         Task<ReturnRequestImage> AddReturnImageAsync(ReturnRequestImage image);
         Task<List<ReturnRequestImage>> AddRangeAsync(List<ReturnRequestImage> images);
+
+        Task SaveChatImageAsync(ChatMessageImage image);
+
     }
 }

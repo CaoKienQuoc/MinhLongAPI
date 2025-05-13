@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace Services.Service
 {
+    using BusinessObject.DTO.Chat;
     using BusinessObject.DTO.Product;
     using CloudinaryDotNet;
     using CloudinaryDotNet.Actions;
@@ -245,9 +246,9 @@ namespace Services.Service
             outputStream.Position = 0; // Reset stream về đầu để upload
             return outputStream;
         }
-    
 
-    public async Task<List<Image>> UpdateImagesByProductIdAsync(long productId, ImageModel imageModel)
+
+        public async Task<List<Image>> UpdateImagesByProductIdAsync(long productId, ImageModel imageModel)
         {
             // ✅ Lấy tất cả ảnh hiện có theo ProductId
             var existingImages = await _repo.GetImagesByProductIdAsync(productId);
@@ -355,5 +356,40 @@ namespace Services.Service
 
             return await _repo.AddRangeAsync(result);
         }
+
+        public async Task<List<ImageUploadResultDto>> UploadImagesAndReturnMetaAsync(List<IFormFile> files)
+        {
+            var result = new List<ImageUploadResultDto>();
+
+            foreach (var file in files)
+            {
+                using var stream = file.OpenReadStream();
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    PublicId = Guid.NewGuid().ToString(),
+                    Overwrite = true
+                };
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.StatusCode == HttpStatusCode.OK)
+                {
+                    result.Add(new ImageUploadResultDto
+                    {
+                        ImageUrl = uploadResult.SecureUrl.ToString(),
+                        PublicId = uploadResult.PublicId
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        public Task SaveChatImageAsync(ChatMessageImage image)
+        {
+            return _repo.SaveChatImageAsync(image);
+        }
+
     }
 }

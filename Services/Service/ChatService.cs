@@ -121,9 +121,11 @@ namespace Services.Service
                 SenderId = m.SenderId,
                 SenderName = m.Sender?.Username,   // hoặc m.Sender.Email tuỳ UI
                 MessageText = m.MessageText,
-                FileUrl = m.FileUrl,
                 Timestamp = m.Timestamp,
-                IsRead = m.IsRead
+                IsRead = m.IsRead,
+
+                // ✅ Map danh sách ImageUrl
+                ImageUrls = m.Images?.Select(img => img.ImageUrl).ToList() ?? new List<string>()
             });
         }
 

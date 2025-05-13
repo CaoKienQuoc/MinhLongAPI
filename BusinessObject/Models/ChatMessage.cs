@@ -32,10 +32,8 @@ namespace BusinessObject.Models
 
         // 4. Nội dung & file
         [MaxLength(2000)]
-        public string MessageText { get; set; }
-
-        [MaxLength(500)]
-        public string? FileUrl { get; set; }
+        public string? MessageText { get; set; }
+        
 
         // 5. Thời gian và trạng thái đọc
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
@@ -44,6 +42,9 @@ namespace BusinessObject.Models
         // 6. Tính năng tự động xoá sau 7 ngày
         [NotMapped]
         public DateTime ExpiryDate => Timestamp.AddDays(7);
+
+        public ICollection<ChatMessageImage> Images { get; set; }
+
     }
 
 }
