@@ -329,21 +329,32 @@ namespace Services.Service
             var createdRegister = await _userRepository.RegisterUserRequestAsync(registerAccount);
 
             // ✅ Bước 2: Nếu là AGENCY và có ContractFiles => upload và lưu
-            if (request.UserType == "AGENCY" && request.ContractFiles != null && request.ContractFiles.Any())
+            if (request.UserType == "AGENCY")
             {
-                var uploadedContracts = await _contractService.UploadContractsAsync(request.ContractFiles); // không cần AgencyId
-
-                var registerContracts = uploadedContracts.Select(c => new RegisterAccountContract
+                if (request.ContractFiles != null && request.ContractFiles.Any())
                 {
-                    RegisterId = createdRegister.RegisterId,
-                    FileName = c.FileName,
-                    FilePath = c.FilePath,
-                    FileType = c.FileType
-                }).ToList();
+                    var uploadedContracts = await _contractService.UploadContractsAsync(request.ContractFiles); // không cần AgencyId
 
-                await _contractRepository.AddRangeRegisterContractsAsync(registerContracts);
+                    var registerContracts = uploadedContracts.Select(c => new RegisterAccountContract
+                    {
+                        RegisterId = createdRegister.RegisterId,
+                        FileName = c.FileName,
+                        FilePath = c.FilePath,
+                        FileType = c.FileType
+                    }).ToList();
 
-                createdRegister.Contracts = registerContracts;
+                    await _contractRepository.AddRangeRegisterContractsAsync(registerContracts);
+
+                    createdRegister.Contracts = registerContracts;
+                }
+                else
+                {
+                    createdRegister.Contracts = new List<RegisterAccountContract>();
+                }
+            }
+            else
+            {
+                createdRegister.Contracts = null;
             }
 
             return createdRegister;
