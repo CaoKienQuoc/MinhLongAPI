@@ -15,5 +15,7 @@ namespace Repo.IRepository
         Task<AgencyLevel> GetLevelByIdAsync(long levelId);
         Task UpdateAsync(AgencyAccountLevel level);
 
+
+
     }
 }

@@ -60,6 +60,12 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateAgencyAccountLevelAsync(AgencyAccountLevel agencyAccountLevel)
+        {
+            _context.AgencyAccountLevels.Update(agencyAccountLevel);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<AgencyAccount>> GetAgenciesManagedByEmployeeIdAsync(long employeeId)
         {
             return await _context.AgencyAccounts
@@ -82,7 +88,12 @@ namespace Repo.Repository
 
         }
 
-
+        public async Task<List<AgencyAccountLevel>> GetByLevelIdAsync(long levelId)
+        {
+            return await _context.AgencyAccountLevels
+                                 .Where(x => x.LevelId == levelId)
+                                 .ToListAsync();
+        }
         public async Task<List<AgencyAccount>> GetAllAsync()
         {
             return await _context.AgencyAccounts.ToListAsync();
