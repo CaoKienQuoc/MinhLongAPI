@@ -36,6 +36,7 @@ namespace Services.Service
         private readonly IAgencyScoreHistoryRepository _agencyScoreRepository;
         private readonly IAgencyLevelRepository _agencyLevelRepository;
         private readonly IAgencyPromotionRequestRepository _agencyPromotionRepository;
+        private readonly IAgencyAccountRepository _agencyRepository;
 
         // Constructor có đầy đủ các dependency
         public PaymentService(IOptions<PayOSSettings> payOSSettings,
@@ -48,7 +49,8 @@ namespace Services.Service
                               IPaymentHistoryRepository repository,
                               IAgencyScoreHistoryRepository agencyScoreHistory,
                               IAgencyLevelRepository agencyLevel,
-                              IAgencyPromotionRequestRepository agencyPromotionRequest)
+                              IAgencyPromotionRequestRepository agencyPromotionRequest,
+                              IAgencyAccountRepository agencyAccount)
         {
             // Kiểm tra nếu payOSSettings bị null
             _payOSSettings = payOSSettings?.Value ?? throw new ArgumentNullException(nameof(payOSSettings));
@@ -71,6 +73,7 @@ namespace Services.Service
             _agencyScoreRepository = agencyScoreHistory ?? throw new ArgumentNullException(nameof(agencyScoreHistory));
             _agencyLevelRepository = agencyLevel ?? throw new ArgumentNullException(nameof(agencyLevel));
             _agencyPromotionRepository = agencyPromotionRequest ?? throw new ArgumentNullException(nameof(agencyPromotionRequest));
+            _agencyRepository = agencyAccount ?? throw new ArgumentNullException(nameof(agencyAccount));
         }
     
         public async Task<CreatePaymentResult> SendPaymentLink(Guid accountId, CreatePaymentRequest request)
@@ -272,7 +275,11 @@ namespace Services.Service
 
         public async Task<StatusPayment> ConfirmPayment(string queryString, QueryRequest requestquery)
         {
-            
+
+            // ✅ Sử dụng TimeZoneInfo để đảm bảo chính xác
+            TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+
 
             try
             {
@@ -329,7 +336,7 @@ namespace Services.Service
                         existingHistory.Status = "PARTIALLY_PAID";
                     }
 
-                    existingHistory.UpdatedAt = DateTime.Now;
+                    existingHistory.UpdatedAt = vnNow;
                     await _paymentRepository.UpdatePaymentHistoryAsync(existingHistory);
                 }
                 else
@@ -359,14 +366,14 @@ namespace Services.Service
                     {
                         OrderId = order.OrderId,
                         PaymentMethod = "PayOS",
-                        PaymentDate = DateTime.Now,
+                        PaymentDate = vnNow,
                         Status = statusFlag,
                         TotalAmountPayment = totalOrderAmount,
                         RemainingDebtAmount = newRemainingDebt, 
                         PaymentAmount = paidAmount,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,  
-                        SerieNumber = $"SER-{DateTime.Now.Ticks}",
+                        CreatedAt = vnNow,
+                        UpdatedAt = vnNow,  
+                        SerieNumber = $"SER-{vnNow.Ticks}",
                         UserId = userId.Value,
                         DueDate = computedDueDate
                     };
@@ -397,7 +404,7 @@ namespace Services.Service
                 var transaction = new PaymentTransaction
                 {
                     PaymentHistoryId = existingHistory.PaymentHistoryId, // ✅ lấy từ EF sau khi lưu
-                    PaymentDate = DateTime.UtcNow,
+                    PaymentDate = vnNow,
                     Amount = paidAmount,
                     PaymentStatus = "PAID",
                     TransactionReference = requestquery.Paymentlink
@@ -527,6 +534,12 @@ namespace Services.Service
                         };
                         await _agencyScoreRepository.AddScoreAsync(scoreEntry);
                         await _agencyScoreRepository.SaveChangesAsync();
+
+                        // ✅ 2. Cập nhật tổng điểm vào bảng AgencyAccount
+                        agency.AgencyScore =  scoreEntry.ScoreChange;
+                        await _agencyRepository.UpdateAsync(agency);
+
+                        Console.WriteLine($"✅ +{addedScore} điểm cho đại lý {agency.AgencyName} - {reason}");
                     }
 
                     // ✅ Tổng điểm hiện tại
@@ -545,7 +558,7 @@ namespace Services.Service
                                 SuggestedLevelId = 2,
                                 TotalScore = totalScore,
                                 Status = "Pending",
-                                CreatedAt = DateTime.Now
+                                CreatedAt = vnNow
                             };
                             await _agencyPromotionRepository.AddAsync(promotionRequest);
                             await _agencyPromotionRepository.SaveChangesAsync();
@@ -563,7 +576,7 @@ namespace Services.Service
                                 SuggestedLevelId = 1,
                                 TotalScore = totalScore,
                                 Status = "Pending",
-                                CreatedAt = DateTime.Now
+                                CreatedAt = vnNow
                             };
                             await _agencyPromotionRepository.AddAsync(promotionRequest);
                             await _agencyPromotionRepository.SaveChangesAsync();
