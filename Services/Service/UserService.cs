@@ -133,6 +133,7 @@ namespace Services.Service
                 Status = user.Status,
                 VerifyEmail = user.VerifyEmail,
                 AgencyLevelName = null,
+                AgencyScore = 0,
                 CreditLimit = null,
                 Position = null,
                 Department = null,
@@ -144,6 +145,8 @@ namespace Services.Service
                 var agency = await _userRepository.GetAgencyAccountByUserIdAsync(userId);
                 if (agency != null)
                 {
+
+                    dto.AgencyScore = agency.AgencyScore;
                     // Nếu đại lý có cấp độ
                     var level = await _agencyAccountLevelRepository.GetLatestLevelByAgencyIdAsync(agency.AgencyId);
                     if (level != null)

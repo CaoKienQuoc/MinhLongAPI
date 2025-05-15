@@ -41,6 +41,7 @@ namespace Services.Service
                 PaymentTerm = dto.PaymentTerm
             };
             await _repo.AddAsync(level);
+
         }
 
         public async Task UpdateLevelAsync(long id, UpdateAgencyLevelDto dto)
@@ -49,12 +50,34 @@ namespace Services.Service
             if (existing == null)
                 throw new Exception("Agency level not found");
 
-            existing.LevelName = dto.LevelName;
-            existing.DiscountPercentage = dto.DiscountPercentage;
-            existing.CreditLimit = dto.CreditLimit;
-            existing.PaymentTerm = dto.PaymentTerm;
+            if (dto.LevelName != null)
+                existing.LevelName = dto.LevelName;
+
+            if (dto.DiscountPercentage.HasValue)
+                existing.DiscountPercentage = dto.DiscountPercentage.Value;
+
+            if (dto.CreditLimit.HasValue)
+                existing.CreditLimit = dto.CreditLimit.Value;
+
+            if (dto.PaymentTerm.HasValue)
+                existing.PaymentTerm = dto.PaymentTerm.Value;
+
 
             await _repo.UpdateAsync(existing);
+
+            // Bước 3: Cập nhật OrderDiscount trong bảng AgencyAccountLevel
+            var accountsToUpdate = await _accountRepo.GetByLevelIdAsync(id);
+
+            foreach (var account in accountsToUpdate)
+            {
+                if (dto.DiscountPercentage.HasValue && dto.DiscountPercentage.Value != 0)
+                {
+                    account.OrderDiscount = dto.DiscountPercentage.Value;
+                }
+
+                await _accountRepo.UpdateAgencyAccountLevelAsync(account);
+            }
+
         }
 
 

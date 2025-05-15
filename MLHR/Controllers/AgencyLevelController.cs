@@ -45,8 +45,16 @@ namespace MLHR.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(long id, [FromBody] UpdateAgencyLevelDto dto)
         {
-            await _service.UpdateLevelAsync(id, dto);
-            return NoContent();
+            try
+            {
+                await _service.UpdateLevelAsync(id, dto);
+                return Ok(new { message = "Cập nhật cấp đại lý thành công." });
+            }
+            catch (Exception ex)
+            {
+                // Có thể phân loại lỗi chi tiết hơn nếu muốn
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
 

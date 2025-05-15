@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VisualBasic;
 using Repo.IRepository;
+using Repo.Repository;
 using Services.IService;
 
 namespace Services.Service
@@ -118,6 +121,9 @@ namespace Services.Service
                         var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
                         var orderRepo = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
                         var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                        var agencyLevelRepo = scope.ServiceProvider.GetRequiredService<IAgencyLevelRepository>();
+                        var agencyScoreRepo = scope.ServiceProvider.GetRequiredService<IAgencyScoreHistoryRepository>();
+                        var agencyRepo = scope.ServiceProvider.GetRequiredService<IAgencyAccountRepository>();
 
                         var payments = await paymentRepository.GetAllPaymentHistoryAsync();
                         foreach (var payment in payments)
@@ -125,33 +131,74 @@ namespace Services.Service
                             var dueDate = payment.PaymentDate.AddMonths(3);
                             var daysLeft = (dueDate.Date - vnNow.Date).TotalDays;
 
+                            // Gửi email nhắc nợ trước hạn 10 ngày
                             if (daysLeft == 10)
                             {
                                 string cacheKey = $"DebtReminder:{payment.OrderId}:{vnNow:yyyy-MM-dd}";
                                 if (!await cacheService.ExistsAsync(cacheKey))
                                 {
                                     var email = payment.User?.Email;
-                                    if (string.IsNullOrEmpty(email))
-                                        continue;
+                                    if (!string.IsNullOrEmpty(email))
+                                    {
+                                        var agency = await userRepo.GetAgencyAccountByUserIdAsync(payment.UserId);
+                                        var order = await orderRepo.GetOrderByIdAsync(payment.OrderId);
 
+                                        if (agency?.AgencyName is string agencyName && order?.OrderCode is string orderCode)
+                                        {
+                                            await emailService.SendEmailDebtReminderAsync(email, agencyName, orderCode, dueDate);
+                                            await cacheService.SetAsync(cacheKey, true, TimeSpan.FromDays(1));
+                                            Console.WriteLine($"[{vnNow:yyyy-MM-dd HH:mm:ss}] Sent debt reminder for order {orderCode}");
+                                        }
+                                    }
+                                }
+                            }
+
+                            // ✅ Trừ điểm nếu quá hạn
+                            if (vnNow.Date > dueDate.Date)
+                            {
+                                int overdueDays = (vnNow.Date - dueDate.Date).Days;
+                                string penaltyKey = $"Penalty:{payment.OrderId}:{vnNow:yyyy-MM-dd}";
+
+                                if (!await cacheService.ExistsAsync(penaltyKey))
+                                {
                                     var agency = await userRepo.GetAgencyAccountByUserIdAsync(payment.UserId);
                                     var order = await orderRepo.GetOrderByIdAsync(payment.OrderId);
 
-                                    if (agency?.AgencyName is string agencyName
-                                        && order?.OrderCode is string orderCode)
+                                    if (agency != null)
                                     {
-                                        await emailService.SendEmailDebtReminderAsync(
-                                            email, agencyName, orderCode, dueDate
-                                        );
-                                        await cacheService.SetAsync(cacheKey, true, TimeSpan.FromDays(1));
+                                        var currentLevel = await agencyLevelRepo.GetCurrentLevelByAgencyIdAsync(agency.AgencyId);
+                                        decimal deductionRate = currentLevel switch
+                                        {
+                                            3 => 1.0m,
+                                            2 => 0.8m,
+                                            1 => 0.5m,
+                                            _ => 1.0m
+                                        };
+
+                                        int deductedScore = (int)(overdueDays * deductionRate);
+                                        var reason = $"Trừ điểm vì quá hạn thanh toán đơn hàng #{order?.OrderCode} ({overdueDays} ngày)";
+
+                                        var scoreEntry = new AgencyScoreHistory
+                                        {
+                                            AgencyId = agency.AgencyId,
+                                            ScoreChange = -deductedScore,
+                                            Reason = reason,
+                                            CreatedDate = vnNow
+                                        };
+
+                                        await agencyScoreRepo.AddScoreAsync(scoreEntry);
+                                        await agencyScoreRepo.SaveChangesAsync();
+
+                                        // ✅ 2. Cập nhật tổng điểm vào bảng AgencyAccount
+                                        agency.AgencyScore = scoreEntry.ScoreChange;
+                                        await agencyRepo.UpdateAsync(agency);
+
+                                        await cacheService.SetAsync(penaltyKey, true, TimeSpan.FromDays(1));
+                                        Console.WriteLine($"[{vnNow:yyyy-MM-dd HH:mm:ss}] Trừ {deductedScore} điểm cho đại lý {agency.AgencyName} (order {order?.OrderCode})");
                                     }
                                 }
                             }
                         }
-
-                        Console.WriteLine(
-                            $"[{vnNow:yyyy-MM-dd HH:mm:ss}] Debt reminders sent."
-                        );
                     }
                     catch (Exception ex)
                     {

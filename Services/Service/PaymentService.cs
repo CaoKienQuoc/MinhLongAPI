@@ -36,6 +36,7 @@ namespace Services.Service
         private readonly IAgencyScoreHistoryRepository _agencyScoreRepository;
         private readonly IAgencyLevelRepository _agencyLevelRepository;
         private readonly IAgencyPromotionRequestRepository _agencyPromotionRepository;
+        private readonly IAgencyAccountRepository _agencyRepository;
 
         // Constructor có đầy đủ các dependency
         public PaymentService(IOptions<PayOSSettings> payOSSettings,
@@ -48,7 +49,8 @@ namespace Services.Service
                               IPaymentHistoryRepository repository,
                               IAgencyScoreHistoryRepository agencyScoreHistory,
                               IAgencyLevelRepository agencyLevel,
-                              IAgencyPromotionRequestRepository agencyPromotionRequest)
+                              IAgencyPromotionRequestRepository agencyPromotionRequest,
+                              IAgencyAccountRepository agencyAccount)
         {
             // Kiểm tra nếu payOSSettings bị null
             _payOSSettings = payOSSettings?.Value ?? throw new ArgumentNullException(nameof(payOSSettings));
@@ -71,6 +73,7 @@ namespace Services.Service
             _agencyScoreRepository = agencyScoreHistory ?? throw new ArgumentNullException(nameof(agencyScoreHistory));
             _agencyLevelRepository = agencyLevel ?? throw new ArgumentNullException(nameof(agencyLevel));
             _agencyPromotionRepository = agencyPromotionRequest ?? throw new ArgumentNullException(nameof(agencyPromotionRequest));
+            _agencyRepository = agencyAccount ?? throw new ArgumentNullException(nameof(agencyAccount));
         }
     
         public async Task<CreatePaymentResult> SendPaymentLink(Guid accountId, CreatePaymentRequest request)
@@ -101,8 +104,8 @@ namespace Services.Service
                 var returnurlfail = _configuration["PayOS:ReturnUrlFail"];
 
                 // ✅ returnUrl chỉ cần OrderId
-                string returnUrl = $"http://localhost:5214/api/Payment/paymentconfirm" +
-                //string returnUrl = $"https://minhlong.mlhr.org/api/Payment/paymentconfirm" +
+                //string returnUrl = $"http://localhost:5214/api/Payment/paymentconfirm" +
+                string returnUrl = $"https://minhlong.mlhr.org/api/Payment/paymentconfirm" +
                    $"?orderCode={orderCode}" +
                    $"&accountId={accountId}" +
                    $"&amount={request.Price}"+
@@ -272,7 +275,11 @@ namespace Services.Service
 
         public async Task<StatusPayment> ConfirmPayment(string queryString, QueryRequest requestquery)
         {
-            
+
+            // ✅ Sử dụng TimeZoneInfo để đảm bảo chính xác
+            TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+
 
             try
             {
@@ -329,7 +336,7 @@ namespace Services.Service
                         existingHistory.Status = "PARTIALLY_PAID";
                     }
 
-                    existingHistory.UpdatedAt = DateTime.Now;
+                    existingHistory.UpdatedAt = vnNow;
                     await _paymentRepository.UpdatePaymentHistoryAsync(existingHistory);
                 }
                 else
@@ -359,14 +366,14 @@ namespace Services.Service
                     {
                         OrderId = order.OrderId,
                         PaymentMethod = "PayOS",
-                        PaymentDate = DateTime.Now,
+                        PaymentDate = vnNow,
                         Status = statusFlag,
                         TotalAmountPayment = totalOrderAmount,
                         RemainingDebtAmount = newRemainingDebt, 
                         PaymentAmount = paidAmount,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,  
-                        SerieNumber = $"SER-{DateTime.Now.Ticks}",
+                        CreatedAt = vnNow,
+                        UpdatedAt = vnNow,  
+                        SerieNumber = $"SER-{vnNow.Ticks}",
                         UserId = userId.Value,
                         DueDate = computedDueDate
                     };
@@ -397,7 +404,7 @@ namespace Services.Service
                 var transaction = new PaymentTransaction
                 {
                     PaymentHistoryId = existingHistory.PaymentHistoryId, // ✅ lấy từ EF sau khi lưu
-                    PaymentDate = DateTime.UtcNow,
+                    PaymentDate = vnNow,
                     Amount = paidAmount,
                     PaymentStatus = "PAID",
                     TransactionReference = requestquery.Paymentlink
@@ -407,7 +414,7 @@ namespace Services.Service
                 //order.Status = "Paid";
                 await _paymentRepository.SaveChangesAsync();
 
-                // ✅ Nếu thanh toán đủ & đúng hạn => Cộng điểm
+                /*// ✅ Nếu thanh toán đủ & đúng hạn => Cộng điểm
                 if (existingHistory.Status == "PAID")
                 {
                     var reason = "Thanh toán đơn hàng đúng hạn";
@@ -475,7 +482,108 @@ namespace Services.Service
                             await _agencyPromotionRepository.SaveChangesAsync();
                         }
                     }
+                }*/
+
+
+                // ✅ Nếu thanh toán đủ & đúng hạn => Cộng điểm
+                if (existingHistory.Status == "PAID")
+                {
+                    // ✅ Gán hệ số theo cấp hiện tại của đại lý
+                    var currentLevel = await _agencyLevelRepository.GetCurrentLevelByAgencyIdAsync(agency.AgencyId);
+                    decimal ratio = 1.0m;
+
+                    switch (currentLevel)
+                    {
+                        case 3:
+                            ratio = 1.0m; // 1 điểm mỗi 1 triệu
+                            break;
+                        case 2:
+                            ratio = 0.8m;
+                            break;
+                        case 1:
+                            ratio = 0.5m;
+                            break;
+                    }
+
+                    // ✅ Tính điểm dựa trên số tiền thanh toán và hệ số
+                    int addedScore = (int)((transaction.Amount / 1_000_000m) * ratio);
+                    var paymentId = transaction.PaymentHistoryId;
+                    var payment = await _repository.GetByIdAsync(paymentId);
+                    var orderCode = await _orderRepository.GetOrderByIdAsync(payment.OrderId);
+
+
+                    // ✅ Tạo reason riêng cho mỗi giao dịch để tránh cộng dồn vào 1 dòng
+                    var reason = $"Thanh toán đơn hàng #{orderCode} đúng hạn";
+
+                    // ✅ Kiểm tra xem đã cộng điểm cho giao dịch này chưa (dựa trên reason)
+                    var existingScore = await _agencyScoreRepository.GetByAgencyIdAndReasonAsync(agency.AgencyId, reason);
+
+                    if (existingScore != null)
+                    {
+                        // Đã có thì không cộng lại (tránh trùng)
+                    }
+                    else
+                    {
+                        // ✅ Thêm điểm mới
+                        var scoreEntry = new AgencyScoreHistory
+                        {
+                            AgencyId = agency.AgencyId,
+                            ScoreChange = addedScore,
+                            Reason = reason,
+                            CreatedDate = transaction.PaymentDate
+                        };
+                        await _agencyScoreRepository.AddScoreAsync(scoreEntry);
+                        await _agencyScoreRepository.SaveChangesAsync();
+
+                        // ✅ 2. Cập nhật tổng điểm vào bảng AgencyAccount
+                        agency.AgencyScore =  scoreEntry.ScoreChange;
+                        await _agencyRepository.UpdateAsync(agency);
+
+                        Console.WriteLine($"✅ +{addedScore} điểm cho đại lý {agency.AgencyName} - {reason}");
+                    }
+
+                    // ✅ Tổng điểm hiện tại
+                    var totalScore = await _agencyScoreRepository.GetTotalScoreByAgencyIdAsync(agency.AgencyId);
+
+                    // ✅ Kiểm tra điều kiện thăng hạng
+                    if (currentLevel == 3 && totalScore >= 1500)
+                    {
+                        bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 2);
+                        if (!exists)
+                        {
+                            var promotionRequest = new AgencyPromotionRequest
+                            {
+                                AgencyId = agency.AgencyId,
+                                CurrentLevelId = 3,
+                                SuggestedLevelId = 2,
+                                TotalScore = totalScore,
+                                Status = "Pending",
+                                CreatedAt = vnNow
+                            };
+                            await _agencyPromotionRepository.AddAsync(promotionRequest);
+                            await _agencyPromotionRepository.SaveChangesAsync();
+                        }
+                    }
+                    else if (currentLevel == 2 && totalScore >= 7000)
+                    {
+                        bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 1);
+                        if (!exists)
+                        {
+                            var promotionRequest = new AgencyPromotionRequest
+                            {
+                                AgencyId = agency.AgencyId,
+                                CurrentLevelId = 2,
+                                SuggestedLevelId = 1,
+                                TotalScore = totalScore,
+                                Status = "Pending",
+                                CreatedAt = vnNow
+                            };
+                            await _agencyPromotionRepository.AddAsync(promotionRequest);
+                            await _agencyPromotionRepository.SaveChangesAsync();
+                        }
+                    }
                 }
+
 
                 return new StatusPayment
                 {
