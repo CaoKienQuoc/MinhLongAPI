@@ -15,6 +15,6 @@ namespace BusinessObject.DTO.ReturnOrder
         public long? BatchId { get; set; }
         public string Reason { get; set; }
 
-        public List<ReturnRequestImageDto> Images { get; set; } = new List<ReturnRequestImageDto>();
+        
     }
 }

@@ -13,6 +13,5 @@ namespace BusinessObject.DTO.ReturnOrder
         public string ProductName { get; set; }
         public string Reason { get; set; }
         public int QuantityReturned { get; set; }
-        public List<ReturnRequestImageDto> Images { get; set; }
     }
 }

@@ -83,6 +83,19 @@ namespace Services.Service
             if (!string.Equals(order.Status, "Exported", StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Chỉ được phép tạo yêu cầu trả hàng cho đơn hàng đã xuất.");
 
+            var exportReceipt = await _warehouseExportRepo.GetExportSaleByOrderIdAsync(orderId);
+            if (exportReceipt == null)
+                throw new Exception("Không tìm thấy phiếu xuất kho bán tương ứng.");
+
+            // ✅ Kiểm tra nếu ngày xuất quá 30 ngày thì không cho tạo yêu cầu
+            var exportDate = exportReceipt.ExportDate;
+            var nowVN = GetVietnamTime();
+            var daysDiff = (nowVN.Date - exportDate.Date).TotalDays;
+
+            if (daysDiff > 30)
+                throw new Exception("Đơn hàng đã được xuất quá 30 ngày, không thể tạo yêu cầu trả hàng.");
+
+
             string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
 
             var returnRequest = new ReturnRequest
@@ -321,7 +334,13 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "",
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
+                }).ToList() ?? new List<ReturnRequestProdductDetailDto>(),
+
+                Images = r.Images?.Select(img => new ReturnRequestImageDto
+                {
+                    ReturnRequestImageId = img.ReturnRequestImageId,
+                    ImageUrl = img.ImageUrl
+                }).ToList() ?? new List<ReturnRequestImageDto>()
             }).ToList();
         }
 
@@ -351,7 +370,12 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "",
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
+                }).ToList() ?? new List<ReturnRequestProdductDetailDto>(),
+                Images = r.Images?.Select(img => new ReturnRequestImageDto
+                {
+                    ReturnRequestImageId = img.ReturnRequestImageId,
+                    ImageUrl = img.ImageUrl
+                }).ToList() ?? new List<ReturnRequestImageDto>()
             };
         }
 
@@ -437,8 +461,12 @@ namespace Services.Service
                         BatchId = d.BatchId,
                         Reason = d.Reason
                     };
-                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
-
+                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>(),
+                Images = r.ReturnRequest.Images?.Select(img => new ReturnRequestImageDto
+                {
+                    ReturnRequestImageId = img.ReturnRequestImageId,
+                    ImageUrl = img.ImageUrl
+                }).ToList() ?? new List<ReturnRequestImageDto>()
             }).ToList();
         }
 
@@ -473,7 +501,12 @@ namespace Services.Service
                         BatchId = d.BatchId,
                         Reason = d.Reason,
                     };
-                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
+                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>(),
+                Images = r.ReturnRequest.Images?.Select(img => new ReturnRequestImageDto
+                {
+                    ReturnRequestImageId = img.ReturnRequestImageId,
+                    ImageUrl = img.ImageUrl
+                }).ToList() ?? new List<ReturnRequestImageDto>()
             };
         }
 
@@ -538,7 +571,12 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "",
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
+                }).ToList() ?? new List<ReturnRequestProdductDetailDto>(),
+                Images = r.Images?.Select(img => new ReturnRequestImageDto
+                {
+                    ReturnRequestImageId = img.ReturnRequestImageId,
+                    ImageUrl = img.ImageUrl
+                }).ToList() ?? new List<ReturnRequestImageDto>()
             }).ToList();
         }
 
@@ -567,7 +605,12 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "",
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
+                }).ToList() ?? new List<ReturnRequestProdductDetailDto>(),
+                Images = request.Images?.Select(img => new ReturnRequestImageDto
+                {
+                    ReturnRequestImageId = img.ReturnRequestImageId,
+                    ImageUrl = img.ImageUrl
+                }).ToList() ?? new List<ReturnRequestImageDto>()
             };
         }
 

@@ -69,6 +69,8 @@ namespace Repo.Repository
                 .Include(r => r.ReturnRequest)
                     .ThenInclude(req => req.Details)
                 .Include(r => r.ReturnRequest)
+                .ThenInclude(r => r.Images)
+                .Include(r => r.ReturnRequest)
                     .ThenInclude(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
@@ -84,6 +86,8 @@ namespace Repo.Repository
                     .ThenInclude(d => d.Product) // Include thêm Product cho mỗi Detail
                     .Include(r => r.ReturnRequest)
                     .ThenInclude(req => req.Details)
+                    .Include(r => r.ReturnRequest)
+                .ThenInclude(r => r.Images)
                 .Include(r => r.ReturnRequest)
                     .ThenInclude(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)

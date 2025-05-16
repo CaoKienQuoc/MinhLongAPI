@@ -17,5 +17,7 @@ namespace BusinessObject.DTO.ReturnOrder
         public string Status { get; set; }
         //public string? Note { get; set; }
         public List<ReturnRequestProdductDetailDto> Details { get; set; }
+
+        public List<ReturnRequestImageDto> Images { get; set; }
     }
 }

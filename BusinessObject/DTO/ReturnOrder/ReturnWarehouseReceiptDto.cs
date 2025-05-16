@@ -19,5 +19,7 @@ namespace BusinessObject.DTO.ReturnOrder
         public string Status { get; set; }
         public string ReturnRequestCode { get; set; }
         public List<ReturnWarehouseReceiptDetailDto> Details { get; set; }
+
+        public List<ReturnRequestImageDto> Images { get; set; } = new List<ReturnRequestImageDto>();
     }
 }

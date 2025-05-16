@@ -65,6 +65,7 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
+                .Include(r => r.Images)
                 .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
@@ -83,6 +84,7 @@ namespace Repo.Repository
                .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
+                .Include(r => r.Images)
                     .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
@@ -136,6 +138,7 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
+                .Include(r => r.Images)
                 .Where(r => r.CreatedByUserId == userId)
                 .ToListAsync();
         }
@@ -147,6 +150,7 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
+                .Include(r => r.Images)
                 .FirstOrDefaultAsync(r => r.ReturnRequestId == returnRequestId && r.CreatedByUserId == userId);
         }
         public async Task<string> GenerateRequestReturnCodeAsync()
