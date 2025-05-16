@@ -118,13 +118,17 @@ namespace Services.Service
                     payload = $"TransferRequestId: {transferRequestId}"
                 });
 
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
                 // Lưu DB
                 var notification = new Notification
                 {
                     UserId = userId.Value,
                     Title = "Phiếu điều phối",
                     Message = message,
-                    Url = $"/warehouse/transfer-request"
+                    Url = $"/warehouse/transfer-request",
+                    CreatedAt = vietnamNow
                 };
 
                 await _notificationRepository.AddAsync(notification);

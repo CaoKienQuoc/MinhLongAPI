@@ -344,13 +344,17 @@ namespace Services.Service
                             payload = order.OrderCode
                         });
 
+                    var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                    var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
                     // ✅ Lưu vào Notification
                     var notification = new Notification
                     {
                         UserId = saleUserId.Value,
                         Title = "Đơn hàng mới",
                         Message = message,
-                        Url = $"/sales/export"
+                        Url = $"/sales/export",
+                        CreatedAt = vietnamNow
                     };
 
                     await _notificationRepository.AddAsync(notification);

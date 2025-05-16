@@ -851,13 +851,17 @@ namespace Services.Service
                     payload = userId
                 });
 
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
             // Lưu vào Notification
             var notification = new Notification
             {
                 UserId = userId,
                 Title = "Trạng thái tài khoản",
                 Message = message,
-                Url = $"/agency/profile"
+                Url = $"/agency/profile",
+                CreatedAt = vietnamNow
             };
 
             await _notificationRepository.AddAsync(notification);

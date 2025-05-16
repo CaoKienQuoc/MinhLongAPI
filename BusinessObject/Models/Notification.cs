@@ -30,6 +30,6 @@ namespace BusinessObject.Models
 
         public bool IsRead { get; set; } = false; // Đã đọc hay chưa
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
     }
 }

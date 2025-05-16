@@ -228,13 +228,17 @@ namespace Services.Service
                 payload = $"RequestExportCode: {code}"
             });
 
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
             // Lưu vào DB Notification
             var notification = new Notification
             {
                 UserId = userId.Value,
                 Title = "Yêu cầu xuất kho",
                 Message = message,
-                Url = $"/warehouse/view-export"
+                Url = $"/warehouse/view-export",
+                CreatedAt = vietnamNow
             };
 
             await _notificationRepository.AddAsync(notification);
