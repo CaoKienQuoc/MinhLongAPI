@@ -30,6 +30,7 @@ namespace MLHR.Controllers
             return Ok(requests);
         }
 
+        //api
         // API lấy danh sách Order dựa trên AgencyId của user đang đăng nhập
         [HttpGet("my-request-product")]
         public async Task<IActionResult> GetOrdersForLoggedInAgency()
