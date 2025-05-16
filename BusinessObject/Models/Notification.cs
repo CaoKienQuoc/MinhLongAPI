@@ -10,10 +10,6 @@ namespace BusinessObject.Models
 {
     public class Notification
     {
-        // Lấy múi giờ Việt Nam (GMT+7)
-        TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-        DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
-            return vietnamTime;
         [Key]
         public Guid NotificationId { get; set; } = Guid.NewGuid();
 
@@ -33,12 +29,6 @@ namespace BusinessObject.Models
         public string? Url { get; set; } // Đường dẫn (nếu có) khi click vào
 
         public bool IsRead { get; set; } = false; // Đã đọc hay chưa
-
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; }
     }
-
-    private DateTime GetVietnamTime()
-        {
-            
-        }
-    }
+}
