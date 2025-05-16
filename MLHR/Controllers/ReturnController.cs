@@ -42,7 +42,7 @@ namespace MLHR.Controllers
         [HttpPost("create")]
         [Authorize]
         [RequestSizeLimit(20_000_000)]
-        [Consumes("multipart/form-data")] // ✅ Dòng này!
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateReturnRequestWithImages([FromForm] ReturnRequestFormDto dto)
         {
             var userId = GetLoggedInUserId();
@@ -59,6 +59,7 @@ namespace MLHR.Controllers
 
             return Ok(result);
         }
+
 
 
 

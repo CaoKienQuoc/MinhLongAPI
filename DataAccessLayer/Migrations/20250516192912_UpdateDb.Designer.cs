@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250513122916_UpdateDb")]
+    [Migration("20250516192912_UpdateDb")]
     partial class UpdateDb
     {
         /// <inheritdoc />
@@ -71,6 +71,9 @@ namespace DataAccessLayer.Migrations
                     b.Property<string>("AgencyName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("AgencyScore")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1537,11 +1540,14 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsProof")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PublicId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("ReturnRequestDetailId")
+                    b.Property<Guid>("ReturnRequestId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("UploadedAt")
@@ -1549,7 +1555,7 @@ namespace DataAccessLayer.Migrations
 
                     b.HasKey("ReturnRequestImageId");
 
-                    b.HasIndex("ReturnRequestDetailId");
+                    b.HasIndex("ReturnRequestId");
 
                     b.ToTable("ReturnRequestImage", (string)null);
                 });
@@ -2737,13 +2743,13 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("BusinessObject.Models.ReturnRequestImage", b =>
                 {
-                    b.HasOne("BusinessObject.Models.ReturnRequestDetail", "ReturnRequestDetail")
+                    b.HasOne("BusinessObject.Models.ReturnRequest", "ReturnRequest")
                         .WithMany("Images")
-                        .HasForeignKey("ReturnRequestDetailId")
+                        .HasForeignKey("ReturnRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ReturnRequestDetail");
+                    b.Navigation("ReturnRequest");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.ReturnWarehouseReceipt", b =>
@@ -3133,10 +3139,7 @@ namespace DataAccessLayer.Migrations
             modelBuilder.Entity("BusinessObject.Models.ReturnRequest", b =>
                 {
                     b.Navigation("Details");
-                });
 
-            modelBuilder.Entity("BusinessObject.Models.ReturnRequestDetail", b =>
-                {
                     b.Navigation("Images");
                 });
 

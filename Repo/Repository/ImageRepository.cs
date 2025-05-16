@@ -47,12 +47,10 @@ namespace Repo.Repository
                 if (string.IsNullOrWhiteSpace(image.PublicId))
                     throw new ArgumentException("PublicId không được rỗng.", nameof(image.PublicId));
 
-                /*if (image.ReturnRequestImageId <= 0)
-                    throw new ArgumentException("ReturnRequestDetailId không hợp lệ.", nameof(image.ReturnRequestDetailId));*/
 
                 // Kiểm tra ReturnRequestDetail có tồn tại không
-                var returnRequestDetail = await _context.ReturnRequestDetails.FindAsync(image.ReturnRequestId);
-                if (returnRequestDetail == null)
+                var returnRequest = await _context.ReturnRequests.FindAsync(image.ReturnRequestId);
+                if (returnRequest == null)
                     throw new Exception($"Không tìm thấy ReturnRequestDetail với ID {image.ReturnRequestId}.");
 
                 // Thêm ảnh

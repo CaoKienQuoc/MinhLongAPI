@@ -25,7 +25,6 @@ namespace BusinessObject.Models
 
         public string Reason { get; set; }
 
-        public ICollection<ReturnRequestImage> Images { get; set; }
 
         public long ProductId { get; set; } // optional nếu cần thêm tra cứu nhanh
 

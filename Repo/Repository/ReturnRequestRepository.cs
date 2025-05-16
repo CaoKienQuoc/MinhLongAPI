@@ -28,7 +28,6 @@ namespace Repo.Repository
         public async Task<ReturnRequest> GetByIdAsync(Guid id)
             => await _context.ReturnRequests
                             .Include(r => r.Details)
-                            .ThenInclude(d => d.Images)
                             .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
 
         public async Task<List<ReturnRequest>> GetPendingApprovalAsync()
@@ -50,7 +49,6 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                     .ThenInclude(d => d.OrderDetail)
                 .Include(r => r.Details)
-                    .ThenInclude(d => d.Images)
                 .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
         }
 
@@ -67,7 +65,6 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
-                    .ThenInclude(d => d.Images)
                 .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
@@ -86,7 +83,6 @@ namespace Repo.Repository
                .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
-                    .ThenInclude(d => d.Images)
                     .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
@@ -106,7 +102,6 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
-                    .ThenInclude(d => d.Images)
                     .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
@@ -121,7 +116,6 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                 .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
-                    .ThenInclude(d => d.Images)
                     .Include(r => r.Order)
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
@@ -142,7 +136,6 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
-                    .ThenInclude(d => d.Images)
                 .Where(r => r.CreatedByUserId == userId)
                 .ToListAsync();
         }
@@ -154,7 +147,6 @@ namespace Repo.Repository
                 .Include(r => r.Details)
                     .ThenInclude(d => d.Product)
                 .Include(r => r.Details)
-                    .ThenInclude(d => d.Images)
                 .FirstOrDefaultAsync(r => r.ReturnRequestId == returnRequestId && r.CreatedByUserId == userId);
         }
         public async Task<string> GenerateRequestReturnCodeAsync()
@@ -211,7 +203,6 @@ namespace Repo.Repository
         public async Task AddDetailsAsync(IEnumerable<ReturnRequestDetail> details)
         {
             _context.ReturnRequestDetails.AddRange(details);
-            await _context.SaveChangesAsync();
         }
 
         public async Task<List<Guid>> GetDetailIdsByReturnRequestIdAsync(Guid returnRequestId)

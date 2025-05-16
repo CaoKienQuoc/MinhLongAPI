@@ -36,6 +36,9 @@ namespace BusinessObject.Models
         public Guid? RejectedBy { get; set; }           // UserId của Sale từ chối
         public DateTime? RejectedAt { get; set; }       // Thời gian từ chối
         public string? Reason { get; set; }       // Lý do từ chối
+
+
+        public ICollection<ReturnRequestImage> Images { get; set; }
     }
 
 

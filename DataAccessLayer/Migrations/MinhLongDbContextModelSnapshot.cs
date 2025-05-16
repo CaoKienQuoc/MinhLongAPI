@@ -1544,9 +1544,6 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("ReturnRequestDetailId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("ReturnRequestId")
                         .HasColumnType("uniqueidentifier");
 
@@ -1554,8 +1551,6 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("ReturnRequestImageId");
-
-                    b.HasIndex("ReturnRequestDetailId");
 
                     b.HasIndex("ReturnRequestId");
 
@@ -2745,12 +2740,8 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("BusinessObject.Models.ReturnRequestImage", b =>
                 {
-                    b.HasOne("BusinessObject.Models.ReturnRequestDetail", null)
-                        .WithMany("Images")
-                        .HasForeignKey("ReturnRequestDetailId");
-
                     b.HasOne("BusinessObject.Models.ReturnRequest", "ReturnRequest")
-                        .WithMany()
+                        .WithMany("Images")
                         .HasForeignKey("ReturnRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3145,10 +3136,7 @@ namespace DataAccessLayer.Migrations
             modelBuilder.Entity("BusinessObject.Models.ReturnRequest", b =>
                 {
                     b.Navigation("Details");
-                });
 
-            modelBuilder.Entity("BusinessObject.Models.ReturnRequestDetail", b =>
-                {
                     b.Navigation("Images");
                 });
 

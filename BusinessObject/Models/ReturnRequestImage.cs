@@ -19,9 +19,6 @@ namespace BusinessObject.Models
         [ForeignKey(nameof(ReturnRequestId))]
         public ReturnRequest ReturnRequest { get; set; }
 
-        // ❌ Loại bỏ nếu không còn dùng đến
-        // public Guid? ReturnRequestDetailId { get; set; }
-        // public ReturnRequestDetail ReturnRequestDetail { get; set; }
 
         [Required]
         public string ImageUrl { get; set; }

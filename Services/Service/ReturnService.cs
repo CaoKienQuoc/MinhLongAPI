@@ -122,19 +122,13 @@ namespace Services.Service
 
             var savedRequest = await _returnRepo.CreateAsync(returnRequest);
 
-            foreach (var d in returnRequest.Details)
-            {
-                d.ReturnRequestId = savedRequest.ReturnRequestId;
-            }
-            await _returnRepo.AddDetailsAsync(returnRequest.Details);
-
 
             // ✅ Upload ảnh cho toàn bộ ReturnRequest (không còn liên quan đến từng detail)
             if (images != null && images.Count > 0)
             {
                 var imageModel = new ImageModel { Files = images };
                 var uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, savedRequest.ReturnRequestId); // << change here
-                await _returnRepo.AddRangeAsync(uploadedImages);
+                //await _returnRepo.AddRangeAsync(uploadedImages);
             }
 
             return savedRequest;
@@ -269,11 +263,6 @@ namespace Services.Service
                     ProductName = d.Product.ProductName,
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                    Images = d.Images?.Select(img => new ReturnRequestImageDto
-                    {
-                        ReturnRequestImageId = img.ReturnRequestImageId,
-                        ImageUrl = img.ImageUrl
-                    }).ToList()
                 }).ToList()
             }).ToList();
         }
@@ -299,11 +288,6 @@ namespace Services.Service
                     ProductName = d.Product.ProductName,
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                    Images = d.Images?.Select(img => new ReturnRequestImageDto
-                    {
-                        ReturnRequestImageId = img.ReturnRequestImageId,
-                        ImageUrl = img.ImageUrl
-                    }).ToList()
                 }).ToList()
             };
         }
@@ -337,11 +321,6 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "",
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                    Images = d.Images?.Select(img => new ReturnRequestImageDto
-                    {
-                        ReturnRequestImageId = img.ReturnRequestImageId,
-                        ImageUrl = img.ImageUrl
-                    }).ToList() ?? new List<ReturnRequestImageDto>()
                 }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
             }).ToList();
         }
@@ -372,11 +351,6 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "",
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                    Images = d.Images?.Select(img => new ReturnRequestImageDto
-                    {
-                        ReturnRequestImageId = img.ReturnRequestImageId,
-                        ImageUrl = img.ImageUrl
-                    }).ToList() ?? new List<ReturnRequestImageDto>()
                 }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
             };
         }
@@ -403,11 +377,6 @@ namespace Services.Service
                     ProductName = d.Product.ProductName,
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                    Images = d.Images?.Select(img => new ReturnRequestImageDto
-                    {
-                        ReturnRequestImageId = img.ReturnRequestImageId,
-                        ImageUrl = img.ImageUrl
-                    }).ToList()
                 }).ToList()
             }).ToList();
         }
@@ -433,11 +402,6 @@ namespace Services.Service
                     ProductName = d.Product.ProductName,
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                    Images = d.Images?.Select(img => new ReturnRequestImageDto
-                    {
-                        ReturnRequestImageId = img.ReturnRequestImageId,
-                        ImageUrl = img.ImageUrl
-                    }).ToList()
                 }).ToList()
             };
         }
@@ -471,12 +435,7 @@ namespace Services.Service
                         ProductName = d.Product.ProductName,
                         Quantity = d.Quantity,
                         BatchId = d.BatchId,
-                        Reason = d.Reason,
-                        Images = relatedRequestDetail?.Images?.Select(img => new ReturnRequestImageDto
-                        {
-                            ReturnRequestImageId = img.ReturnRequestImageId,
-                            ImageUrl = img.ImageUrl
-                        }).ToList() ?? new List<ReturnRequestImageDto>()
+                        Reason = d.Reason
                     };
                 }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
 
@@ -513,11 +472,6 @@ namespace Services.Service
                         Quantity = d.Quantity,
                         BatchId = d.BatchId,
                         Reason = d.Reason,
-                        Images = relatedRequestDetail?.Images?.Select(img => new ReturnRequestImageDto
-                        {
-                            ReturnRequestImageId = img.ReturnRequestImageId,
-                            ImageUrl = img.ImageUrl
-                        }).ToList() ?? new List<ReturnRequestImageDto>()
                     };
                 }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
             };
@@ -555,11 +509,6 @@ namespace Services.Service
                         Quantity = d.Quantity,
                         BatchId = d.BatchId,
                         Reason = d.Reason,
-                        Images = relatedRequestDetail?.Images?.Select(img => new ReturnRequestImageDto
-                        {
-                            ReturnRequestImageId = img.ReturnRequestImageId,
-                            ImageUrl = img.ImageUrl
-                        }).ToList() ?? new List<ReturnRequestImageDto>()
                     };
                 }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
             }).ToList();
@@ -589,11 +538,6 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "",
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                    Images = d.Images?.Select(img => new ReturnRequestImageDto
-                    {
-                        ReturnRequestImageId = img.ReturnRequestImageId,
-                        ImageUrl = img.ImageUrl
-                    }).ToList() ?? new List<ReturnRequestImageDto>()
                 }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
             }).ToList();
         }
@@ -623,11 +567,6 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "",
                     Reason = d.Reason,
                     QuantityReturned = d.QuantityReturned,
-                    Images = d.Images?.Select(img => new ReturnRequestImageDto
-                    {
-                        ReturnRequestImageId = img.ReturnRequestImageId,
-                        ImageUrl = img.ImageUrl
-                    }).ToList() ?? new List<ReturnRequestImageDto>()
                 }).ToList() ?? new List<ReturnRequestProdductDetailDto>()
             };
         }

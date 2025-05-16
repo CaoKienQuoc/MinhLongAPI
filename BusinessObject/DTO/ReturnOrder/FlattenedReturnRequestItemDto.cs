@@ -11,9 +11,9 @@ namespace BusinessObject.DTO.ReturnOrder
     {
         public Guid OrderDetailId { get; set; }
         public int Quantity { get; set; }
-        public string Reason { get; set; }
-
+        public string Reason { get; set; } = string.Empty;
     }
+
 
 
 }

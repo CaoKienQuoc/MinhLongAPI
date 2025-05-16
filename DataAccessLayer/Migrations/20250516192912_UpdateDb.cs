@@ -587,7 +587,8 @@ namespace DataAccessLayer.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AddressId = table.Column<int>(type: "int", nullable: false),
-                    ManagedByEmployeeId = table.Column<long>(type: "bigint", nullable: true)
+                    ManagedByEmployeeId = table.Column<long>(type: "bigint", nullable: true),
+                    AgencyScore = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1368,6 +1369,29 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ReturnRequestImage",
+                columns: table => new
+                {
+                    ReturnRequestImageId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReturnRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PublicId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsProof = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReturnRequestImage", x => x.ReturnRequestImageId);
+                    table.ForeignKey(
+                        name: "FK_ReturnRequestImage_ReturnRequest_ReturnRequestId",
+                        column: x => x.ReturnRequestId,
+                        principalTable: "ReturnRequest",
+                        principalColumn: "ReturnRequestId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ReturnWarehouseReceipt",
                 columns: table => new
                 {
@@ -1519,28 +1543,6 @@ namespace DataAccessLayer.Migrations
                         principalTable: "WarehouseProduct",
                         principalColumn: "WarehouseProductId",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ReturnRequestImage",
-                columns: table => new
-                {
-                    ReturnRequestImageId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ReturnRequestDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PublicId = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ReturnRequestImage", x => x.ReturnRequestImageId);
-                    table.ForeignKey(
-                        name: "FK_ReturnRequestImage_ReturnRequestDetail_ReturnRequestDetailId",
-                        column: x => x.ReturnRequestDetailId,
-                        principalTable: "ReturnRequestDetail",
-                        principalColumn: "ReturnRequestDetailId",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1931,9 +1933,9 @@ namespace DataAccessLayer.Migrations
                 column: "ReturnRequestId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ReturnRequestImage_ReturnRequestDetailId",
+                name: "IX_ReturnRequestImage_ReturnRequestId",
                 table: "ReturnRequestImage",
-                column: "ReturnRequestDetailId");
+                column: "ReturnRequestId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ReturnWarehouseReceipt_ReturnRequestId",
@@ -2130,6 +2132,9 @@ namespace DataAccessLayer.Migrations
                 name: "RequestProductDetail");
 
             migrationBuilder.DropTable(
+                name: "ReturnRequestDetail");
+
+            migrationBuilder.DropTable(
                 name: "ReturnRequestImage");
 
             migrationBuilder.DropTable(
@@ -2172,7 +2177,7 @@ namespace DataAccessLayer.Migrations
                 name: "RegisterAccount");
 
             migrationBuilder.DropTable(
-                name: "ReturnRequestDetail");
+                name: "OrderDetail");
 
             migrationBuilder.DropTable(
                 name: "ReturnWarehouseReceipt");
@@ -2191,9 +2196,6 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "Batch");
-
-            migrationBuilder.DropTable(
-                name: "OrderDetail");
 
             migrationBuilder.DropTable(
                 name: "ReturnRequest");
