@@ -44,21 +44,6 @@ namespace MLHR.Controllers
             return Ok(product);
         }
 
-        /*[HttpPost("product")]
-        [Authorize(Roles = "4")]
-        public async Task<ActionResult<ProductResponseDto>> CreateProduct([FromBody] ProductDto productDto)
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
-            {
-                return Unauthorized(new { message = "User ID is invalid." });
-            }
-
-            var createdProduct = await _service.CreateProductAsync(productDto, userId);
-            return CreatedAtAction(nameof(GetProduct), new { id = createdProduct.ProductId }, createdProduct);
-        }*/
-
         [HttpPost("product")]
         [Authorize(Roles = "4")]
         [Consumes("multipart/form-data")] // ✅ Bắt buộc để hỗ trợ file upload

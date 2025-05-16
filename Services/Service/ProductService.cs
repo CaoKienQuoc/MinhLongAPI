@@ -8,6 +8,7 @@ using BusinessObject.Models;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Services.Service
 {
@@ -97,9 +98,10 @@ namespace Services.Service
 
         public async Task<ProductResponseDto> CreateProductAsync(ProductDto model, Guid userId)
         {
+            var random = new Random();
             var product = new Product
             {
-                ProductCode = model.ProductCode,
+                ProductCode = $"SP-{DateTime.Now.Ticks}-{random.Next(1000, 9999)}",
                 ProductName = model.ProductName,
                 Unit = model.Unit,
                 DefaultExpiration = model.DefaultExpiration,
@@ -131,37 +133,47 @@ namespace Services.Service
             var product = await _repository.GetByIdAsync(id);
             if (product == null) return null;
 
-            // ✅ Cập nhật thông tin sản phẩm
-            product.ProductName = productDto.ProductName ?? product.ProductName;
-            product.Unit = productDto.Unit ?? product.Unit;
-            product.DefaultExpiration = productDto.DefaultExpiration ?? product.DefaultExpiration;
-            product.CategoryId = productDto.CategoryId;
-            product.Description = productDto.Description ?? product.Description;
-            product.TaxId = productDto.TaxId ?? product.TaxId;
+            // ✅ Cập nhật lẻ từng trường nếu được truyền vào
+            if (!string.IsNullOrEmpty(productDto.ProductName))
+                product.ProductName = productDto.ProductName;
+
+            if (!string.IsNullOrEmpty(productDto.Unit))
+                product.Unit = productDto.Unit;
+
+            if (productDto.DefaultExpiration.HasValue)
+                product.DefaultExpiration = productDto.DefaultExpiration.Value;
+
+            if (productDto.CategoryId.HasValue)
+                product.CategoryId = productDto.CategoryId.Value;
+
+            if (!string.IsNullOrEmpty(productDto.Description))
+                product.Description = productDto.Description;
+
+            if (productDto.TaxId.HasValue)
+                product.TaxId = productDto.TaxId.Value;
+
             product.UpdatedBy = userId;
             product.UpdatedDate = DateTime.Now;
 
-            // ✅ Cập nhật sản phẩm trước
+            // ✅ Cập nhật sản phẩm trong DB
             var updatedProduct = await _repository.UpdateAsync(product);
 
-            // ✅ Nếu có ảnh mới, thay thế ảnh cũ bằng ảnh mới trong bảng Images
+            // ✅ Nếu có ảnh mới, thay thế ảnh cũ
             if (productDto.Images != null && productDto.Images.Count > 0)
             {
-                // Xóa ảnh cũ trong bảng Images
                 await _imageService.DeleteImagesByProductIdAsync(updatedProduct.ProductId);
 
-                // Tạo model ảnh để upload
                 var imageModel = new ImageModel
                 {
-                    Files = productDto.Images // List<IFormFile>
+                    Files = productDto.Images
                 };
 
-                // Upload ảnh mới và lưu vào bảng Images
                 await _imageService.UploadImagesAsync(imageModel, updatedProduct.ProductId);
             }
 
             return await GetProductByIdAsync(updatedProduct.ProductId);
         }
+
         public async Task<int> GetAvailableStockAsync(long productId)
         {
             var total = await _warehouseProductRepository.GetTotalAvailableStockByProductIdAsync(productId);
