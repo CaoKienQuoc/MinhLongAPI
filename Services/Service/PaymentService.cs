@@ -510,7 +510,7 @@ namespace Services.Service
                         var payment = await _repository.GetByIdAsync(paymentId);
                         var orderCode = await _orderRepository.GetOrderByIdAsync(payment.OrderId);
 
-                        var reason = $"Thanh toán đơn hàng #{orderCode} đúng hạn";
+                        var reason = $"Thanh toán đơn hàng #{orderCode} đúng số tiền";
 
                         var existingScore = await _agencyScoreRepository.GetByAgencyIdAndReasonAsync(agency.AgencyId, reason);
 
