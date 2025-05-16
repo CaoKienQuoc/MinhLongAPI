@@ -506,7 +506,7 @@ namespace Services.Service
                 {
                     ReturnRequestImageId = img.ReturnRequestImageId,
                     ImageUrl = img.ImageUrl
-                }).ToList() ?? new List<ReturnRequestImageDto>()
+                }).ToList() ?? new List<ReturnRequestImageDto>() //them dong nay vao
             };
         }
 
