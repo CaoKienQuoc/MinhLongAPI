@@ -23,11 +23,12 @@ namespace BusinessObject.DTO.ReturnOrder
         [Required]
         public string ItemsJson { get; set; } = string.Empty;
 
-        [NotMapped]
+        /*[NotMapped]
+        [JsonIgnore]
         public List<FlattenedReturnItemDto> Items =>
             string.IsNullOrWhiteSpace(ItemsJson)
                 ? new List<FlattenedReturnItemDto>()
-                : JsonConvert.DeserializeObject<List<FlattenedReturnItemDto>>(ItemsJson) ?? new List<FlattenedReturnItemDto>();
+                : JsonConvert.DeserializeObject<List<FlattenedReturnItemDto>>(ItemsJson) ?? new List<FlattenedReturnItemDto>();*/
     }
 
 

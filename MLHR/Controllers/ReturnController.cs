@@ -48,14 +48,21 @@ namespace MLHR.Controllers
             var userId = GetLoggedInUserId();
             if (userId == null) return Unauthorized();
 
-            var itemDetails = dto.Items.Select(i => (
-                i.OrderDetailId,
-                i.Quantity,
-                i.Reason
-            )).ToList();
+
+            Console.WriteLine("ItemsJson nhận vào:");
+            Console.WriteLine(dto.ItemsJson);
+
+
+            var itemDetails = JsonConvert
+                    .DeserializeObject<List<FlattenedReturnItemDto>>(dto.ItemsJson) ?? new();
 
             var result = await _returnService.CreateReturnRequestWithImagesAsync(
-                dto.OrderId, itemDetails, userId.Value, dto.Images);
+                dto.OrderId,
+                itemDetails.Select(i => (i.OrderDetailId, i.Quantity, i.Reason)).ToList(),
+                userId.Value,
+                dto.Images
+            );
+
 
             return Ok(result);
         }
