@@ -40,42 +40,32 @@ namespace MLHR.Controllers
 
         [HttpPost("create")]
         [Authorize]
-        [RequestSizeLimit(10_000_000)]
+        [RequestSizeLimit(20_000_000)]
         public async Task<IActionResult> CreateReturnRequestWithImages(
     [FromForm] Guid orderId,
-    [FromForm] Guid orderDetailId,
-    [FromForm] int quantity,
-    [FromForm] string reason,
-    [FromForm] List<IFormFile> images)
+    [FromForm] List<IFormFile> Images,
+    [FromForm] List<FlattenedReturnItemDto> items)
         {
             var userId = GetLoggedInUserId();
             if (userId == null)
-                return Unauthorized(new { message = "Bạn chưa đăng nhập." });
+                return Unauthorized();
 
-            try
-            {
-                var result = await _returnService.CreateReturnRequestWithImagesAsync(
-                    orderId, orderDetailId, quantity, reason, userId.Value, images
-                );
+            // Map FlattenedReturnItemDto to simpler tuple for service
+            var itemDetails = items.Select(i => (
+                i.OrderDetailId,
+                i.Quantity,
+                i.Reason
+            )).ToList();
 
-                return Ok(new
-                {
-                    message = "Tạo yêu cầu trả hàng thành công.",
-                    data = result
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    message = "Tạo yêu cầu trả hàng thất bại.",
-                    error = ex.Message
-                });
-            }
+            var result = await _returnService.CreateReturnRequestWithImagesAsync(
+                orderId,
+                itemDetails,
+                userId.Value,
+                Images
+            );
+
+            return Ok(result);
         }
-
-
-
 
 
         [HttpPut("approve-Return-Request/{returnRequestId}")]

@@ -14,10 +14,14 @@ namespace BusinessObject.Models
         public long ReturnRequestImageId { get; set; }
 
         [Required]
-        public Guid ReturnRequestDetailId { get; set; }
+        public Guid ReturnRequestId { get; set; }
 
-        [ForeignKey(nameof(ReturnRequestDetailId))]
-        public ReturnRequestDetail ReturnRequestDetail { get; set; }
+        [ForeignKey(nameof(ReturnRequestId))]
+        public ReturnRequest ReturnRequest { get; set; }
+
+        // ❌ Loại bỏ nếu không còn dùng đến
+        // public Guid? ReturnRequestDetailId { get; set; }
+        // public ReturnRequestDetail ReturnRequestDetail { get; set; }
 
         [Required]
         public string ImageUrl { get; set; }
@@ -25,6 +29,9 @@ namespace BusinessObject.Models
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
         public string PublicId { get; set; }
+
+        public bool IsProof { get; set; } = true;
     }
+
 
 }

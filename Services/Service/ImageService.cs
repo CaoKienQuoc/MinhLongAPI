@@ -173,7 +173,7 @@ namespace Services.Service
 
                     var returnImage = new ReturnRequestImage
                     {
-                        ReturnRequestDetailId = returnRequestDetailId,
+                        ReturnRequestId = returnRequestDetailId,
                         ImageUrl = uploadResult.SecureUrl.ToString(),
                         PublicId = uploadResult.PublicId,
                         UploadedAt = GetVietnamTime()
@@ -199,7 +199,7 @@ namespace Services.Service
 
                     var returnImage = new ReturnRequestImage
                     {
-                        ReturnRequestDetailId = returnRequestDetailId,
+                        ReturnRequestId = returnRequestDetailId,
                         ImageUrl = uploadResult.SecureUrl.ToString(),
                         PublicId = uploadResult.PublicId,
                         UploadedAt = GetVietnamTime(),
@@ -310,7 +310,7 @@ namespace Services.Service
             }
         }
 
-        public async Task<List<ReturnRequestImage>> UploadReturnRequestImagesAsync(Guid orderDetailId, Guid returnRequestDetailId, List<IFormFile> files)
+        /*public async Task<List<ReturnRequestImage>> UploadReturnRequestImagesAsync(Guid orderDetailId, Guid returnRequestDetailId, List<IFormFile> files)
         {
             if (files == null || files.Count == 0)
                 throw new Exception("Không có ảnh được tải lên.");
@@ -355,7 +355,7 @@ namespace Services.Service
             }
 
             return await _repo.AddRangeAsync(result);
-        }
+        }*/
 
         public async Task<List<ImageUploadResultDto>> UploadImagesAndReturnMetaAsync(List<IFormFile> files)
         {
@@ -385,6 +385,9 @@ namespace Services.Service
 
             return result;
         }
+
+        
+
 
         public Task SaveChatImageAsync(ChatMessageImage image)
         {

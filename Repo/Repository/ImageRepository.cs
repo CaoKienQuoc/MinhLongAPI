@@ -51,9 +51,9 @@ namespace Repo.Repository
                     throw new ArgumentException("ReturnRequestDetailId không hợp lệ.", nameof(image.ReturnRequestDetailId));*/
 
                 // Kiểm tra ReturnRequestDetail có tồn tại không
-                var returnRequestDetail = await _context.ReturnRequestDetails.FindAsync(image.ReturnRequestDetailId);
+                var returnRequestDetail = await _context.ReturnRequestDetails.FindAsync(image.ReturnRequestId);
                 if (returnRequestDetail == null)
-                    throw new Exception($"Không tìm thấy ReturnRequestDetail với ID {image.ReturnRequestDetailId}.");
+                    throw new Exception($"Không tìm thấy ReturnRequestDetail với ID {image.ReturnRequestId}.");
 
                 // Thêm ảnh
                 _context.ReturnRequestImages.Add(image);

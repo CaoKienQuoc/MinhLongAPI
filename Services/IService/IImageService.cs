@@ -20,5 +20,6 @@ namespace Services.IService
         Task SaveChatImageAsync(ChatMessageImage image);
         Task<List<ImageUploadResultDto>> UploadImagesAndReturnMetaAsync(List<IFormFile> files);
 
+
     }
 }

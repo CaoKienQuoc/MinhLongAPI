@@ -60,8 +60,8 @@ namespace Services.Service
             if (returnReceipt.Status != "Approved")
                 throw new Exception("Phiếu Trả Hàng Chưa Duyệt.");
 
-            if (receipt.Status == "Imported")
-                throw new Exception("Đã Nhập Kho Huỷ Trước Đó Rồi");
+            if (receipt.Status == "Completed")
+                throw new Exception("Đơn Hàng Đã Được Xử Lý Thành Công Trước Đó!");
 
             // 5) Lấy warehouseId và kiểm quyền
             var userWarehouseId = await _warehouseRepo.GetWarehouseIdByUserAsync(warehouseUserId);

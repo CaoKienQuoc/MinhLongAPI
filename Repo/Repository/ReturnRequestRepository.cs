@@ -190,8 +190,24 @@ namespace Repo.Repository
 
         public async Task SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message;
+                // Log chi tiết lỗi ra console hoặc logger
+                Console.WriteLine("DbUpdateException: " + ex.Message);
+                Console.WriteLine("InnerException: " + innerMessage);
+
+                // Bạn có thể log ra logger nếu dùng ILogger
+                // _logger.LogError(ex, "Lỗi SaveChanges: {Message}", innerMessage);
+
+                throw new Exception("Lỗi khi lưu dữ liệu: " + innerMessage, ex);
+            }
         }
+
 
         public async Task<List<Guid>> GetDetailIdsByReturnRequestIdAsync(Guid returnRequestId)
         {

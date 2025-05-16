@@ -69,10 +69,12 @@ namespace Services.Service
             return sb.ToString().Replace(" ", "").ToLowerInvariant();
         }
 
-        public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(Guid orderId, Guid orderDetailId, int quantity, string reason, Guid userId, List<IFormFile> images)
+        public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(
+    Guid orderId,
+    List<(Guid orderDetailId, int quantity, string reason)> itemDetails,
+    Guid userId,
+    List<IFormFile> images)
         {
-            //string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
-            // 🔎 Lấy đơn hàng và kiểm tra trạng thái
             var order = await _orderRepo.GetOrderByIdAsync(orderId);
             if (order == null)
                 throw new Exception("Không tìm thấy đơn hàng.");
@@ -80,138 +82,56 @@ namespace Services.Service
             if (!string.Equals(order.Status, "Exported", StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Chỉ được phép tạo yêu cầu trả hàng cho đơn hàng đã xuất.");
 
-            var orderDetail = await _orderRepo.GetOrderDetailByIdAsync(orderDetailId);
-            if (orderDetail == null) throw new Exception("Không tìm thấy OrderDetail.");
-
-            long productId = orderDetail.ProductId;
-
-            // 🔥 Validate số lượng trả
-            // 1. Tổng số lượng đã trả trước đó
-            int totalReturned = await _returnRepo.GetTotalReturnedQuantityAsync(orderDetailId);
-
-            // 2. Số lượng còn lại có thể trả
-            int availableQuantity = orderDetail.Quantity - totalReturned;
-
-            if (quantity > availableQuantity)
-                throw new Exception($"Số lượng trả vượt quá số lượng còn lại. Số lượng còn lại có thể trả là {availableQuantity} sản phẩm cho đơn hàng này.");
-            
-            // 🔎 Kiểm tra nếu đã có ReturnRequest cho sản phẩm này
-            var existingRequest = await _returnRepo.GetByOrderAndProductAsync(orderId, productId);
-            // Biến dùng chung cho upload ảnh
-            ImageModel imageModel = null;
-            List<ReturnRequestImage> uploadedImages = null;
-
-            // Nếu đã có ReturnRequest trước đó
-            if (existingRequest != null)
-            {
-                // ✅ Tìm chi tiết trả hàng của sản phẩm này
-                //var existingDetail = existingRequest.Details.FirstOrDefault(d => d.OrderDetailId == orderDetailId);
-
-                // 🔍 Kiểm tra lý do đã tồn tại (không phân biệt dấu, khoảng trắng, chữ hoa/thường)
-                var normalizedReason = NormalizeString(reason);
-                var existingDetail = existingRequest.Details.FirstOrDefault(d =>
-                    d.OrderDetailId == orderDetailId &&
-                    d.ProductId == productId &&
-                    NormalizeString(d.Reason) == normalizedReason
-                );
-
-
-                if (existingDetail != null)
-                {
-                    // Cập nhật số lượng trả hàng
-                    existingDetail.QuantityReturned += quantity;
-                    await _returnRepo.UpdateAsync(existingRequest);
-
-                    // ✅ Upload thêm ảnh nếu có
-                    if (images != null && images.Count > 0)
-                    {
-                        imageModel = new ImageModel { Files = images };
-                        uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, existingDetail.ReturnRequestDetailId);
-
-                        // Lưu ảnh mới vào database
-                        //await _returnRepo.AddRangeAsync(uploadedImages);
-                    }
-
-                    return existingRequest;
-                }
-                else
-                {
-                    // ✅ Tạo chi tiết trả hàng mới nếu lý do khác
-                    var newDetail = new ReturnRequestDetail
-                    {
-                        OrderDetailId = orderDetailId,
-                        ProductId = productId,
-                        QuantityReturned = quantity,
-                        Reason = reason
-                    };
-
-                    existingRequest.Details.Add(newDetail);
-                    await _returnRepo.UpdateAsync(existingRequest);
-                    await _returnRepo.SaveChangesAsync();
-
-                    // 🔄 Lấy chính xác ReturnRequestDetailId sau khi lưu
-                    var savedDetail = existingRequest.Details.LastOrDefault(d =>
-                        d.OrderDetailId == orderDetailId &&
-                        d.ProductId == productId &&
-                        d.Reason == reason
-                    );
-
-                    // ✅ Upload ảnh nếu có
-                    if (images != null && images.Count > 0)
-                    {
-                        imageModel = new ImageModel { Files = images };
-                        uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, savedDetail.ReturnRequestDetailId);
-                        //await _returnRepo.AddRangeAsync(uploadedImages);
-                    }
-
-                    return existingRequest;
-                }
-            }
-
-            // Tạo ReturnRequest mới nếu chưa có
             string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
-            // Tạo return request
+
             var returnRequest = new ReturnRequest
             {
                 OrderId = orderId,
                 CreatedByUserId = userId,
-                //Note = note,
                 Status = "Pending",
                 ReturnRequestCode = returnRequestCode,
                 CreatedAt = GetVietnamTime(),
-                
-                Details = new List<ReturnRequestDetail>
+                Details = new List<ReturnRequestDetail>()
+            };
+
+            foreach (var (orderDetailId, quantity, reason) in itemDetails)
             {
-                new ReturnRequestDetail
+                var orderDetail = await _orderRepo.GetOrderDetailByIdAsync(orderDetailId);
+                if (orderDetail == null) throw new Exception($"Không tìm thấy OrderDetail {orderDetailId}");
+
+                long productId = orderDetail.ProductId;
+
+                int totalReturned = await _returnRepo.GetTotalReturnedQuantityAsync(orderDetailId);
+                int availableQuantity = orderDetail.Quantity - totalReturned;
+
+                if (quantity > availableQuantity)
+                    throw new Exception($"Số lượng trả vượt quá giới hạn cho OrderDetail {orderDetailId}. Có thể trả: {availableQuantity}");
+
+                returnRequest.Details.Add(new ReturnRequestDetail
                 {
                     OrderDetailId = orderDetailId,
                     ProductId = productId,
                     QuantityReturned = quantity,
                     Reason = reason
-                }
+                });
             }
-            };
 
             var savedRequest = await _returnRepo.CreateAsync(returnRequest);
 
-            /*// ✅ Lấy chính xác ReturnRequestDetailId sau khi lưu
-            var returnDetailId = savedRequest.Details.First().ReturnRequestDetailId;
-
-            // Upload ảnh lên Cloudinary hoặc thư mục lưu trữ
-            var imageModel = new ImageModel { Files = images };
-            var uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, returnDetailId);*/
-
-            // ✅ Upload ảnh cho ReturnRequest mới
+            // ✅ Upload ảnh cho toàn bộ ReturnRequest (không còn liên quan đến từng detail)
             if (images != null && images.Count > 0)
             {
-                var returnDetailId = savedRequest.Details.First().ReturnRequestDetailId;
-                imageModel = new ImageModel { Files = images };
-                uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, returnDetailId);
+                var imageModel = new ImageModel { Files = images };
+                var uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, savedRequest.ReturnRequestId); // << change here
                 await _returnRepo.AddRangeAsync(uploadedImages);
             }
 
             return savedRequest;
         }
+
+
+
+
         public DateTime GetVietnamTime()
         {
             // Lấy múi giờ Việt Nam (GMT+7)
