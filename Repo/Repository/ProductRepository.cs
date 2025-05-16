@@ -82,10 +82,7 @@ namespace Repo.Repository
             _context.Products.Update(product);
             await _context.SaveChangesAsync();
 
-            /*// ✅ Xóa hình ảnh cũ trước khi cập nhật
-            var existingImages = _context.Images.Where(img => img.ProductId == product.ProductId);
-            _context.Images.RemoveRange(existingImages);
-            await _context.SaveChangesAsync();*/
+            
 
             await _context.SaveChangesAsync();
 
