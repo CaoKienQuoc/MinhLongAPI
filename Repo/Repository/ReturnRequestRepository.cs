@@ -208,6 +208,11 @@ namespace Repo.Repository
             }
         }
 
+        public async Task AddDetailsAsync(IEnumerable<ReturnRequestDetail> details)
+        {
+            _context.ReturnRequestDetails.AddRange(details);
+            await _context.SaveChangesAsync();
+        }
 
         public async Task<List<Guid>> GetDetailIdsByReturnRequestIdAsync(Guid returnRequestId)
         {

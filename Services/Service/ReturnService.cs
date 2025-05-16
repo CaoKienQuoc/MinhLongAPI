@@ -50,23 +50,24 @@ namespace Services.Service
 
         private string NormalizeString(string input)
         {
-            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
 
-            // Loại bỏ dấu tiếng Việt
-            var normalizedString = input.Normalize(NormalizationForm.FormD);
+            // 1. Tách ký tự có dấu thành ký tự cơ bản + dấu
+            var normalizedFormD = input.Normalize(NormalizationForm.FormD);
             var sb = new StringBuilder();
-
-            foreach (var c in normalizedString)
+            foreach (var c in normalizedFormD)
             {
-                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
-                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
-                {
+                // 2. Bỏ mark (dấu)
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
                     sb.Append(c);
-                }
             }
 
-            // Loại bỏ khoảng trắng thừa và chuyển về chữ thường
-            return sb.ToString().Replace(" ", "").ToLowerInvariant();
+            // 3. Xóa hết khoảng trắng, chuyển chữ thường
+            return sb
+                .ToString()
+                .Replace(" ", "")
+                .ToLowerInvariant();
         }
 
         public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(
@@ -96,6 +97,9 @@ namespace Services.Service
 
             foreach (var (orderDetailId, quantity, reason) in itemDetails)
             {
+                // Chuẩn hóa reason ngay tại đây
+                var normalizedReason = NormalizeString(reason);
+
                 var orderDetail = await _orderRepo.GetOrderDetailByIdAsync(orderDetailId);
                 if (orderDetail == null) throw new Exception($"Không tìm thấy OrderDetail {orderDetailId}");
 
@@ -112,11 +116,18 @@ namespace Services.Service
                     OrderDetailId = orderDetailId,
                     ProductId = productId,
                     QuantityReturned = quantity,
-                    Reason = reason
+                    Reason = normalizedReason
                 });
             }
 
             var savedRequest = await _returnRepo.CreateAsync(returnRequest);
+
+            foreach (var d in returnRequest.Details)
+            {
+                d.ReturnRequestId = savedRequest.ReturnRequestId;
+            }
+            await _returnRepo.AddDetailsAsync(returnRequest.Details);
+
 
             // ✅ Upload ảnh cho toàn bộ ReturnRequest (không còn liên quan đến từng detail)
             if (images != null && images.Count > 0)

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Services.IService;
 using Services.Service;
 using BusinessObject.Models;
+using Newtonsoft.Json;
 
 namespace MLHR.Controllers
 {
@@ -41,31 +42,24 @@ namespace MLHR.Controllers
         [HttpPost("create")]
         [Authorize]
         [RequestSizeLimit(20_000_000)]
-        public async Task<IActionResult> CreateReturnRequestWithImages(
-    [FromForm] Guid orderId,
-    [FromForm] List<IFormFile> Images,
-    [FromForm] List<FlattenedReturnItemDto> items)
+        [Consumes("multipart/form-data")] // ✅ Dòng này!
+        public async Task<IActionResult> CreateReturnRequestWithImages([FromForm] ReturnRequestFormDto dto)
         {
             var userId = GetLoggedInUserId();
-            if (userId == null)
-                return Unauthorized();
+            if (userId == null) return Unauthorized();
 
-            // Map FlattenedReturnItemDto to simpler tuple for service
-            var itemDetails = items.Select(i => (
+            var itemDetails = dto.Items.Select(i => (
                 i.OrderDetailId,
                 i.Quantity,
                 i.Reason
             )).ToList();
 
             var result = await _returnService.CreateReturnRequestWithImagesAsync(
-                orderId,
-                itemDetails,
-                userId.Value,
-                Images
-            );
+                dto.OrderId, itemDetails, userId.Value, dto.Images);
 
             return Ok(result);
         }
+
 
 
         [HttpPut("approve-Return-Request/{returnRequestId}")]
