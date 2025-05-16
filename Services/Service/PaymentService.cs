@@ -488,101 +488,92 @@ namespace Services.Service
                 // ✅ Nếu thanh toán đủ & đúng hạn => Cộng điểm
                 if (existingHistory.Status == "PAID")
                 {
-                    // ✅ Gán hệ số theo cấp hiện tại của đại lý
+                    // ✅ Lấy cấp hiện tại của đại lý
                     var currentLevel = await _agencyLevelRepository.GetCurrentLevelByAgencyIdAsync(agency.AgencyId);
-                    decimal ratio = 1.0m;
+                    decimal ratio = 0m;
 
-                    switch (currentLevel)
+                    // ✅ Chỉ cộng điểm nếu còn khả năng thăng cấp
+                    if (currentLevel == 3)
                     {
-                        case 3:
-                            ratio = 1.0m; // 1 điểm mỗi 1 triệu
-                            break;
-                        case 2:
-                            ratio = 0.8m;
-                            break;
-                        case 1:
-                            ratio = 0.5m;
-                            break;
+                        ratio = 1.0m; // Chuẩn bị lên cấp 2
+                    }
+                    else if (currentLevel == 2)
+                    {
+                        ratio = 0.5m; // Chuẩn bị lên cấp 1
                     }
 
-                    // ✅ Tính điểm dựa trên số tiền thanh toán và hệ số
-                    int addedScore = (int)((transaction.Amount / 1_000_000m) * ratio);
-                    var paymentId = transaction.PaymentHistoryId;
-                    var payment = await _repository.GetByIdAsync(paymentId);
-                    var orderCode = await _orderRepository.GetOrderByIdAsync(payment.OrderId);
-
-
-                    // ✅ Tạo reason riêng cho mỗi giao dịch để tránh cộng dồn vào 1 dòng
-                    var reason = $"Thanh toán đơn hàng #{orderCode} đúng hạn";
-
-                    // ✅ Kiểm tra xem đã cộng điểm cho giao dịch này chưa (dựa trên reason)
-                    var existingScore = await _agencyScoreRepository.GetByAgencyIdAndReasonAsync(agency.AgencyId, reason);
-
-                    if (existingScore != null)
+                    // ✅ Nếu không còn thăng cấp hoặc cấp 1 thì không cộng điểm
+                    if (ratio > 0)
                     {
-                        // Đã có thì không cộng lại (tránh trùng)
-                    }
-                    else
-                    {
-                        // ✅ Thêm điểm mới
-                        var scoreEntry = new AgencyScoreHistory
+                        int addedScore = (int)((transaction.Amount / 1_000_000m) * ratio);
+                        var paymentId = transaction.PaymentHistoryId;
+                        var payment = await _repository.GetByIdAsync(paymentId);
+                        var orderCode = await _orderRepository.GetOrderByIdAsync(payment.OrderId);
+
+                        var reason = $"Thanh toán đơn hàng #{orderCode} đúng hạn";
+
+                        var existingScore = await _agencyScoreRepository.GetByAgencyIdAndReasonAsync(agency.AgencyId, reason);
+
+                        if (existingScore == null)
                         {
-                            AgencyId = agency.AgencyId,
-                            ScoreChange = addedScore,
-                            Reason = reason,
-                            CreatedDate = transaction.PaymentDate
-                        };
-                        await _agencyScoreRepository.AddScoreAsync(scoreEntry);
-                        await _agencyScoreRepository.SaveChangesAsync();
-
-                        // ✅ 2. Cập nhật tổng điểm vào bảng AgencyAccount
-                        agency.AgencyScore =  scoreEntry.ScoreChange;
-                        await _agencyRepository.UpdateAsync(agency);
-
-                        Console.WriteLine($"✅ +{addedScore} điểm cho đại lý {agency.AgencyName} - {reason}");
-                    }
-
-                    // ✅ Tổng điểm hiện tại
-                    var totalScore = await _agencyScoreRepository.GetTotalScoreByAgencyIdAsync(agency.AgencyId);
-
-                    // ✅ Kiểm tra điều kiện thăng hạng
-                    if (currentLevel == 3 && totalScore >= 1500)
-                    {
-                        bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 2);
-                        if (!exists)
-                        {
-                            var promotionRequest = new AgencyPromotionRequest
+                            var scoreEntry = new AgencyScoreHistory
                             {
                                 AgencyId = agency.AgencyId,
-                                CurrentLevelId = 3,
-                                SuggestedLevelId = 2,
-                                TotalScore = totalScore,
-                                Status = "Pending",
-                                CreatedAt = vnNow
+                                ScoreChange = addedScore,
+                                Reason = reason,
+                                CreatedDate = transaction.PaymentDate
                             };
-                            await _agencyPromotionRepository.AddAsync(promotionRequest);
-                            await _agencyPromotionRepository.SaveChangesAsync();
+                            await _agencyScoreRepository.AddScoreAsync(scoreEntry);
+                            await _agencyScoreRepository.SaveChangesAsync();
+
+                            agency.AgencyScore = scoreEntry.ScoreChange;
+                            await _agencyRepository.UpdateAsync(agency);
+
+                            Console.WriteLine($"✅ +{addedScore} điểm cho đại lý {agency.AgencyName} - {reason}");
                         }
-                    }
-                    else if (currentLevel == 2 && totalScore >= 7000)
-                    {
-                        bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 1);
-                        if (!exists)
+
+                        var totalScore = await _agencyScoreRepository.GetTotalScoreByAgencyIdAsync(agency.AgencyId);
+
+                        // ✅ Kiểm tra điều kiện thăng hạng
+                        if (currentLevel == 3 && totalScore >= 1500)
                         {
-                            var promotionRequest = new AgencyPromotionRequest
+                            bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 2);
+                            if (!exists)
                             {
-                                AgencyId = agency.AgencyId,
-                                CurrentLevelId = 2,
-                                SuggestedLevelId = 1,
-                                TotalScore = totalScore,
-                                Status = "Pending",
-                                CreatedAt = vnNow
-                            };
-                            await _agencyPromotionRepository.AddAsync(promotionRequest);
-                            await _agencyPromotionRepository.SaveChangesAsync();
+                                var promotionRequest = new AgencyPromotionRequest
+                                {
+                                    AgencyId = agency.AgencyId,
+                                    CurrentLevelId = 3,
+                                    SuggestedLevelId = 2,
+                                    TotalScore = totalScore,
+                                    Status = "Pending",
+                                    CreatedAt = vnNow
+                                };
+                                await _agencyPromotionRepository.AddAsync(promotionRequest);
+                                await _agencyPromotionRepository.SaveChangesAsync();
+                            }
+                        }
+                        else if (currentLevel == 2 && totalScore >= 7000)
+                        {
+                            bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 1);
+                            if (!exists)
+                            {
+                                var promotionRequest = new AgencyPromotionRequest
+                                {
+                                    AgencyId = agency.AgencyId,
+                                    CurrentLevelId = 2,
+                                    SuggestedLevelId = 1,
+                                    TotalScore = totalScore,
+                                    Status = "Pending",
+                                    CreatedAt = vnNow
+                                };
+                                await _agencyPromotionRepository.AddAsync(promotionRequest);
+                                await _agencyPromotionRepository.SaveChangesAsync();
+                            }
                         }
                     }
                 }
+
 
 
                 return new StatusPayment
