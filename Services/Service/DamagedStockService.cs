@@ -22,7 +22,7 @@ namespace Services.Service
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
         private readonly IUserRepository _userRepo;
-
+        private readonly IOrderRepository _orderRepo;
         public DamagedStockService(
             IDamagedStockRepository repo,
             IReturnWarehouseReceiptRepository receiptRepo,
@@ -30,7 +30,8 @@ namespace Services.Service
             IWarehouseRepository whRepo,
             IConfiguration configuration,
             IEmailService emailService,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IOrderRepository orderRepo)
         {
             _damagedRepo = repo;
             _returnWarehouseReceiptRepo = receiptRepo;
@@ -39,6 +40,7 @@ namespace Services.Service
             _configuration = configuration;
             _emailService = emailService;
             _userRepo = userRepository;
+            _orderRepo = orderRepo;
         }
 
         public Task<IEnumerable<DamagedStockDto>> GetByWarehouseIdAsync(long warehouseId)
@@ -98,6 +100,15 @@ namespace Services.Service
 
             // 8) Cập nhật trạng thái ReturnRequest thành Completed
             await _returnRepo.UpdateStatusAsync(receipt.ReturnRequestId, "Completed");
+
+            var request = await _returnRepo.GetByIdWithDetailsAsync(receipt.ReturnRequestId);
+            if (request == null)
+                throw new Exception("Không tìm thấy yêu cầu trả hàng.");
+
+            var order = await _orderRepo.GetOrderByIdAsync(request.OrderId);
+            if (order == null)
+                throw new Exception("Không tìm thấy đơn hàng.");
+
 
             // 9) Gửi email thông báo tới người tạo phiếu
             var managerEmail = user.Email;

@@ -227,6 +227,22 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(r => r.OrderId == orderId && r.Details.Any(d => d.ProductId == productId));
         }
 
+        public async Task<ReturnRequest?> GetLatestReturnRequestByOrderIdAsync(Guid orderId)
+        {
+            return await _context.ReturnRequests
+                .Include(r => r.Details) // nếu bạn cần load danh sách chi tiết
+                .Where(r => r.OrderId == orderId)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<ReturnRequest> UpdateReturnAsync(ReturnRequest request)
+        {
+            _context.ReturnRequests.Update(request);
+            await _context.SaveChangesAsync();
+            return request; // ✅ Trả về request sau khi cập nhật
+        }
+
     }
 
 }

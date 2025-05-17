@@ -70,7 +70,7 @@ namespace Services.Service
                 .ToLowerInvariant();
         }
 
-        public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(
+        /*public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(
     Guid orderId,
     List<(Guid orderDetailId, int quantity, string reason)> itemDetails,
     Guid userId,
@@ -145,9 +145,115 @@ namespace Services.Service
             }
 
             return savedRequest;
+        }*/
+
+        public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(
+    Guid orderId,
+    List<(Guid orderDetailId, int quantity, string reason)> itemDetails,
+    Guid userId,
+    List<IFormFile> images)
+        {
+            var order = await _orderRepo.GetOrderByIdAsync(orderId);
+            if (order == null)
+                throw new Exception("Không tìm thấy đơn hàng.");
+
+            if (!string.Equals(order.Status, "Exported", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Chỉ được phép tạo yêu cầu trả hàng cho đơn hàng đã xuất.");
+
+            var exportReceipt = await _warehouseExportRepo.GetExportSaleByOrderIdAsync(orderId);
+            if (exportReceipt == null)
+                throw new Exception("Không tìm thấy phiếu xuất kho bán tương ứng.");
+
+            var exportDate = exportReceipt.ExportDate;
+            var nowVN = GetVietnamTime();
+            var daysDiff = (nowVN.Date - exportDate.Date).TotalDays;
+            if (daysDiff > 30)
+                throw new Exception("Đơn hàng đã được xuất quá 30 ngày, không thể tạo yêu cầu trả hàng.");
+
+            var existingReturn = await _returnRepo.GetLatestReturnRequestByOrderIdAsync(orderId);
+
+            ReturnRequest returnRequest;
+            bool isNewRequest = false;
+
+            if (existingReturn == null ||
+                existingReturn.Status == "Approved" ||
+                existingReturn.Status == "Completed")
+            {
+                string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
+                returnRequest = new ReturnRequest
+                {
+                    OrderId = orderId,
+                    CreatedByUserId = userId,
+                    Status = "Pending",
+                    ReturnRequestCode = returnRequestCode,
+                    CreatedAt = GetVietnamTime(),
+                    Details = new List<ReturnRequestDetail>()
+                };
+                isNewRequest = true;
+            }
+            else
+            {
+                returnRequest = existingReturn;
+                if (returnRequest.Details == null)
+                    returnRequest.Details = new List<ReturnRequestDetail>();
+            }
+
+            foreach (var (orderDetailId, quantity, reason) in itemDetails)
+            {
+                var normalizedReason = NormalizeString(reason);
+                var orderDetail = await _orderRepo.GetOrderDetailByIdAsync(orderDetailId);
+                if (orderDetail == null)
+                    throw new Exception($"Không tìm thấy OrderDetail {orderDetailId}");
+
+                long productId = orderDetail.ProductId;
+                int totalReturned = await _returnRepo.GetTotalReturnedQuantityAsync(orderDetailId);
+                int availableQuantity = orderDetail.Quantity - totalReturned;
+
+                if (quantity > availableQuantity)
+                    throw new Exception($"Số lượng trả vượt quá giới hạn cho OrderDetail {orderDetailId}. Có thể trả: {availableQuantity}");
+
+                // ✅ So sánh theo cả OrderDetailId và Reason đã chuẩn hoá
+                var existingDetail = returnRequest.Details
+                    .FirstOrDefault(d =>
+                        d.OrderDetailId == orderDetailId &&
+                        NormalizeString(d.Reason) == normalizedReason);
+
+                if (existingDetail != null)
+                {
+                    // ✅ Nếu trùng OrderDetailId + Reason → cộng dồn
+                    existingDetail.QuantityReturned += quantity;
+                }
+                else
+                {
+                    // ✅ Nếu khác Reason hoặc OrderDetailId mới → thêm mới
+                    returnRequest.Details.Add(new ReturnRequestDetail
+                    {
+                        OrderDetailId = orderDetailId,
+                        ProductId = productId,
+                        QuantityReturned = quantity,
+                        Reason = normalizedReason
+                    });
+                }
+            }
+
+            ReturnRequest savedRequest;
+            if (isNewRequest)
+            {
+                savedRequest = await _returnRepo.CreateAsync(returnRequest);
+            }
+            else
+            {
+                savedRequest = await _returnRepo.UpdateReturnAsync(returnRequest);
+            }
+
+            if (images != null && images.Count > 0)
+            {
+                var imageModel = new ImageModel { Files = images };
+                await _imageService.UploadReturnImagesAsync(imageModel, savedRequest.ReturnRequestId);
+            }
+
+            return savedRequest;
         }
-
-
 
 
         public DateTime GetVietnamTime()
@@ -168,6 +274,10 @@ namespace Services.Service
             var request = await _returnRepo.GetByIdWithDetailsAsync(returnRequestId);
             if (request == null)
                 throw new Exception("Không tìm thấy yêu cầu trả hàng.");
+
+            var order = await _orderRepo.GetOrderByIdAsync(request.OrderId);
+            if (order == null)
+                throw new Exception("Không tìm thấy đơn hàng.");
 
             if (!string.Equals(request.Status, "Pending", StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Yêu cầu đã được duyệt trước đó rồi!");

@@ -34,6 +34,10 @@ namespace Repo.IRepository
         Task<ReturnRequest> GetByOrderAndProductAsync(Guid orderId, long productId);
         Task SaveChangesAsync();
         Task AddDetailsAsync(IEnumerable<ReturnRequestDetail> details);
+
+        Task<ReturnRequest?> GetLatestReturnRequestByOrderIdAsync(Guid orderId);
+
+        Task<ReturnRequest> UpdateReturnAsync(ReturnRequest request);
     }
 
 }
