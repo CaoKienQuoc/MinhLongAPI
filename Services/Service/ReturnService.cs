@@ -305,7 +305,6 @@ namespace Services.Service
             };
         }
 
-        //fix
         public async Task<List<ReturnRequestProdductDto>> GetAllReturnRequestsAsyncForSales(Guid userId)
         {
             var requests = await _returnRepo.GetAllAsync();
