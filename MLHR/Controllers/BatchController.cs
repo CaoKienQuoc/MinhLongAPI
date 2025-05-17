@@ -37,8 +37,6 @@ namespace MLHR.Controllers
         {
             var batches = await _batchService.GetBatchesByProductIdAsync(productId);
 
-            if (batches == null || !batches.Any())
-                return NotFound("No batches found for the given product.");
 
             return Ok(batches);
         }
@@ -47,8 +45,6 @@ namespace MLHR.Controllers
         public async Task<IActionResult> GetProductInfoByBatchId(long batchId)
         {
             var result = await _batchService.GetProductInfoByBatchIdAsync(batchId);
-            if (result == null)
-                return NotFound("Batch not found");
 
             return Ok(result);
         }
@@ -59,16 +55,14 @@ namespace MLHR.Controllers
             try
             {
                 var batches = await _batchService.GetBatchesByWarehouseIdAsync(warehouseId);
-                if (!batches.Any())
-                    return NotFound("Không tìm thấy batch nào cho kho này.");
-
-                return Ok(batches);
+                return Ok(batches); // Luôn trả về 200, kể cả khi batches là mảng rỗng
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
+
 
         [HttpGet("expired-soon/{warehouseId}")]
         public async Task<IActionResult> GetExpiredSoonBatchesByWarehouse(long warehouseId)
