@@ -46,25 +46,36 @@ namespace MLHR.Controllers
         public async Task<IActionResult> CreateReturnRequestWithImages([FromForm] ReturnRequestFormDto dto)
         {
             var userId = GetLoggedInUserId();
-            if (userId == null) return Unauthorized();
+            if (userId == null)
+                return Unauthorized(new { message = "Người dùng chưa đăng nhập" });
 
+            try
+            {
+                Console.WriteLine("ItemsJson nhận vào:");
+                Console.WriteLine(dto.ItemsJson);
 
-            Console.WriteLine("ItemsJson nhận vào:");
-            Console.WriteLine(dto.ItemsJson);
-
-
-            var itemDetails = JsonConvert
+                var itemDetails = JsonConvert
                     .DeserializeObject<List<FlattenedReturnItemDto>>(dto.ItemsJson) ?? new();
 
-            var result = await _returnService.CreateReturnRequestWithImagesAsync(
-                dto.OrderId,
-                itemDetails.Select(i => (i.OrderDetailId, i.Quantity, i.Reason)).ToList(),
-                userId.Value,
-                dto.Images
-            );
+                await _returnService.CreateReturnRequestWithImagesAsync(
+                    dto.OrderId,
+                    itemDetails.Select(i => (i.OrderDetailId, i.Quantity, i.Reason)).ToList(),
+                    userId.Value,
+                    dto.Images
+                );
 
-
-            return Ok(result);
+                return Ok(new { message = "Tạo yêu cầu trả hàng thành công" });
+            }
+            catch (JsonException jsonEx)
+            {
+                // Lỗi khi parse JSON sai định dạng
+                return BadRequest(new { message = "Dữ liệu ItemsJson không hợp lệ", detail = jsonEx.Message });
+            }
+            catch (Exception ex)
+            {
+                // Lỗi không xác định
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi tạo yêu cầu trả hàng", detail = ex.Message });
+            }
         }
 
 
