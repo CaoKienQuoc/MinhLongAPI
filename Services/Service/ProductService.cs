@@ -56,7 +56,7 @@ namespace Services.Service
                 UpdatedByName = product.Updater?.Employee?.FullName ?? product.Updater?.Username ?? "Chưa cập nhật",
                 UpdatedDate = product.UpdatedDate,
                 AvailableStock = availableStock,
-                Price = (decimal)Math.Ceiling((double)product.Price),
+                Price = product.Price,
                 Images = product.Images.Select(img => img.ImageUrl).ToList()
             };
         }
@@ -87,7 +87,7 @@ namespace Services.Service
                     UpdatedByName = product.Updater?.Employee?.FullName ?? product.Updater?.Username ?? "Chưa cập nhật",
                     UpdatedDate = product.UpdatedDate,
                     AvailableStock = availableStock,
-                    Price = (decimal)Math.Ceiling((double)product.Price),
+                    Price = product.Price,
                     Images = product.Images.Select(img => img.ImageUrl).ToList()
                 });
             }
