@@ -757,11 +757,12 @@ namespace Services.Service
             var userRole = await _userRepository.GetUserRoleByUserIdAsync(user.UserId);
             long roleId = userRole?.RoleId ?? 0;
             string roleName = userRole?.Role?.RoleName ?? null;
-
+            string displayName = await _userRepository.GetEmployeeFullNameByUserIdAsync(user.UserId)
+                    ?? await _userRepository.GetAgencyNameByUserIdAsync(user.UserId);
 
             // Tạo JWT Token
             var token = await _jwtService.GenerateJwtTokenAsync(user, roleId);
-            return new { roleName, roleId, token };
+            return new { roleName, roleId, displayName, token };
         }
 
         public async Task<List<RegisterAccountWithContractsDto>> GetRegisterAccount()

@@ -498,6 +498,14 @@ namespace Repo.Repository
          .FirstOrDefaultAsync();
         }
 
+        public async Task<string?> GetEmployeeFullNameByUserIdAsync(Guid userId)
+        {
+            return await _context.Employees
+                .Where(e => e.UserId == userId)
+                .Select(e => e.FullName)
+                .FirstOrDefaultAsync();
+        }
+
     }
 
 

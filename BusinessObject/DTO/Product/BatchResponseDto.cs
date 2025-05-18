@@ -21,6 +21,7 @@ namespace BusinessObject.DTO.Product
         public decimal SellingPrice { get; set; } // Tổng giá trị lô hàng (Quantity * UnitCost)
         public DateTime DateOfManufacture { get; set; }
         public DateTime ExpiryDate { get; set; } // Ngày hết hạn
+        public DateTime DateImport { get; set; } // Ngày hết hạn
         public string Status { get; set; }      // Trạng thái batch (Available, Pending, Expired...)
     }
 }

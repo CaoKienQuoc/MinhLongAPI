@@ -125,7 +125,7 @@ namespace Services.Service
                         SellingPrice = 0,
                         Status = status,
                         DateOfManufacture = b.DateOfManufacture,
-                        ExpiryDate = expiryDate
+                        ExpiryDate = expiryDate,
                     });
 
                     totalQuantity += b.Quantity;
