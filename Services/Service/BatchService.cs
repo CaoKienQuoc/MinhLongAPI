@@ -111,7 +111,11 @@ namespace Services.Service
 
             // ✅ Tính lại giá và cập nhật trạng thái
             batch.ProfitMarginPercent = profitMarginPercent;
-            batch.SellingPrice = batch.UnitCost * (1 + (profitMarginPercent / 100));
+            batch.SellingPrice = Math.Round(
+                                 batch.UnitCost * (1 + (profitMarginPercent / 100)),
+                                     0,
+                                     MidpointRounding.AwayFromZero
+                                 );
             batch.Status = "ACTIVE";
 
             // ✅ Cập nhật Batch trước

@@ -351,7 +351,7 @@ namespace Services.Service
                 await _orderRepository.AddOrderDetailAsync(orderDetails);
 
             order.TotalPrice = finalPrice;
-            order.FinalPrice = finalPrice * (1 - discount);
+            order.FinalPrice = Math.Round(finalPrice * (1 - discount), 0, MidpointRounding.AwayFromZero);
             await _orderRepository.UpdateOrderAsync(order);
             await _orderRepository.SaveChangesAsync();
         }

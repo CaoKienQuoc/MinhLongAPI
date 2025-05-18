@@ -21,7 +21,7 @@ namespace BusinessObject.DTO.Warehouse
         [Required]
         public string Supplier { get; set; } // Nhà cung cấp
 
-        [JsonIgnore]
+        [Required]
         public DateTime DateImport { get; set; } // Ngày nhập
 
         public string Note { get; set; } = "nothing";
