@@ -109,7 +109,7 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "N/A",
                     Quantity = d.Quantity,
                     Unit = d.Unit,
-                    UnitPrice = d.Price
+                    UnitPrice = (decimal)Math.Ceiling((double)d.Price)
                 }).ToList()
             };
         }
@@ -133,7 +133,7 @@ namespace Services.Service
                     ProductName = d.Product?.ProductName ?? "N/A",
                     Quantity = d.Quantity,
                     Unit = d.Unit,
-                    UnitPrice = d.Price
+                    UnitPrice = (decimal)Math.Ceiling((double)d.Price)
                 }).ToList()
             }).ToList();
         }
