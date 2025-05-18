@@ -57,7 +57,7 @@ namespace Services.Service
         {
             var orders = await _orderRepository.GetAllOrdersAsync();
 
-            return orders.Select(o => new OrderDto
+            return orders.OrderByDescending(re => re.OrderDate).Select(o => new OrderDto
             {
                 OrderId = o.OrderId,
                 OrderCode = o.OrderCode,

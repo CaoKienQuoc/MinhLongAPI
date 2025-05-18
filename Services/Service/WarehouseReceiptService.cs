@@ -222,6 +222,8 @@ namespace Services.Service
         public async Task<List<WarehouseReceiptDTO>> GetAllReceiptsByUserAsync(Guid userId)
         {
             var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
+            // ✅ Sắp xếp theo DateImport mới nhất trước
+            receipts = receipts.OrderByDescending(r => r.DateImport).ToList();
             var result = new List<WarehouseReceiptDTO>();
 
             foreach (var receipt in receipts)
@@ -238,7 +240,7 @@ namespace Services.Service
                 {
                     WarehouseReceiptId = receipt.WarehouseReceiptId,
                     DocumentNumber = receipt.DocumentNumber,
-                    DocumentDate = receipt.DocumentDate,
+                    DocumentDate = DateTime.Now,
                     WarehouseId = receipt.WarehouseId,
                     WarehouseName = warehouse?.WarehouseName ?? "",
                     ImportType = receipt.ImportType,
@@ -247,7 +249,7 @@ namespace Services.Service
                     TotalQuantity = receipt.TotalQuantity,
                     TotalPrice = receipt.TotalPrice,
                     Batches = batches,
-                    IsApproved = receipt.IsApproved
+                    IsApproved = receipt.IsApproved,
                 });
             }
 

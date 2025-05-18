@@ -23,6 +23,7 @@ namespace Repo.Repository
         {
             return await _context.PaymentTransactions
                 .Include(pt => pt.PaymentHistory)
+                .OrderByDescending(re => re.PaymentDate)
                 .ToListAsync();
         }
 

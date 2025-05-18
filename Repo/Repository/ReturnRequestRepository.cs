@@ -75,6 +75,7 @@ namespace Repo.Repository
                     .ThenInclude(rp => rp.AgencyAccount)
                         .ThenInclude(aa => aa.ManagedByEmployee) // thêm dòng này
                             .ThenInclude(e => e.User) // để có UserId của nhân viên
+                            .OrderByDescending(r => r.CreatedAt) // ✅ Sắp xếp theo ngày tạo mới nhất
                 .ToListAsync();
         }
 

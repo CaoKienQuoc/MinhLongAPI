@@ -66,6 +66,7 @@ namespace Repo.Repository
                 .Include(r => r.TransferProducts)
                 .ThenInclude(p => p.Batch)
                 .Where(r => r.SourceWarehouse.UserId == userId)
+                .OrderByDescending(r => r.RequestDate)
                 .ToListAsync();
         }
 

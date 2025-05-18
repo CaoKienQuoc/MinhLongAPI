@@ -25,6 +25,7 @@ namespace Repo.Repository
                 .Include(re => re.RequestExportDetails)
                     .ThenInclude(red => red.Product)
                 .Include(re => re.RequestedByAgency)             // Lấy tên Agency
+                .OrderByDescending(re => re.RequestDate)
                 .ToListAsync();
         }
 
@@ -41,6 +42,7 @@ namespace Repo.Repository
                 .ThenInclude(red => red.Warehouse)
                 .Where(re => re.RequestedByAgency.ManagedByEmployee != null &&
                              re.RequestedByAgency.ManagedByEmployee.UserId == salesUserId)
+                .OrderByDescending(re => re.RequestDate)
                 .ToListAsync();
         }
 

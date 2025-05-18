@@ -71,7 +71,7 @@ namespace Services.Service
         {
             var histories = await _repository.GetAllAsync();
 
-            return histories.Select(ph =>
+            return histories.OrderByDescending(re => re.CreatedAt).Select(ph =>
             {
                 var dueDate = ph.CreatedAt.AddMonths(3);
                 return new PaymentHistoryDto

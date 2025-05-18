@@ -69,7 +69,13 @@ namespace Services.Service
                               : m.User.Username
                     }).ToList(),
                     LastMessage = lastMessage?.MessageText,
-                    LastTimestamp = lastMessage?.Timestamp ?? DateTime.MinValue
+                    LastTimestamp = lastMessage?.Timestamp ?? DateTime.MinValue,
+                    LastUserId =  lastMessage.SenderId,
+                    LastUserName = lastMessage.Sender?.Employee != null
+                                     ? lastMessage.Sender.Employee.FullName
+                                        : lastMessage.Sender?.AgencyAccount != null
+                                        ? lastMessage.Sender.AgencyAccount.AgencyName
+                                        : lastMessage.Sender?.Username
                 };
             })
                     .OrderByDescending(r => r.LastTimestamp) // Sắp xếp theo thời gian tin nhắn mới nhất

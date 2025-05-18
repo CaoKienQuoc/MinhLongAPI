@@ -305,6 +305,7 @@ namespace Services.Service
         public async Task<List<ExportWarehouseReceiptDTO>> GetAllExportsByUserAsync(Guid userId)
         {
             var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+            receipts = receipts.OrderByDescending(r => r.ExportDate).ToList();
             var result = new List<ExportWarehouseReceiptDTO>();
 
             foreach (var receipt in receipts)

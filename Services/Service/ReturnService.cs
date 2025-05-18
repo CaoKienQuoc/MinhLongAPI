@@ -370,7 +370,7 @@ namespace Services.Service
         {
             var requests = await _returnRepo.GetAllAsync();
 
-            return requests.Select(r => new ReturnRequestProdductDto
+            return requests.OrderByDescending(r => r.CreatedAt).Select(r => new ReturnRequestProdductDto
             {
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
@@ -544,7 +544,7 @@ namespace Services.Service
         {
             var receipts = await _warehouseReceiptRepo.GetAllAsync();
 
-            return receipts.Select(r => new ReturnWarehouseReceiptDto
+            return receipts.OrderByDescending(r => r.CreatedAt).Select(r => new ReturnWarehouseReceiptDto
             {
                 ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
                 ReceiptCode = r.ReceiptCode,

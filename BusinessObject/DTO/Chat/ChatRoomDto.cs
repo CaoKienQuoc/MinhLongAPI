@@ -19,6 +19,9 @@ namespace BusinessObject.DTO.Chat
         public string LastMessage { get; set; }
         public DateTime? LastTimestamp { get; set; }
 
+        public Guid LastUserId { get; set; }
+        public string LastUserName { get; set; }
+
         public List<ChatRoomMemberDto> Members { get; set; } = new List<ChatRoomMemberDto>();
     }
 

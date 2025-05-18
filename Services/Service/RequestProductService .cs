@@ -63,7 +63,7 @@ namespace Services.Service
         {
             var requests = await _requestProductRepository.GetAllRequestsAsync();
 
-            return requests.Select(rp => new RequestProductDto
+            return requests.OrderByDescending(r => r.CreatedAt).Select(rp => new RequestProductDto
             {
                 RequestProductId = rp.RequestProductId,
                 RequestCode = rp.RequestCode,
