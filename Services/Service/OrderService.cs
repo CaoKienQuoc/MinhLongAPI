@@ -107,7 +107,7 @@ namespace Services.Service
                 OrderCode = o.OrderCode,
                 OrderDate = o.OrderDate,
                 Discount = o.Discount,
-                FinalPrice = o.FinalPrice,
+                FinalPrice = (decimal)Math.Ceiling((double)o.FinalPrice),
                 Status = o.Status,
                 AgencyId = o.RequestProduct?.AgencyId ?? 0,
                 RequestCode = o.RequestProduct?.RequestCode ?? "N/A",
@@ -153,7 +153,7 @@ namespace Services.Service
                 OrderCode = order.OrderCode,
                 OrderDate = order.OrderDate,
                 Discount = discount,
-                FinalPrice = order.FinalPrice,
+                FinalPrice = (decimal)Math.Ceiling((double)order.FinalPrice),
                 Status = order.Status,
                 // ✅ Thêm AgencyId
                 AgencyId = order.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
@@ -188,7 +188,7 @@ namespace Services.Service
                 OrderCode = order.OrderCode,
                 OrderDate = order.OrderDate,
                 Discount = order.Discount,
-                FinalPrice = order.FinalPrice,
+                FinalPrice = (decimal)Math.Ceiling((double)order.FinalPrice),
                 Status = order.Status,
                 AgencyId = order.RequestProduct?.AgencyId ?? 0,
                 RequestCode = order.RequestProduct?.RequestCode ?? "N/A",
@@ -407,7 +407,7 @@ namespace Services.Service
                 OrderCode = o.OrderCode,
                 OrderDate = o.OrderDate,
                 Discount = discount,
-                FinalPrice = o.FinalPrice,
+                FinalPrice = (decimal)Math.Ceiling((double)o.FinalPrice),
                 Status = o.Status,
                 // ✅ Thêm AgencyId
                 AgencyId = o.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
@@ -421,7 +421,7 @@ namespace Services.Service
                     ProductId = od.ProductId,
                     ProductName = od.Product?.ProductName ?? "N/A",
                     Quantity = od.Quantity,
-                    UnitPrice = od.UnitPrice,
+                    UnitPrice = (decimal)Math.Ceiling((double)od.UnitPrice),
                     TotalAmount = od.TotalAmount,
                     Unit = od.Unit,
                     CreatedAt = od.CreatedAt
