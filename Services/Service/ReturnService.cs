@@ -177,7 +177,8 @@ namespace Services.Service
 
             if (existingReturn == null ||
                 existingReturn.Status == "Approved" ||
-                existingReturn.Status == "Completed")
+                existingReturn.Status == "Completed" ||
+                existingReturn.Status == "Rejected")
             {
                 string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
                 returnRequest = new ReturnRequest
