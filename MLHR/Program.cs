@@ -272,7 +272,8 @@ builder.Services.AddCors(options =>
                 "https://admin-warehouse-otme.vercel.app", // ✅ domain chính thức
                 "http://localhost:5173",                   // ✅ local FE
                 "https://clone-ui-user.vercel.app",         // ✅ nếu có clone UI
-                "http://127.0.0.1:5500"
+                "http://127.0.0.1:5500",
+                "https://www.minhlongshop.com.vn"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
