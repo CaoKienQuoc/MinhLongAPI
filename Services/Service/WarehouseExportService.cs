@@ -248,7 +248,7 @@ namespace Services.Service
 
         public async Task FinalizeExportSaleAsync(int exportReceiptId, Guid currentUserId)
         {
-            
+
             // 1. Lấy phiếu xuất kho
             var receipt = await _exportReceiptRepo.GetByIdWithDetailsAsync(exportReceiptId);
             if (receipt == null)
@@ -287,7 +287,7 @@ namespace Services.Service
             order.Status = "Exported";
             requestExport.Status = "Approved";
 
-            
+
             await _exportReceiptRepo.UpdateAsync(receipt);
             await _orderRepo.UpdateOrderAsync(order);
             await _requestExportRepo.UpdateExportAsync(requestExport);
@@ -300,6 +300,38 @@ namespace Services.Service
                 message = $"✅ Phiếu xuất kho đã hoàn tất: {receipt.DocumentNumber}",
                 payload = receipt.ExportWarehouseReceiptId
             });
+
+
+            var agencyUserId = order?.RequestProduct?.AgencyAccount?.UserId;
+
+            if (agencyUserId != null)
+            {
+                var notifyMessage = $"✅ Đơn hàng {order.OrderCode} đã được xuất kho. Vui lòng chuẩn bị nhận hàng.";
+
+                // Gửi SignalR đến đại lý
+                await _hub.Clients.User(agencyUserId.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "Thông báo xuất kho",
+                    message = notifyMessage,
+                    payload = receipt.ExportWarehouseReceiptId
+                });
+
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                // Ghi vào bảng thông báo
+                var notification = new Notification
+                {
+                    UserId = agencyUserId.Value,
+                    Title = "Thông báo xuất kho",
+                    Message = notifyMessage,
+                    Url = $"/agency/orders", // Cập nhật URL nếu cần
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                await _notificationRepository.SaveChangesAsync();
+            }
         }
 
         public async Task<List<ExportWarehouseReceiptDTO>> GetAllExportsByUserAsync(Guid userId)
