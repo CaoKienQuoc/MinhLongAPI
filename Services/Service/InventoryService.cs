@@ -33,9 +33,9 @@ namespace Services.Service
         }
 
 
-        
 
-        public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
+
+        /*public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
         {
             var remainingQuantity = requiredQuantity;
 
@@ -46,6 +46,11 @@ namespace Services.Service
                 .OrderBy(x => x.ExpirationDate)
                 .ToList();
 
+            // Kiểm tra xem đã có bản ghi TemporaryStockExport với OrderId và IsReverted == 0 chưa
+            var existingTempsForOrder = await _tempExportRepo.GetByConditionAsync(x =>
+                x.OrderId == orderId &&
+                !x.IsReverted
+            );
 
             foreach (var stock in stockList)
             {
@@ -76,8 +81,8 @@ namespace Services.Service
                 if (batch == null)
                     throw new InvalidOperationException($"Không tìm thấy Batch với BatchId {stock.BatchId}.");
 
-                /*if (totalBatchQuantity < deductQuantity)
-                    throw new InvalidOperationException($"Batch {batch.BatchId} không đủ tồn kho. Thiếu {deductQuantity}.");*/
+                *//*if (totalBatchQuantity < deductQuantity)
+                    throw new InvalidOperationException($"Batch {batch.BatchId} không đủ tồn kho. Thiếu {deductQuantity}.");*//*
 
                 // Cập nhật số lượng của Batch
                 batch.Quantity = totalBatchQuantity;
@@ -124,7 +129,99 @@ namespace Services.Service
 
             await _warehouseProductRepo.SaveChangesAsync();
             await _tempExportRepo.SaveChangesAsync();
+        }*/
+
+        public async Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity)
+        {
+            var remainingQuantity = requiredQuantity;
+
+            var stockList = await _warehouseProductRepo.GetAvailableWarehouseProductsAsync(productId);
+
+            stockList = stockList
+                .Where(x => x.ExpirationDate != null)
+                .OrderBy(x => x.ExpirationDate)
+                .ToList();
+
+            // Ở đây thêm validate lấy danh sách bản ghi tạm có OrderId và IsReverted = 0 để dùng lại
+            var existingTempsForOrder = await _tempExportRepo.GetByConditionAsync(x =>
+                x.OrderId == orderId &&
+                !x.IsReverted
+            );
+
+            foreach (var stock in stockList)
+            {
+                var unitPrice = stock.Batch?.SellingPrice ?? throw new InvalidOperationException("Không tìm thấy giá lô hàng.");
+
+                if (remainingQuantity <= 0)
+                    break;
+
+                var deductQuantity = Math.Min(stock.Quantity, remainingQuantity);
+
+                if (stock.Quantity < deductQuantity)
+                    throw new InvalidOperationException($"Tồn kho không đủ tại kho {stock.WarehouseId}.");
+
+                stock.Quantity -= (int)deductQuantity;
+                await _warehouseProductRepo.UpdateAsync(stock);
+
+                // 🔄 Cập nhật số lượng trong bảng Batch
+                var warehouseProducts = await _warehouseProductRepo.GetByBatchIdAsync(stock.BatchId);
+                if (warehouseProducts == null || !warehouseProducts.Any())
+                    throw new InvalidOperationException($"Không tìm thấy WarehouseProduct với BatchId {stock.BatchId}.");
+
+                // Tổng hợp số lượng từ tất cả WarehouseProduct có cùng BatchId
+                var totalBatchQuantity = warehouseProducts.Sum(wp => wp.Quantity);
+
+                // Kiểm tra số lượng trong Batch trước khi trừ
+                var batch = await _batchRepository.GetByIdAsync(stock.BatchId);
+                if (batch == null)
+                    throw new InvalidOperationException($"Không tìm thấy Batch với BatchId {stock.BatchId}.");
+
+                /*if (totalBatchQuantity < deductQuantity)
+                    throw new InvalidOperationException($"Batch {batch.BatchId} không đủ tồn kho. Thiếu {deductQuantity}.");*/
+
+                // Cập nhật số lượng của Batch
+                batch.Quantity = totalBatchQuantity;
+                await _batchRepository.UpdateAsync(batch);
+
+                // 🔄 Phần xử lý bảng tạm có validate tìm bản ghi đã tồn tại IsReverted = 0
+                var matchedTemp = existingTempsForOrder.FirstOrDefault(x =>
+                    x.ProductId == productId &&
+                    x.WarehouseId == stock.WarehouseId &&
+                    x.BatchId == stock.BatchId);
+
+                if (matchedTemp != null)
+                {
+                    matchedTemp.Quantity += deductQuantity;
+                    await _tempExportRepo.UpdateAsync(matchedTemp);
+                }
+                else
+                {
+                    await _tempExportRepo.AddAsync(new TemporaryStockExport
+                    {
+                        ProductId = productId,
+                        WarehouseId = stock.WarehouseId,
+                        BatchId = stock.BatchId,
+                        BatchNumber = stock.Batch.BatchCode,
+                        UnitPrice = unitPrice,
+                        ExpiryDate = stock.ExpirationDate,
+                        WarehouseProductId = stock.WarehouseProductId,
+                        Quantity = deductQuantity,
+                        OrderId = orderId,
+                        CreatedAt = DateTime.UtcNow,
+                        IsReverted = false // đảm bảo mới thêm là chưa xử lý
+                    });
+                }
+
+                remainingQuantity -= deductQuantity;
+            }
+
+            if (remainingQuantity > 0)
+                throw new InvalidOperationException($"Không đủ tồn kho cho sản phẩm {productId}. Thiếu {remainingQuantity}");
+
+            await _warehouseProductRepo.SaveChangesAsync();
+            await _tempExportRepo.SaveChangesAsync();
         }
+
 
 
         public async Task RollbackStockForCancelledOrderAsync(Guid orderId)
