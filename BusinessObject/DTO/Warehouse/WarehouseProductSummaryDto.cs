@@ -11,5 +11,6 @@ namespace BusinessObject.DTO.Warehouse
         public long ProductId { get; set; }
         public string ProductName { get; set; }
         public int TotalQuantity { get; set; }
+        public string Status { get; set; }
     }
 }

@@ -145,11 +145,12 @@ namespace Repo.Repository
         {
             return await _context.WarehouseProduct
                 .Where(wp => wp.WarehouseId == warehouseId)
-                .GroupBy(wp => new { wp.ProductId, wp.Product.ProductName })
+                .GroupBy(wp => new { wp.ProductId, wp.Product.ProductName, wp.Status })
                 .Select(g => new WarehouseProductSummaryDto
                 {
                     ProductId = g.Key.ProductId,
                     ProductName = g.Key.ProductName,
+                    Status = g.Key.Status, // ✅ Trả về Status
                     TotalQuantity = g.Sum(x => x.Quantity)
                 })
                 .ToListAsync();

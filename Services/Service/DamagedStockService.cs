@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BusinessObject.DTO;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Repo.IRepository;
 using Repo.Repository;
@@ -23,6 +24,10 @@ namespace Services.Service
         private readonly IEmailService _emailService;
         private readonly IUserRepository _userRepo;
         private readonly IOrderRepository _orderRepo;
+        private readonly INotificationRepository _notificationRepository;
+
+        private readonly IHubContext<NotificationHub> _hub;
+
         public DamagedStockService(
             IDamagedStockRepository repo,
             IReturnWarehouseReceiptRepository receiptRepo,
@@ -31,7 +36,9 @@ namespace Services.Service
             IConfiguration configuration,
             IEmailService emailService,
             IUserRepository userRepository,
-            IOrderRepository orderRepo)
+            IOrderRepository orderRepo,
+            IHubContext<NotificationHub> hub,
+            INotificationRepository notificationRepository)
         {
             _damagedRepo = repo;
             _returnWarehouseReceiptRepo = receiptRepo;
@@ -41,6 +48,8 @@ namespace Services.Service
             _emailService = emailService;
             _userRepo = userRepository;
             _orderRepo = orderRepo;
+            _hub = hub;
+            _notificationRepository = notificationRepository;
         }
 
         public Task<IEnumerable<DamagedStockDto>> GetByWarehouseIdAsync(long warehouseId)
@@ -118,6 +127,39 @@ namespace Services.Service
                 warehouseName,
                 damagedStocks
             );
+
+            // 🔔 Gửi thông báo đến đại lý
+            var agencyUserId = order.RequestProduct?.AgencyAccount?.User?.UserId;
+
+            if (agencyUserId != null)
+            {
+                string message = $"📦 Yêu cầu trả hàng cho đơn {order.OrderCode} đã được tiếp nhận và nhập kho.";
+
+                // Gửi SignalR đến đại lý
+                await _hub.Clients.User(agencyUserId.Value.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "Hoàn tất yêu cầu trả hàng",
+                    message,
+                    payload = receipt.ReturnWarehouseReceiptId
+                });
+
+                // Lưu thông báo vào DB
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                var notification = new Notification
+                {
+                    UserId = agencyUserId.Value,
+                    Title = "Hoàn tất yêu cầu trả hàng",
+                    Message = message,
+                    Url = $"/agency/return-order",
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                await _notificationRepository.SaveChangesAsync();
+            }
+
         }
 
         public async Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId)

@@ -8,6 +8,7 @@ using BusinessObject.DTO.Product;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
@@ -25,6 +26,9 @@ namespace Services.Service
         private readonly IWarehouseExportRepository _warehouseExportRepo;
         private readonly IReturnWarehouseReceiptRepository _returnWarehouseReceiptRepo;
         private readonly IUserRepository _employeeRepo;
+        private readonly INotificationRepository _notificationRepository;
+
+        private readonly IHubContext<NotificationHub> _hub;
 
         public ReturnService(
             IReturnRequestRepository returnRepo,
@@ -35,7 +39,9 @@ namespace Services.Service
             IReturnWarehouseReceiptRepository warehouseReceiptRepo,
             IWarehouseExportRepository warehouseExportRepo,
             IReturnWarehouseReceiptRepository returnWarehouseReceiptRepo,
-            IUserRepository employeeRepo)
+            IUserRepository employeeRepo,
+            IHubContext<NotificationHub> hub,
+            INotificationRepository notificationRepository)
         {
             _returnRepo = returnRepo;
             _damagedRepo = damagedRepo;
@@ -46,6 +52,8 @@ namespace Services.Service
             _warehouseExportRepo = warehouseExportRepo;
             _returnWarehouseReceiptRepo = returnWarehouseReceiptRepo;
             _employeeRepo = employeeRepo;
+            _hub = hub;
+            _notificationRepository = notificationRepository;
         }
 
         private string NormalizeString(string input)
@@ -253,6 +261,39 @@ namespace Services.Service
                 await _imageService.UploadReturnImagesAsync(imageModel, savedRequest.ReturnRequestId);
             }
 
+            var managerUserId = order?.RequestProduct?.AgencyAccount?.ManagedByEmployee?.UserId;
+
+            if (managerUserId != null && managerUserId != userId)
+            {
+                var agencyName = order.RequestProduct?.AgencyAccount?.AgencyName ?? "Đại lý";
+                string message = $"📥 Đại lý {agencyName} vừa tạo yêu cầu trả hàng cho đơn {order.OrderCode}.";
+
+                // Gửi thông báo qua SignalR
+                await _hub.Clients.User(managerUserId.Value.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "Yêu cầu trả hàng mới",
+                    message,
+                    payload = savedRequest.ReturnRequestId
+                });
+
+                // Ghi thông báo vào DB
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                var notification = new Notification
+                {
+                    UserId = managerUserId.Value,
+                    Title = "Yêu cầu trả hàng mới",
+                    Message = message,
+                    Url = $"/sales/review-order",
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                await _notificationRepository.SaveChangesAsync();
+            }
+
+
             return savedRequest;
         }
 
@@ -337,6 +378,37 @@ namespace Services.Service
             await _warehouseReceiptRepo.CreateReturnWarehouseReceiptDetailAsync(receiptDetails);
             //request.Reason = "Đã duyệt yêu cầu trả hàng";
             await _warehouseReceiptRepo.SaveChangesAsync();
+
+            var warehouseUserId = await _employeeRepo.GetUserIdByWarehouseIdAsync(warehouseId);
+            if (warehouseUserId != null)
+            {
+                var agencyName = order.RequestProduct?.AgencyAccount?.AgencyName ?? "Đại lý";
+                string message = $"📦 Có một đơn hàng trả về đã được duyệt từ đại lý {agencyName}. Vui lòng kiểm tra và xử lý.";
+
+                // Gửi SignalR
+                await _hub.Clients.User(warehouseUserId.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "Phiếu nhập trả hàng",
+                    message,
+                    payload = receipt.ReturnWarehouseReceiptId
+                });
+
+                // Lưu thông báo vào DB
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                var notification = new Notification
+                {
+                    UserId = warehouseUserId.Value,
+                    Title = "Phiếu nhập trả hàng",
+                    Message = message,
+                    Url = $"/warehouse/view-export/",
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                await _notificationRepository.SaveChangesAsync();
+            }
         }
 
         public async Task RejectReturnRequestAsync(Guid returnRequestId, Guid userId, string rejectReason)
