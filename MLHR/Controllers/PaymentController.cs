@@ -116,7 +116,7 @@ namespace MLHR.Controllers
                 var result = await _paymentService.ConfirmPayment(Request.QueryString.Value!, queryRequest);
                 string formattedAmount2 = $"{amount:N0} VND";
 
-                if (result != null && result.code == "00")
+                /*if (result != null && result.code == "00")
                 {
 
                     string html = $@"
@@ -143,7 +143,13 @@ namespace MLHR.Controllers
 
                     return Content(html, "text/html");
 
+                }*/
+
+                if (result != null && result.code == "00")
+                {
+                    return Redirect("https://clone-ui-user.vercel.app/agency/orders");
                 }
+
 
                 return Redirect("https://minhlong.mlhr.org/api/Payment/payment-fail");
             }
