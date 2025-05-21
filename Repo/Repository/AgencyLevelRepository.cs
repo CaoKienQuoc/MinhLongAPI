@@ -70,6 +70,14 @@ namespace Repo.Repository
 
             return agencyLevel?.PaymentTerm;
         }
+
+        public async Task<AgencyLevel> GetLowestLevelAsync()
+        {
+            return await _context.AgencyLevels
+                .OrderBy(x => x.DiscountPercentage)
+                .FirstOrDefaultAsync();
+        }
+
     }
 
 }

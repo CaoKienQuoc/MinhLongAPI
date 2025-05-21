@@ -420,7 +420,7 @@ namespace Services.Service
                 await _agencyAccountRepository.UpdateAsync(agencyAccount);
 
 
-                // Gán level mặc định
+                /*// Gán level mặc định
                 var defaultLevel = await _agencyLevelRepository.GetByIdAsync(3);
                 if (defaultLevel == null)
                     throw new Exception("Cấp đại lý 3 (LevelId = 3) không tìm thấy.");
@@ -434,7 +434,23 @@ namespace Services.Service
                     MonthlyRevenue = 0,
                     OrderRevenue = 0,
                     ChangeDate = DateTime.Now
+                };*/
+
+                var defaultLevel = await _agencyLevelRepository.GetLowestLevelAsync();
+                if (defaultLevel == null)
+                    throw new Exception("Không tìm thấy cấp đại lý thấp nhất.");
+
+                var agencyAccountLevel = new AgencyAccountLevel
+                {
+                    AgencyId = agencyAccount.AgencyId,
+                    LevelId = defaultLevel.LevelId,
+                    TotalDebtValue = 0,
+                    OrderDiscount = defaultLevel.DiscountPercentage ?? 0,
+                    MonthlyRevenue = 0,
+                    OrderRevenue = 0,
+                    ChangeDate = DateTime.Now
                 };
+
 
                 await _agencyAccountLevelRepository.AddAsync(agencyAccountLevel);
             }
