@@ -273,7 +273,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173",                   // ✅ local FE
                 "https://clone-ui-user.vercel.app",         // ✅ nếu có clone UI
                 "http://127.0.0.1:5500",
-                "https://www.minhlongshop.com.vn"
+                "https://www.minhlongshop.com.vn",
+                "https://manager.minhlongshop.com.vn"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
