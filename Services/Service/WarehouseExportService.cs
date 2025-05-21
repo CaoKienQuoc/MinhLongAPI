@@ -278,8 +278,14 @@ namespace Services.Service
             if (tempExports == null || !tempExports.Any())
                 throw new InvalidOperationException("Không tìm thấy dữ liệu tạm để xoá tồn kho.");
 
-            var tempIds = tempExports.Select(t => t.TemporaryStockExportId).ToList();
-            await _tempExportRepo.DeleteByTemporaryExportIdsAsync(tempIds);
+            /*var tempIds = tempExports.Select(t => t.TemporaryStockExportId).ToList();
+            await _tempExportRepo.DeleteByTemporaryExportIdsAsync(tempIds);*/
+
+            foreach (var temp in tempExports)
+            {
+                temp.IsReverted = true;  // Đánh dấu đã xử lý/xóa tạm
+            }
+            await _tempExportRepo.UpdateRangeAsync(tempExports);
 
             // 4. Cập nhật phiếu xuất kho & đơn hàng
             receipt.Status = "Completed";

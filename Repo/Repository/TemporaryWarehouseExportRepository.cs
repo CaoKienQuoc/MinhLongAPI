@@ -121,6 +121,13 @@ namespace Repo.Repository
                 ))
                 .ToListAsync();
         }
+
+        public async Task UpdateRangeAsync(IEnumerable<TemporaryStockExport> tempExports)
+        {
+            _context.TemporaryStockExports.UpdateRange(tempExports);
+            await _context.SaveChangesAsync();
+        }
+
     }
 
 }
