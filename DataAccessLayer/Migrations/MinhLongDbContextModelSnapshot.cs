@@ -69,8 +69,8 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("AgencyScore")
-                        .HasColumnType("int");
+                    b.Property<long>("AgencyScore")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -170,8 +170,8 @@ namespace DataAccessLayer.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CurrentLevelId")
-                        .HasColumnType("int");
+                    b.Property<long>("CurrentLevelId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("datetime2");
@@ -183,11 +183,11 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SuggestedLevelId")
-                        .HasColumnType("int");
+                    b.Property<long>("SuggestedLevelId")
+                        .HasColumnType("bigint");
 
-                    b.Property<int>("TotalScore")
-                        .HasColumnType("int");
+                    b.Property<long>("TotalScore")
+                        .HasColumnType("bigint");
 
                     b.HasKey("AgencyPromotionRequestId");
 
@@ -213,8 +213,8 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ScoreChange")
-                        .HasColumnType("int");
+                    b.Property<long>("ScoreChange")
+                        .HasColumnType("bigint");
 
                     b.HasKey("AgencyScoreHistoryId");
 

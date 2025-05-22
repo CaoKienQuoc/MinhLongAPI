@@ -8,7 +8,7 @@ namespace BusinessObject.DTO
 {
     public class AgencyScoreItemDto
     {
-        public int ScoreChange { get; set; }
+        public long ScoreChange { get; set; }
         public string Reason { get; set; }
         public DateTime CreatedDate { get; set; }
     }

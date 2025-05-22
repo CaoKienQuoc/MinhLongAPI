@@ -32,7 +32,7 @@ namespace BusinessObject.Models
         [ForeignKey("ManagedByEmployeeId")]
         public Employee ManagedByEmployee { get; set; }
 
-        public int AgencyScore { get; set; } = 0;
+        public long AgencyScore { get; set; } = 0;
 
         public ICollection<AgencyAccountLevel> AgencyAccountLevels { get; set; }
 

@@ -147,7 +147,7 @@ namespace MLHR.Controllers
 
                 if (result != null && result.code == "00")
                 {
-                    return Redirect("https://clone-ui-user.vercel.app/agency/orders");
+                    return Redirect("https://www.minhlongshop.com.vn/agency/payment");
                 }
 
 
@@ -165,12 +165,7 @@ namespace MLHR.Controllers
         [HttpGet("payment-fail")]
         public IActionResult PaymentFail()
         {
-            /*return Content($@"
-            <html><head><meta charset='UTF-8'><title>Thất bại</title></head>
-            <body style='text-align:center;font-family:sans-serif'>
-            <h1 style='color:red'>BẠN ĐÃ THANH TOÁN THẤT BẠI</h1>
-            <p>Giao dịch không thành công hoặc dữ liệu phản hồi không hợp lệ.</p>
-            <p>Xin vui lòng thử lại hoặc liên hệ hỗ trợ.</p></body></html>", "text/html");*/
+            
 
             return Content($@"
                 <html>
@@ -182,7 +177,7 @@ namespace MLHR.Controllers
                 <h1 style='color:red'>BẠN ĐÃ THANH TOÁN THẤT BẠI</h1>
                     <p>Giao dịch không thành công hoặc dữ liệu phản hồi không hợp lệ.</p>
                     <p>Xin vui lòng thử lại hoặc liên hệ hỗ trợ.</p>
-                    <button onclick='window.location.href=""https://clone-ui-user.vercel.app/agency/payment""' 
+                    <button onclick='window.location.href=""https://www.minhlongshop.com.vn/agency/payment""' 
                     style='margin-top:20px;padding:10px 20px;font-size:16px;border:none;background-color:#007BFF;color:white;border-radius:5px;cursor:pointer;'>
                     Quay về trang chủ
                     </button>
@@ -190,12 +185,6 @@ namespace MLHR.Controllers
                     </html>", "text/html");
 
         }
-
-       /* [HttpGet("test-ping")]
-        public IActionResult Ping()
-        {
-            return Ok("✅ GET thành công từ server!");
-        }*/
 
     }
 }

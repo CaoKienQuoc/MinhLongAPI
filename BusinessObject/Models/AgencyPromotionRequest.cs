@@ -10,9 +10,9 @@ namespace BusinessObject.Models
     {
         public Guid AgencyPromotionRequestId { get; set; }
         public long AgencyId { get; set; }
-        public int CurrentLevelId { get; set; }
-        public int SuggestedLevelId { get; set; }
-        public int TotalScore { get; set; }
+        public long CurrentLevelId { get; set; }
+        public long SuggestedLevelId { get; set; }
+        public long TotalScore { get; set; }
         public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ReviewedAt { get; set; }

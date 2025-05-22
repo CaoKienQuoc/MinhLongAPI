@@ -78,6 +78,12 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync();
         }
 
+        // ✅ Thêm triển khai mới
+        public async Task<List<AgencyLevel>> GetAllLevelsAsync()
+        {
+            return await _context.AgencyLevels.ToListAsync();
+        }
+
     }
 
 }

@@ -10,7 +10,7 @@ namespace Repo.IRepository
     public interface IAgencyScoreHistoryRepository
     {
         Task AddScoreAsync(AgencyScoreHistory history);
-        Task<int> GetTotalScoreByAgencyIdAsync(long agencyId);
+        Task<long> GetTotalScoreByAgencyIdAsync(long agencyId);
         Task<AgencyScoreHistory?> GetByAgencyIdAndReasonAsync(long agencyId, string reason);
         Task UpdateAsync(AgencyScoreHistory history);
         Task SaveChangesAsync();

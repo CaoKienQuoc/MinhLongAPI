@@ -588,7 +588,7 @@ namespace DataAccessLayer.Migrations
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AddressId = table.Column<int>(type: "int", nullable: false),
                     ManagedByEmployeeId = table.Column<long>(type: "bigint", nullable: true),
-                    AgencyScore = table.Column<int>(type: "int", nullable: false)
+                    AgencyScore = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -736,9 +736,9 @@ namespace DataAccessLayer.Migrations
                 {
                     AgencyPromotionRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
                     AgencyId = table.Column<long>(type: "bigint", nullable: false),
-                    CurrentLevelId = table.Column<int>(type: "int", nullable: false),
-                    SuggestedLevelId = table.Column<int>(type: "int", nullable: false),
-                    TotalScore = table.Column<int>(type: "int", nullable: false),
+                    CurrentLevelId = table.Column<long>(type: "bigint", nullable: false),
+                    SuggestedLevelId = table.Column<long>(type: "bigint", nullable: false),
+                    TotalScore = table.Column<long>(type: "bigint", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ReviewedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -761,7 +761,7 @@ namespace DataAccessLayer.Migrations
                 {
                     AgencyScoreHistoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
                     AgencyId = table.Column<long>(type: "bigint", nullable: false),
-                    ScoreChange = table.Column<int>(type: "int", nullable: false),
+                    ScoreChange = table.Column<long>(type: "bigint", nullable: false),
                     Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },

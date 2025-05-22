@@ -10,7 +10,7 @@ namespace BusinessObject.Models
     {
         public Guid AgencyScoreHistoryId { get; set; }
         public long AgencyId { get; set; }
-        public int ScoreChange { get; set; }
+        public long ScoreChange { get; set; }
         public string Reason { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
