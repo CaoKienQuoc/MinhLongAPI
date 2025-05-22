@@ -1,7 +1,14 @@
 ﻿using BusinessObject.DTO;
+using BusinessObject.DTO.Email;
+using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 using DataAccessLayer;
+using MailKit;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
@@ -9,16 +16,11 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.Mail;
 using System.Net;
+using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using MailKit;
-using BusinessObject.DTO.Email;
-using Microsoft.AspNetCore.Http.HttpResults;
-using BusinessObject.DTO.Warehouse;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Services.Service
 {
@@ -34,11 +36,13 @@ namespace Services.Service
         private readonly IContractRepository _contractRepository;
         private readonly IHubContext<NotificationHub> _hub;
         private readonly INotificationRepository _notificationRepository;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UserService(IUserRepository userRepository, JwtService jwtService, IEmailService mailService, 
             IAgencyAccountRepository agencyAccountRepository, IAgencyAccountLevelRepository agencyAccountLevelRepository, 
             IAgencyLevelRepository agencyLevelRepository, IContractService contractService, IContractRepository contractRepository,
-            IHubContext<NotificationHub> hub, INotificationRepository notificationRepository)
+            IHubContext<NotificationHub> hub, INotificationRepository notificationRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _userRepository = userRepository;
             _jwtService = jwtService;
@@ -50,6 +54,8 @@ namespace Services.Service
             _contractRepository = contractRepository;
             _hub = hub;
             _notificationRepository = notificationRepository;
+            _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
         }
 
 
@@ -486,7 +492,7 @@ namespace Services.Service
 
 
         //Logout
-        public async Task<bool> LogoutAsync(string email)
+        /*public async Task<bool> LogoutAsync(string email)
         {
             var user = await _userRepository.GetUserByEmailAsync(email);
             if (user == null)
@@ -499,7 +505,29 @@ namespace Services.Service
             await _userRepository.UpdateUserAsync(user);
 
             return true; // Trả về true nếu logout thành công
+        }*/
+
+        public async Task<bool> LogoutAsync()
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst("UserId")?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                throw new UnauthorizedAccessException("Không thể xác định người dùng đăng nhập.");
+
+            var user = await _userRepository.GetUserByIdAsync(Guid.Parse(userId));
+            if (user == null)
+                throw new ArgumentException("Người dùng không tồn tại.");
+
+            // ✅ Xóa cookie JWT
+            _httpContextAccessor.HttpContext.Response.Cookies.Delete("access_token");
+
+            // ✅ Nếu bạn dùng refresh token, cũng nên xóa
+            // user.RefreshToken = null;
+            // await _userRepository.UpdateUserAsync(user);
+
+            return true;
         }
+
 
         public async Task<bool> UpdateUserAccountAsync(Guid userId, UpdateUserRequest request)
         {
@@ -751,35 +779,63 @@ namespace Services.Service
             return roleUpdated && empUpdated;
         }
 
+        /* public async Task<object> LoginAsync(LoginRequest request)
+         {
+             var user = await _userRepository.GetUserByUsernameAsync(request.userName);
+             if (user == null)
+             {
+                 throw new ArgumentException("Tài Khoản của bạn cần phải được kích hoạt!");
+             }
+             if (user == null || request.Password != user.Password)
+             {
+                 throw new ArgumentException("Tên người dùng hoặc mật khẩu không hợp lệ.");
+             }
+
+             if (user.Status == false)
+             {
+                 throw new ArgumentException("Tài khoản của bạn không thể đăng nhập!");
+             }
+
+
+             // Lấy RoleId từ UserRole
+             var userRole = await _userRepository.GetUserRoleByUserIdAsync(user.UserId);
+             long roleId = userRole?.RoleId ?? 0;
+             string roleName = userRole?.Role?.RoleName ?? null;
+             string displayName = await _userRepository.GetEmployeeFullNameByUserIdAsync(user.UserId)
+                     ?? await _userRepository.GetAgencyNameByUserIdAsync(user.UserId);
+
+             // Tạo JWT Token
+             var token = await _jwtService.GenerateJwtTokenAsync(user, roleId);
+             return new { roleName, roleId, displayName, token };
+         }*/
+
+
         public async Task<object> LoginAsync(LoginRequest request)
         {
             var user = await _userRepository.GetUserByUsernameAsync(request.userName);
-            if (user == null)
-            {
-                throw new ArgumentException("Tài Khoản của bạn cần phải được kích hoạt!");
-            }
-            if (user == null || request.Password != user.Password)
-            {
-                throw new ArgumentException("Tên người dùng hoặc mật khẩu không hợp lệ.");
-            }
+            if (user == null || request.Password != user.Password || !user.Status)
+                throw new ArgumentException("Tài khoản không hợp lệ");
 
-            if (user.Status == false)
-            {
-                throw new ArgumentException("Tài khoản của bạn không thể đăng nhập!");
-            }
-
-
-            // Lấy RoleId từ UserRole
             var userRole = await _userRepository.GetUserRoleByUserIdAsync(user.UserId);
             long roleId = userRole?.RoleId ?? 0;
-            string roleName = userRole?.Role?.RoleName ?? null;
             string displayName = await _userRepository.GetEmployeeFullNameByUserIdAsync(user.UserId)
-                    ?? await _userRepository.GetAgencyNameByUserIdAsync(user.UserId);
+                ?? await _userRepository.GetAgencyNameByUserIdAsync(user.UserId);
 
-            // Tạo JWT Token
             var token = await _jwtService.GenerateJwtTokenAsync(user, roleId);
-            return new { roleName, roleId, displayName, token };
+            var expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:ExpireMinutes"]));
+
+            // ✅ Gửi cookie HttpOnly
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("access_token", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // Dùng HTTPS trên môi trường thật
+                SameSite = SameSiteMode.Strict,
+                Expires = expires
+            });
+
+            return new { roleId, displayName, roleName = userRole?.Role?.RoleName };
         }
+
 
         public async Task<List<RegisterAccountWithContractsDto>> GetRegisterAccount()
         {

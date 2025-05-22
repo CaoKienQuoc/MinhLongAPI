@@ -44,11 +44,11 @@ namespace MLHR.Controllers
 
         //logout 
         [HttpPost("auth/logout")]
-        public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
+        public async Task<IActionResult> Logout()
         {
             try
             {
-                bool isLoggedOut = await _userService.LogoutAsync(request.Email);
+                bool isLoggedOut = await _userService.LogoutAsync();
                 if (!isLoggedOut)
                 {
                     return BadRequest(new { message = "Logout failed!" });

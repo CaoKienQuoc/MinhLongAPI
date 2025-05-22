@@ -27,41 +27,6 @@ namespace Services.Service
             _userRepository = userRepository;
         }
 
-        /*public async Task<string> GenerateJwtTokenAsync(User user, long roleId)
-        {
-            var jwtSettings = _configuration.GetSection("Jwt");
-
-            long? agencyId = await _userRepository.GetAgencyIdByUserId(user.UserId);
-
-            var claims = new List<Claim>
-                {
-                    new Claim("UserId", user.UserId.ToString()), // 👈 thêm dòng này
-                    new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, roleId.ToString())
-                };
-
-            if (agencyId.HasValue)
-            {
-                claims.Add(new Claim("AgencyId", agencyId.Value.ToString()));
-            }
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpireMinutes"]));
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: expires,
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }*/
-
         public async Task<string> GenerateJwtTokenAsync(User user, long roleId)
         {
             var jwtSettings = _configuration.GetSection("Jwt");

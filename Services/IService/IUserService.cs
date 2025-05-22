@@ -13,7 +13,7 @@ namespace Services.IService
     {
         Task<RegisterAccount> RegisterUserRequestAsync(RegisterRequest request);
         Task<bool> ApproveUserAsync(int registerId);
-        Task<bool> LogoutAsync(string email);
+        Task<bool> LogoutAsync();
         Task<bool> UpdateUserAccountAsync(Guid userId, UpdateUserRequest request);
         Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request);
         Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);

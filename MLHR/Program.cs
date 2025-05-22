@@ -93,6 +93,12 @@ builder.Services.AddAuthentication(options =>
                 context.Token = accessToken;
             }
 
+            // ✅ Nếu không phải SignalR hoặc không có query token, thử lấy từ cookie
+            if (string.IsNullOrEmpty(context.Token))
+            {
+                context.Token = context.HttpContext.Request.Cookies["access_token"];
+            }
+
             return Task.CompletedTask;
         }
     };
