@@ -889,7 +889,7 @@ namespace Services.Service
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.Lax,
                 Expires = refreshTokenExpires
             });
 
