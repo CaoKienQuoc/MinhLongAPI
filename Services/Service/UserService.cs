@@ -814,35 +814,35 @@ namespace Services.Service
             return roleUpdated && empUpdated;
         }
 
-        /* public async Task<object> LoginAsync(LoginRequest request)
-         {
-             var user = await _userRepository.GetUserByUsernameAsync(request.userName);
-             if (user == null)
-             {
-                 throw new ArgumentException("Tài Khoản của bạn cần phải được kích hoạt!");
-             }
-             if (user == null || request.Password != user.Password)
-             {
-                 throw new ArgumentException("Tên người dùng hoặc mật khẩu không hợp lệ.");
-             }
+        /*public async Task<object> LoginAsync(LoginRequest request)
+        {
+            var user = await _userRepository.GetUserByUsernameAsync(request.userName);
+            if (user == null)
+            {
+                throw new ArgumentException("Tài Khoản của bạn cần phải được kích hoạt!");
+            }
+            if (user == null || request.Password != user.Password)
+            {
+                throw new ArgumentException("Tên người dùng hoặc mật khẩu không hợp lệ.");
+            }
 
-             if (user.Status == false)
-             {
-                 throw new ArgumentException("Tài khoản của bạn không thể đăng nhập!");
-             }
+            if (user.Status == false)
+            {
+                throw new ArgumentException("Tài khoản của bạn không thể đăng nhập!");
+            }
 
 
-             // Lấy RoleId từ UserRole
-             var userRole = await _userRepository.GetUserRoleByUserIdAsync(user.UserId);
-             long roleId = userRole?.RoleId ?? 0;
-             string roleName = userRole?.Role?.RoleName ?? null;
-             string displayName = await _userRepository.GetEmployeeFullNameByUserIdAsync(user.UserId)
-                     ?? await _userRepository.GetAgencyNameByUserIdAsync(user.UserId);
+            // Lấy RoleId từ UserRole
+            var userRole = await _userRepository.GetUserRoleByUserIdAsync(user.UserId);
+            long roleId = userRole?.RoleId ?? 0;
+            string roleName = userRole?.Role?.RoleName ?? null;
+            string displayName = await _userRepository.GetEmployeeFullNameByUserIdAsync(user.UserId)
+                    ?? await _userRepository.GetAgencyNameByUserIdAsync(user.UserId);
 
-             // Tạo JWT Token
-             var token = await _jwtService.GenerateJwtTokenAsync(user, roleId);
-             return new { roleName, roleId, displayName, token };
-         }*/
+            // Tạo JWT Token
+            var token = await _jwtService.GenerateJwtTokenAsync(user, roleId);
+            return new { roleName, roleId, displayName, token };
+        }*/
 
         private DateTime GetVnNow()
         {
