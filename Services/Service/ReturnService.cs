@@ -271,7 +271,7 @@ namespace Services.Service
                 // Gửi thông báo qua SignalR
                 await _hub.Clients.User(managerUserId.Value.ToString()).SendAsync("ReceiveNotification", new
                 {
-                    title = "Yêu cầu trả hàng mới",
+                    title = "ReturnSales",
                     message,
                     payload = savedRequest.ReturnRequestId
                 });
@@ -388,7 +388,7 @@ namespace Services.Service
                 // Gửi SignalR
                 await _hub.Clients.User(warehouseUserId.ToString()).SendAsync("ReceiveNotification", new
                 {
-                    title = "Phiếu nhập trả hàng",
+                    title = "ReturnKho",
                     message,
                     payload = receipt.ReturnWarehouseReceiptId
                 });

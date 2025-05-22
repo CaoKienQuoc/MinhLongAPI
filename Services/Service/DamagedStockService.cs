@@ -138,7 +138,7 @@ namespace Services.Service
                 // Gửi SignalR đến đại lý
                 await _hub.Clients.User(agencyUserId.Value.ToString()).SendAsync("ReceiveNotification", new
                 {
-                    title = "Hoàn tất yêu cầu trả hàng",
+                    title = "ReturnAgency",
                     message,
                     payload = receipt.ReturnWarehouseReceiptId
                 });

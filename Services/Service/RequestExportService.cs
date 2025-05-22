@@ -178,35 +178,42 @@ namespace Services.Service
                 };
             }
 
-            return requestExports.Select(re => new RequestExportDto
+            return requestExports.Select(re =>
             {
-                RequestExportId = re.RequestExportId,
-                OrderId = re.OrderId,
-                AgencyName = re.RequestedByAgency?.AgencyName ?? "Unknown",
-                RequestDate = re.RequestDate,
-                Status = re.Status,
-                Note = re.Note,
-                RequestExportCode = re.RequestExportCode,
-                WarehouseId = re.Order?.TemporaryStockExports?.FirstOrDefault()?.WarehouseId ?? 0,
-                WarehouseName = re.Order?.TemporaryStockExports?.FirstOrDefault()?.Warehouse?.WarehouseName ?? "Unknown",
-                RequestExportDetails = re.RequestExportDetails.Select(red => new RequestExportDetailDto
+                var (warehouseId, warehouseName) = tempExportDict.ContainsKey(re.OrderId)
+                    ? GetPrimaryWarehouse(re.OrderId, tempExportDict[re.OrderId])
+                    : (0, "Unknown");
+
+                return new RequestExportDto
                 {
-                    RequestExportDetailId = red.RequestItemId,
-                    ProductId = red.ProductId,
-                    ProductName = red.Product?.ProductName ?? "N/A",
-                    Unit = red.Product?.Unit ?? "N/A",
-                    Price = red.Product?.Price ?? 0,
-                    RequestedQuantity = red.RequestedQuantity
-                }).ToList(),
-                TemporaryStockExportDetails = tempExportDict.ContainsKey(re.OrderId)
-                    ? tempExportDict[re.OrderId].Select(tse => new TemporaryStockExportDto
+                    RequestExportId = re.RequestExportId,
+                    OrderId = re.OrderId,
+                    AgencyName = re.RequestedByAgency?.AgencyName ?? "Unknown",
+                    RequestDate = re.RequestDate,
+                    Status = re.Status,
+                    Note = re.Note,
+                    RequestExportCode = re.RequestExportCode,
+                    WarehouseId = warehouseId,
+                    WarehouseName = warehouseName,
+                    RequestExportDetails = re.RequestExportDetails.Select(red => new RequestExportDetailDto
                     {
-                        WarehouseId = tse.WarehouseId,
-                        ProductId = tse.ProductId,
-                        BatchId = tse.BatchId,
-                        Quantity = tse.Quantity
-                    }).ToList()
-                    : new List<TemporaryStockExportDto>()
+                        RequestExportDetailId = red.RequestItemId,
+                        ProductId = red.ProductId,
+                        ProductName = red.Product?.ProductName ?? "N/A",
+                        Unit = red.Product?.Unit ?? "N/A",
+                        Price = red.Product?.Price ?? 0,
+                        RequestedQuantity = red.RequestedQuantity
+                    }).ToList(),
+                    TemporaryStockExportDetails = tempExportDict.ContainsKey(re.OrderId)
+                        ? tempExportDict[re.OrderId].Select(tse => new TemporaryStockExportDto
+                        {
+                            WarehouseId = tse.WarehouseId,
+                            ProductId = tse.ProductId,
+                            BatchId = tse.BatchId,
+                            Quantity = tse.Quantity
+                        }).ToList()
+                        : new List<TemporaryStockExportDto>()
+                };
             }).ToList();
         }
 
@@ -217,6 +224,7 @@ namespace Services.Service
             if (re == null) return null;
 
             var tempExports = await _temporaryWarehouseRepository.GetByOrderIdAsync(re.OrderId);
+            var (warehouseId, warehouseName) = GetPrimaryWarehouse(re.OrderId, tempExports);
 
             return new RequestExportDto
             {
@@ -226,8 +234,8 @@ namespace Services.Service
                 RequestDate = re.RequestDate,
                 Status = re.Status,
                 Note = re.Note,
-                WarehouseId = re.Order?.TemporaryStockExports?.FirstOrDefault()?.WarehouseId ?? 0,
-                WarehouseName = re.Order?.TemporaryStockExports?.FirstOrDefault()?.Warehouse?.WarehouseName ?? "Unknown",
+                WarehouseId = warehouseId,
+                WarehouseName = warehouseName,
                 RequestExportCode = re.RequestExportCode,
                 RequestExportDetails = re.RequestExportDetails.Select(red => new RequestExportDetailDto
                 {
@@ -247,6 +255,29 @@ namespace Services.Service
                 }).ToList()
             };
         }
+
+        private (long warehouseId, string warehouseName) GetPrimaryWarehouse(Guid orderId, List<TemporaryStockExport> tempExports)
+        {
+            if (tempExports == null || !tempExports.Any())
+                return (0, "Unknown");
+
+            var mainWarehouse = tempExports
+                .Where(x => x.OrderId == orderId)
+                .GroupBy(x => x.WarehouseId)
+                .Select(g => new
+                {
+                    WarehouseId = g.Key,
+                    TotalQuantity = g.Sum(x => x.Quantity),
+                    WarehouseName = g.FirstOrDefault()?.Warehouse?.WarehouseName ?? "Unknown"
+                })
+                .OrderByDescending(x => x.TotalQuantity)
+                .FirstOrDefault();
+
+            return mainWarehouse != null
+                ? (mainWarehouse.WarehouseId, mainWarehouse.WarehouseName)
+                : (0, "Unknown");
+        }
+
 
 
     }

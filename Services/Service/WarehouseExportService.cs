@@ -223,7 +223,7 @@ namespace Services.Service
 
             await _hub.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", new
             {
-                title = "Yêu cầu xuất kho",
+                title = "Kho",
                 message,
                 payload = $"RequestExportCode: {code}"
             });
@@ -317,7 +317,7 @@ namespace Services.Service
                 // Gửi SignalR đến đại lý
                 await _hub.Clients.User(agencyUserId.ToString()).SendAsync("ReceiveNotification", new
                 {
-                    title = "Thông báo xuất kho",
+                    title = "Agency",
                     message = notifyMessage,
                     payload = receipt.ExportWarehouseReceiptId
                 });
