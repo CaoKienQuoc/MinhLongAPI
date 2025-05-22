@@ -893,7 +893,7 @@ namespace Services.Service
                 Expires = refreshTokenExpires
             });
 
-            return new { roleId, displayName, roleName = userRole?.Role?.RoleName };
+            return new { roleId, displayName, roleName = userRole?.Role?.RoleName, accessToken };
         }
 
 
