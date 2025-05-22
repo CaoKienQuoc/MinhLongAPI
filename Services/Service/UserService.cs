@@ -814,7 +814,7 @@ namespace Services.Service
             return roleUpdated && empUpdated;
         }
 
-        /*public async Task<object> LoginAsync(LoginRequest request)
+        public async Task<object> LoginAsync(LoginRequest request)
         {
             var user = await _userRepository.GetUserByUsernameAsync(request.userName);
             if (user == null)
@@ -842,14 +842,14 @@ namespace Services.Service
             // Tạo JWT Token
             var token = await _jwtService.GenerateJwtTokenAsync(user, roleId);
             return new { roleName, roleId, displayName, token };
-        }*/
+        }
 
         private DateTime GetVnNow()
         {
             return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
         }
 
-        public async Task<object> LoginAsync(LoginRequest request)
+        /*public async Task<object> LoginAsync(LoginRequest request)
         {
             var user = await _userRepository.GetUserByUsernameAsync(request.userName);
             if (user == null || request.Password != user.Password || !user.Status)
@@ -894,7 +894,7 @@ namespace Services.Service
             });
 
             return new { roleId, displayName, roleName = userRole?.Role?.RoleName, token };
-        }
+        }*/
 
 
         public async Task<List<RegisterAccountWithContractsDto>> GetRegisterAccount()
