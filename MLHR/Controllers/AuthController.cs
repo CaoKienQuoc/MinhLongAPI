@@ -62,6 +62,19 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken()
+        {
+            var result = await _userService.RefreshTokenAsync();
+
+            if (!result.Success)
+                return Unauthorized(result.Message);
+
+            return Ok(new { message = result.Message });
+        }
+
+
+
         [Authorize]
         [HttpPut("user")]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)

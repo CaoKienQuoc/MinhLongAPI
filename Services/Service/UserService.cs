@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
@@ -38,11 +39,13 @@ namespace Services.Service
         private readonly INotificationRepository _notificationRepository;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IRefreshTokenRepository _refreshTokenRepo;
+        private readonly ILogger<UserService> _logger;
 
         public UserService(IUserRepository userRepository, JwtService jwtService, IEmailService mailService, 
             IAgencyAccountRepository agencyAccountRepository, IAgencyAccountLevelRepository agencyAccountLevelRepository, 
             IAgencyLevelRepository agencyLevelRepository, IContractService contractService, IContractRepository contractRepository,
-            IHubContext<NotificationHub> hub, INotificationRepository notificationRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+            IHubContext<NotificationHub> hub, INotificationRepository notificationRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor,IRefreshTokenRepository refreshTokenRepository, ILogger<UserService> logger)
         {
             _userRepository = userRepository;
             _jwtService = jwtService;
@@ -56,6 +59,8 @@ namespace Services.Service
             _notificationRepository = notificationRepository;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _refreshTokenRepo = refreshTokenRepository;
+            _logger = logger;
         }
 
 
@@ -509,24 +514,54 @@ namespace Services.Service
 
         public async Task<bool> LogoutAsync()
         {
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst("UserId")?.Value;
+            var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["refresh_token"];
 
-            if (string.IsNullOrEmpty(userId))
-                throw new UnauthorizedAccessException("Không thể xác định người dùng đăng nhập.");
+            if (!string.IsNullOrEmpty(refreshToken))
+            {
+                await _refreshTokenRepo.RevokeTokenAsync(refreshToken);
+            }
 
-            var user = await _userRepository.GetUserByIdAsync(Guid.Parse(userId));
-            if (user == null)
-                throw new ArgumentException("Người dùng không tồn tại.");
-
-            // ✅ Xóa cookie JWT
             _httpContextAccessor.HttpContext.Response.Cookies.Delete("access_token");
-
-            // ✅ Nếu bạn dùng refresh token, cũng nên xóa
-            // user.RefreshToken = null;
-            // await _userRepository.UpdateUserAsync(user);
+            _httpContextAccessor.HttpContext.Response.Cookies.Delete("refresh_token");
 
             return true;
         }
+
+
+        public async Task<(bool Success, string Message)> RefreshTokenAsync()
+        {
+            var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["refresh_token"];
+            if (string.IsNullOrEmpty(refreshToken))
+                return (false, "Không tìm thấy refresh token.");
+
+            var tokenInDb = await _refreshTokenRepo.GetByTokenAsync(refreshToken);
+
+            if (tokenInDb == null || tokenInDb.ExpiredAt < DateTime.UtcNow || tokenInDb.IsRevoked)
+                return (false, "Refresh token không hợp lệ hoặc đã hết hạn.");
+
+            var user = await _userRepository.GetByIdAsync(tokenInDb.UserId);
+            if (user == null)
+                return (false, "Người dùng không tồn tại.");
+
+            var userRole = await _userRepository.GetUserRoleByUserIdAsync(user.UserId);
+            long roleId = userRole?.RoleId ?? 0;
+
+            var newAccessToken = await _jwtService.GenerateJwtTokenAsync(user, roleId);
+            var accessTokenExpires = GetVnNow().AddMinutes(double.Parse(_configuration["Jwt:ExpireMinutes"]));
+
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("access_token", newAccessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = accessTokenExpires
+            });
+
+            _logger.LogInformation($"[RefreshToken] User {user.Username} làm mới access token lúc {GetVnNow()}");
+
+            return (true, "Token đã được làm mới thành công.");
+        }
+
 
 
         public async Task<bool> UpdateUserAccountAsync(Guid userId, UpdateUserRequest request)
@@ -809,6 +844,10 @@ namespace Services.Service
              return new { roleName, roleId, displayName, token };
          }*/
 
+        private DateTime GetVnNow()
+        {
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+        }
 
         public async Task<object> LoginAsync(LoginRequest request)
         {
@@ -821,16 +860,37 @@ namespace Services.Service
             string displayName = await _userRepository.GetEmployeeFullNameByUserIdAsync(user.UserId)
                 ?? await _userRepository.GetAgencyNameByUserIdAsync(user.UserId);
 
-            var token = await _jwtService.GenerateJwtTokenAsync(user, roleId);
-            var expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:ExpireMinutes"]));
+            var accessToken = await _jwtService.GenerateJwtTokenAsync(user, roleId);
+            var accessTokenExpires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:ExpireMinutes"]));
 
             // ✅ Gửi cookie HttpOnly
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("access_token", token, new CookieOptions
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("access_token", accessToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true, // Dùng HTTPS trên môi trường thật
                 SameSite = SameSiteMode.Strict,
-                Expires = expires
+                Expires = accessTokenExpires
+            });
+
+            // ✅ Tạo refresh token
+            var refreshToken = Guid.NewGuid().ToString();
+            var refreshTokenExpires = GetVnNow().AddDays(15);
+
+            await _refreshTokenRepo.SaveAsync(new RefreshToken
+            {
+                Token = refreshToken,
+                UserId = user.UserId,
+                CreatedAt = GetVnNow(),
+                ExpiredAt = refreshTokenExpires,
+                IsRevoked = false
+            });
+
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = refreshTokenExpires
             });
 
             return new { roleId, displayName, roleName = userRole?.Role?.RoleName };

@@ -30,6 +30,8 @@ namespace Services.IService
         Task<List<AgencyAccountDto>> GetAgenciesManagedByUserIdAsync(Guid userId);
         Task<EmployeeDto> GetSalesManagerByAgencyUserIdAsync(Guid userId);
         Task<User> GetEmployeeByIdAsync(Guid userId);
+        Task<(bool Success, string Message)> RefreshTokenAsync();
+
     }
 
 

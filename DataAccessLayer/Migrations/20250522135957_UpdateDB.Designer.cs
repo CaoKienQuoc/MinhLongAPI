@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(MinhLongDbContext))]
-    [Migration("20250522131748_UpdateDB")]
+    [Migration("20250522135957_UpdateDB")]
     partial class UpdateDB
     {
         /// <inheritdoc />
@@ -1224,6 +1224,39 @@ namespace DataAccessLayer.Migrations
                     b.HasKey("ProvinceId");
 
                     b.ToTable("Province", (string)null);
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.RefreshToken", b =>
+                {
+                    b.Property<Guid>("RefreshTokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RefreshTokenId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshToken", (string)null);
                 });
 
             modelBuilder.Entity("BusinessObject.Models.RegisterAccount", b =>
@@ -2622,6 +2655,17 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("ParentCategory");
 
                     b.Navigation("Updater");
+                });
+
+            modelBuilder.Entity("BusinessObject.Models.RefreshToken", b =>
+                {
+                    b.HasOne("BusinessObject.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BusinessObject.Models.RegisterAccountContract", b =>

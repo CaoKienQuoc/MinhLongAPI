@@ -86,6 +86,7 @@ namespace DataAccessLayer
         public DbSet<ChatRoom> ChatRooms { get; set; }
         public DbSet<ChatRoomMember> ChatRoomMembers { get; set; }
         public DbSet<ChatMessageImage> ChatMessageImages { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -144,6 +145,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<ChatRoom>().ToTable("ChatRoom");
             modelBuilder.Entity<ChatRoomMember>().ToTable("ChatRoomMember");
             modelBuilder.Entity<ChatMessageImage>().ToTable("ChatMessageImage");
+            modelBuilder.Entity<RefreshToken>().ToTable("RefreshToken");
 
             // 🔥 **Cấu hình quan hệ**
             modelBuilder.Entity<Ward>()
@@ -219,6 +221,7 @@ namespace DataAccessLayer
             modelBuilder.Entity<ChatRoom>().Property(wr => wr.ChatRoomId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<ChatRoomMember>().Property(wr => wr.ChatRoomMemberId).HasDefaultValueSql("NEWID()");
             modelBuilder.Entity<ChatMessageImage>().Property(wr => wr.ImageId).HasDefaultValueSql("NEWID()");
+            modelBuilder.Entity<RefreshToken>().Property(wr => wr.RefreshTokenId).HasDefaultValueSql("NEWID()");
 
             // 🔥 **Cấu hình quan hệ nhiều - nhiều**
             modelBuilder.Entity<UserRole>()
@@ -907,6 +910,10 @@ namespace DataAccessLayer
             modelBuilder.Entity<RequestProduct>()
             .Property(p => p.CreatedAt)
             .ValueGeneratedNever();
+
+            modelBuilder.Entity<RefreshToken>()
+           .HasIndex(r => r.Token)
+           .IsUnique();
         }
     }
 
