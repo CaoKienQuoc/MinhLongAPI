@@ -860,11 +860,11 @@ namespace Services.Service
             string displayName = await _userRepository.GetEmployeeFullNameByUserIdAsync(user.UserId)
                 ?? await _userRepository.GetAgencyNameByUserIdAsync(user.UserId);
 
-            var accessToken = await _jwtService.GenerateJwtTokenAsync(user, roleId);
+            var token = await _jwtService.GenerateJwtTokenAsync(user, roleId);
             var accessTokenExpires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:ExpireMinutes"]));
 
             // ✅ Gửi cookie HttpOnly
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("access_token", accessToken, new CookieOptions
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("access_token", token, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true, // Dùng HTTPS trên môi trường thật
@@ -893,7 +893,7 @@ namespace Services.Service
                 Expires = refreshTokenExpires
             });
 
-            return new { roleId, displayName, roleName = userRole?.Role?.RoleName, accessToken };
+            return new { roleId, displayName, roleName = userRole?.Role?.RoleName, token };
         }
 
 
