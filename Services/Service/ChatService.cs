@@ -75,12 +75,10 @@ namespace Services.Service
 
         public async Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
         {
-            // 1) Kiểm tra room đã tồn tại chưa
             var existing = await _roomRepo.FindByMembersAsync(memberIds);
             if (existing != null)
                 return existing;
 
-            // 2) Tạo phòng mới
             var room = new ChatRoom { RoomName = roomName };
             var creatorId = memberIds.First();
             room.Members = memberIds.Select(uid => new ChatRoomMember
@@ -91,49 +89,45 @@ namespace Services.Service
                 JoinedAt = GetVietnamTime()
             }).ToList();
 
-            // 3) Lưu vào DB
             var createdRoom = await _roomRepo.AddAsync(room);
 
-            // 4) Tìm người gửi tin chào mừng ≠ creator
+            // Gửi tin nhắn chào mừng từ Sale tới Agency
             var saleId = memberIds.FirstOrDefault(id => id != creatorId);
-
             var welcomeMessage = new ChatMessage
             {
                 ChatRoomId = createdRoom.ChatRoomId,
                 SenderId = saleId,
-                MessageText = "Cảm ơn bạn đã lựa chọn mua sắm ở Minh Long, nếu có thắc mắc cần giải đáp gì hãy nhắn tin cho chúng tôi, đội ngũ nhân viên sẽ giúp đỡ bạn!",
+                MessageText = "Cảm ơn bạn đã lựa chọn Minh Long. Hãy nhắn nếu cần hỗ trợ!",
                 Timestamp = GetVietnamTime()
             };
-
             await _msgRepo.AddAsync(welcomeMessage);
+            await _msgRepo.SaveChangesAsync();
 
-            // 5) GỬI SIGNALR + NOTIFICATION cho người nhận đầu tiên (creatorId)
+            // Gửi SignalR đến cả room
+            await _hub.Clients.Group(createdRoom.ChatRoomId.ToString())
+                .SendAsync("ReceiveMessage", new
+                {
+                    MessageId = welcomeMessage.ChatMessageId,
+                    RoomId = createdRoom.ChatRoomId,
+                    SenderId = welcomeMessage.SenderId,
+                    Text = welcomeMessage.MessageText,
+                    Timestamp = welcomeMessage.Timestamp
+                });
 
-            // Gửi SignalR đến người nhận đầu tiên (A)
-            await _hub.Clients.User(creatorId.ToString()).SendAsync("isRead", new
-            {
-                title = "Tin nhắn mới",
-                payload = createdRoom.ChatRoomId
-            });
-
-            // Lưu notification
-            var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(GetVietnamTime(),
-                              TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-
-            var notification = new Notification
+            // Gửi Notification cho Agency
+            await _notificationRepository.AddAsync(new Notification
             {
                 UserId = creatorId,
                 Title = "Tin nhắn mới",
                 Message = "Bạn vừa nhận được tin nhắn chào mừng từ hệ thống Minh Long.",
                 Url = $"/chat/room/{createdRoom.ChatRoomId}",
-                CreatedAt = vietnamNow
-            };
-
-            await _notificationRepository.AddAsync(notification);
+                CreatedAt = GetVietnamTime()
+            });
             await _notificationRepository.SaveChangesAsync();
 
             return createdRoom;
         }
+
 
 
 
