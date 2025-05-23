@@ -22,6 +22,11 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
             return message;
         }
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
 
         public Task<List<ChatMessage>> GetByRoomAsync(Guid roomId, int skip = 0, int take = 200) =>
         _context.ChatMessages
@@ -32,5 +37,13 @@ namespace Repo.Repository
             .Skip(skip)
             .Take(take)
             .ToListAsync();
+
+        public async Task<List<ChatMessage>> GetUnreadMessages(Guid chatRoomId, Guid userId)
+        {
+            return await _context.ChatMessages
+                .Where(m => m.ChatRoomId == chatRoomId && m.ReceiverId == userId && !m.IsRead)
+                .ToListAsync();
+        }
+
     }
 }

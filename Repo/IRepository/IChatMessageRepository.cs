@@ -12,5 +12,7 @@ namespace Repo.IRepository
     {
         Task<ChatMessage> AddAsync(ChatMessage message);
         Task<List<ChatMessage>> GetByRoomAsync(Guid roomId, int skip = 0, int take = 200);
+        Task<List<ChatMessage>> GetUnreadMessages(Guid chatRoomId, Guid userId);
+        Task SaveChangesAsync();
     }
 }

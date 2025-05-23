@@ -1,14 +1,15 @@
-﻿using System;
+﻿using BusinessObject.DTO;
+using BusinessObject.DTO.Chat;
+using BusinessObject.Models;
+using Microsoft.AspNetCore.SignalR;
+using Repo.IRepository;
+using Repo.Repository;
+using Services.IService;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BusinessObject.DTO;
-using BusinessObject.DTO.Chat;
-using BusinessObject.Models;
-using Repo.IRepository;
-using Repo.Repository;
-using Services.IService;
 
 namespace Services.Service
 {
@@ -16,14 +17,24 @@ namespace Services.Service
     {
         private readonly IChatRoomRepository _roomRepo;
         private readonly IChatMessageRepository _msgRepo;
+        private readonly INotificationRepository _notificationRepository;
+        private readonly IHubContext<NotificationHub> _hub;
 
-        public ChatService(IChatRoomRepository roomRepo, IChatMessageRepository msgRepo)
+        public ChatService(IChatRoomRepository roomRepo, IChatMessageRepository msgRepo, INotificationRepository notificationRepository, IHubContext<NotificationHub> hub)
         {
             _roomRepo = roomRepo;
             _msgRepo = msgRepo;
+            _notificationRepository = notificationRepository;
+            _hub = hub;
         }
 
-        public async Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
+        public DateTime GetVietnamTime()
+        {
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+        }
+
+        /*public async Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
         {
             // 1) Kiểm tra room đã tồn tại chưa (ví dụ cặp 2 thành viên)
             //    Giả sử bạn chỉ hỗ trợ 1-1 chat, bạn có thể tìm room có đúng 2 members đó
@@ -42,8 +53,88 @@ namespace Services.Service
                 JoinedAt = DateTime.UtcNow
             }).ToList();
 
-            return await _roomRepo.AddAsync(room);
+            *//*return await _roomRepo.AddAsync(room);*//*
+
+            // 3. Lưu phòng vào database
+            var createdRoom = await _roomRepo.AddAsync(room);
+
+            // 4. Gửi tin nhắn chào mừng từ hệ thống
+            var welcomeMessage = new ChatMessage
+            {
+                ChatRoomId = createdRoom.ChatRoomId,
+                SenderId = new Guid("00000000-0000-0000-0000-000000000001"), // ID của hệ thống
+                MessageText = "Cảm ơn bạn đã lựa chọn mua sắm ở Minh Long, nếu có thắc mắc cần giải đáp gì hãy nhắn tin cho chúng tôi, đội ngũ nhân viên sẽ giúp đỡ bạn!",
+                Timestamp = DateTime.UtcNow
+            };
+
+            await _msgRepo.AddAsync(welcomeMessage);
+
+            return createdRoom;
+
+        }*/
+
+        public async Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
+        {
+            // 1) Kiểm tra room đã tồn tại chưa
+            var existing = await _roomRepo.FindByMembersAsync(memberIds);
+            if (existing != null)
+                return existing;
+
+            // 2) Tạo phòng mới
+            var room = new ChatRoom { RoomName = roomName };
+            var creatorId = memberIds.First();
+            room.Members = memberIds.Select(uid => new ChatRoomMember
+            {
+                UserId = uid,
+                ChatRoom = room,
+                Role = uid == creatorId ? "Admin" : "Member",
+                JoinedAt = GetVietnamTime()
+            }).ToList();
+
+            // 3) Lưu vào DB
+            var createdRoom = await _roomRepo.AddAsync(room);
+
+            // 4) Gửi tin nhắn chào mừng từ Hệ thống đến người tạo (creatorId)
+            var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
+
+            var welcomeMessage = new ChatMessage
+            {
+                ChatRoomId = createdRoom.ChatRoomId,
+                SenderId = systemUserId,
+                MessageText = "Cảm ơn bạn đã lựa chọn mua sắm ở Minh Long, nếu có thắc mắc cần giải đáp gì hãy nhắn tin cho chúng tôi, đội ngũ nhân viên sẽ giúp đỡ bạn!",
+                Timestamp = GetVietnamTime()
+            };
+
+            await _msgRepo.AddAsync(welcomeMessage);
+
+            // 5) GỬI SIGNALR + NOTIFICATION cho người nhận đầu tiên (creatorId)
+
+            // Gửi SignalR đến người nhận đầu tiên (A)
+            await _hub.Clients.User(creatorId.ToString()).SendAsync("UnActive", new
+            {
+                title = "Tin nhắn mới",
+                payload = createdRoom.ChatRoomId
+            });
+
+            // Lưu notification
+            var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(GetVietnamTime(),
+                              TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+
+            var notification = new Notification
+            {
+                UserId = creatorId,
+                Title = "Tin nhắn mới",
+                Message = "Bạn vừa nhận được tin nhắn chào mừng từ hệ thống Minh Long.",
+                Url = $"/chat/room/{createdRoom.ChatRoomId}",
+                CreatedAt = vietnamNow
+            };
+
+            await _notificationRepository.AddAsync(notification);
+            await _notificationRepository.SaveChangesAsync();
+
+            return createdRoom;
         }
+
 
 
         /*public async Task<IEnumerable<ChatRoomDto>> GetUserRoomsAsync(Guid userId)
@@ -184,6 +275,19 @@ namespace Services.Service
             // room.Members đã được include trong GetByIdAsync
             return room.Members.Any(m => m.UserId == userId);
         }
+
+        public async Task MarkMessagesAsReadAsync(Guid chatRoomId, Guid userId)
+        {
+            var unreadMessages = await _msgRepo.GetUnreadMessages(chatRoomId, userId);
+
+            foreach (var msg in unreadMessages)
+            {
+                msg.IsRead = true;
+            }
+
+            await _msgRepo.SaveChangesAsync();
+        }
+
 
         public Task<ChatMessage> SaveMessageAsync(ChatMessage message) =>
             _msgRepo.AddAsync(message);

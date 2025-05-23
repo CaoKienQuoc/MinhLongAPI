@@ -1,4 +1,5 @@
 ﻿using BusinessObject.DTO;
+using BusinessObject.DTO.Chat;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.Mvc;
 using Services.IService;
@@ -132,6 +133,19 @@ namespace MLHR.Controllers
 
             return Ok(uploaded); // List<ImageUploadResultDto>
         }
+
+        [HttpPost("mark-as-read")]
+        public async Task<IActionResult> MarkAsRead([FromBody] MarkAsReadRequest request)
+        {
+            var claim = User.FindFirst("UserId");
+            if (claim == null || !Guid.TryParse(claim.Value, out var userId))
+                return Unauthorized();
+
+            await _chatService.MarkMessagesAsReadAsync(request.ChatRoomId, userId);
+
+            return Ok(new { success = true });
+        }
+
 
     }
 }

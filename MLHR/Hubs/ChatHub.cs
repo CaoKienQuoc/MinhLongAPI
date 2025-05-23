@@ -113,8 +113,21 @@ namespace MLHR.Hubs
                 saved.Timestamp,
                 Images = uploadedImages.Select(img => img.ImageUrl).ToList()
             };
-            await Clients.Group(roomId.ToString())
-                         .SendAsync("ReceiveMessage", payload);
+
+            // 4) Gửi SignalR chỉ đến các thành viên khác người gửi
+            var room = await _chatService.GetRoomByIdAsync(roomId);
+            var receivers = room.Members
+                                .Where(m => m.UserId != senderId)
+                                .Select(m => m.UserId.ToString())
+                                .ToList();
+
+            foreach (var userId in receivers)
+            {
+                await Clients.User(userId).SendAsync("ReceiveMessage", payload);
+            }
+
+            /*await Clients.Group(roomId.ToString())
+                         .SendAsync("ReceiveMessage", payload);*/
         }
 
         public DateTime GetVietnamTime()

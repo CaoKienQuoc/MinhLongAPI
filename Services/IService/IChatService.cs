@@ -20,5 +20,6 @@ namespace Services.IService
         Task<ChatMessage> SaveMessageAsync(ChatMessage message);
 
         Task<bool> IsUserInRoomAsync(Guid roomId, Guid userId);
+        Task MarkMessagesAsReadAsync(Guid chatRoomId, Guid userId);
     }
 }
