@@ -246,5 +246,19 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
         }
 
+        public async Task<string> GetWarehouseNameByIdAsync(long warehouseId)
+        {
+            var warehouse = await _context.Warehouses
+                .Where(w => w.WarehouseId == warehouseId)
+                .Select(w => w.WarehouseName)
+                .FirstOrDefaultAsync();
+
+            if (warehouse == null)
+                throw new Exception("Không tìm thấy kho");
+
+            return warehouse;
+        }
+
+
     }
 }

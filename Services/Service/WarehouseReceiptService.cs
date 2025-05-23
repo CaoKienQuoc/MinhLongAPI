@@ -304,6 +304,10 @@ namespace Services.Service
                 if (userId != currentUserId)
                     throw new UnauthorizedAccessException("Không có quyền thao tác với kho này.");
 
+                // ✅ Lấy tên kho xuất từ SourceWarehouseId
+                var sourceWarehouseName = await _warehouseRepository.GetWarehouseNameByIdAsync(request.SourceWarehouseId);
+
+
                 // Xóa khai báo trùng lặp
                 // ✅ Khai báo danh sách để lưu DTO và entity
                 List<BatchResponseDto> batchDtos = new();
@@ -357,7 +361,7 @@ namespace Services.Service
                     DocumentDate = DateTime.Now,
                     WarehouseId = request.DestinationWarehouseId,
                     ImportType = "ImportCoordination",
-                    Supplier = $"{ request.SourceWarehouse.WarehouseName}",
+                    Supplier = sourceWarehouseName,
                     DateImport = DateTime.Now,
                     TotalQuantity = batchDtos.Sum(x => x.Quantity),
                     TotalPrice = batchDtos.Sum(x => x.TotalAmount),

@@ -42,5 +42,7 @@ namespace Repo.IRepository
         IQueryable<WarehouseProduct> GetQueryable();
         Task UpdateRangeAsync(IEnumerable<WarehouseProduct> products);
 
+        Task<string> GetWarehouseNameByIdAsync(long warehouseId);
+
     }
 }
