@@ -46,7 +46,7 @@ namespace Services.Service
         }
 
 
-        public async Task<IEnumerable<ChatRoomDto>> GetUserRoomsAsync(Guid userId)
+        /*public async Task<IEnumerable<ChatRoomDto>> GetUserRoomsAsync(Guid userId)
         {
             // Lấy entity và include members + messages
             var rooms = await _roomRepo.GetForUserAsync(userId);
@@ -82,7 +82,49 @@ namespace Services.Service
                     .ToList();
 
             return dtos;
+        }*/
+
+        public async Task<IEnumerable<ChatRoomDto>> GetUserRoomsAsync(Guid userId)
+        {
+            // Lấy danh sách phòng có liên quan đến người dùng
+            var rooms = await _roomRepo.GetForUserAsync(userId);
+
+            // Chuyển sang DTO
+            var dtos = rooms.Select(r =>
+            {
+                var lastMessage = r.Messages
+                                   .OrderByDescending(m => m.Timestamp)
+                                   .FirstOrDefault();
+
+                return new ChatRoomDto
+                {
+                    ChatRoomId = r.ChatRoomId,
+                    RoomName = r.RoomName,
+                    CreatedAt = r.CreatedAt,
+                    MemberCount = r.Members.Count,
+                    Members = r.Members.Select(m => new ChatRoomMemberDto
+                    {
+                        UserId = m.UserId,
+                        Name = m.User.Employee?.FullName
+                               ?? m.User.AgencyAccount?.AgencyName
+                               ?? m.User.Username
+                    }).ToList(),
+
+                    LastMessage = lastMessage?.MessageText ?? "Chưa có tin nhắn nào",
+                    LastTimestamp = lastMessage?.Timestamp ?? DateTime.MinValue,
+                    LastUserId = (Guid)(lastMessage?.SenderId ?? Guid.Empty),
+                    LastUserName = lastMessage?.Sender?.Employee?.FullName
+                                   ?? lastMessage?.Sender?.AgencyAccount?.AgencyName
+                                   ?? lastMessage?.Sender?.Username
+                };
+            })
+            .OrderByDescending(r => r.LastTimestamp) // Ưu tiên phòng có hoạt động gần nhất
+            .ToList();
+
+            return dtos;
         }
+
+
         public async Task<ChatRoomDto> GetRoomByIdAsync(Guid roomId)
         {
             // Lấy entity room kèm members và messages

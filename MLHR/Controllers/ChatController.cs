@@ -58,7 +58,7 @@ namespace MLHR.Controllers
             if (!Guid.TryParse(claim.Value, out var userId))
                 return BadRequest(new { error = "Bạn Chưa Đăng Nhập!" });
 
-            var rooms = await _chatService.GetUserRoomsAsync(userId);
+            var rooms = await _chatService.GetUserRoomsAsync(userId) ;
             return Ok(rooms);
         }
 
