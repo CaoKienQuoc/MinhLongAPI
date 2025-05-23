@@ -3,6 +3,7 @@ using BusinessObject.Models;
 using Microsoft.AspNetCore.Mvc;
 using Services.IService;
 using Services.Service;
+using System.Security.Claims;
 
 namespace MLHR.Controllers
 {
@@ -40,7 +41,12 @@ namespace MLHR.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
-
+        private Guid? GetLoggedInUserId()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return null;
+            return Guid.TryParse(userIdClaim.Value, out var id) ? id : null;
+        }
 
         [HttpGet("rooms")]
         public async Task<IActionResult> GetMyRooms()
