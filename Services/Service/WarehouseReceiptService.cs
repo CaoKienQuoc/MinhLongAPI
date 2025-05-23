@@ -357,7 +357,7 @@ namespace Services.Service
                     DocumentDate = DateTime.Now,
                     WarehouseId = request.DestinationWarehouseId,
                     ImportType = "ImportCoordination",
-                    Supplier = $"{request.SourceWarehouse.WarehouseName}",
+                    Supplier = $"{ request.SourceWarehouse.WarehouseName}",
                     DateImport = DateTime.Now,
                     TotalQuantity = batchDtos.Sum(x => x.Quantity),
                     TotalPrice = batchDtos.Sum(x => x.TotalAmount),
