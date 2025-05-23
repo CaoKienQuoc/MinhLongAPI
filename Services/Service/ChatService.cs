@@ -110,7 +110,7 @@ namespace Services.Service
             // 5) GỬI SIGNALR + NOTIFICATION cho người nhận đầu tiên (creatorId)
 
             // Gửi SignalR đến người nhận đầu tiên (A)
-            await _hub.Clients.User(creatorId.ToString()).SendAsync("isRead", new
+            await _hub.Clients.User(saleId.ToString()).SendAsync("isRead", new
             {
                 title = "Tin nhắn mới",
                 payload = createdRoom.ChatRoomId
@@ -122,7 +122,7 @@ namespace Services.Service
 
             var notification = new Notification
             {
-                UserId = creatorId,
+                UserId = saleId,
                 Title = "Tin nhắn mới",
                 Message = "Bạn vừa nhận được tin nhắn chào mừng từ hệ thống Minh Long.",
                 Url = $"/chat/room/{createdRoom.ChatRoomId}",
