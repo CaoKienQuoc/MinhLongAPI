@@ -287,9 +287,9 @@ namespace Services.Service
             };
         }
 
-       
 
-        public async Task<bool> ImportApprovedTransfersAsync(long destinationWarehouseId, Guid currentUserId)
+
+        /*public async Task<bool> ImportApprovedTransfersAsync(long transferRequestId, Guid currentUserId)
         {
             var random = new Random();
             var transferRequests = await _transferRepo.GetApprovedTransfersByDestinationAsync(destinationWarehouseId);
@@ -415,7 +415,127 @@ namespace Services.Service
             }
 
             return true;
+        }*/
+
+        public async Task<bool> ImportApprovedTransferAsync(long transferRequestId, Guid currentUserId)
+        {
+            var random = new Random();
+
+            // ✅ Truy vấn 1 phiếu điều phối Approved cụ thể
+            var request = await _transferRepo.GetApprovedTransferByIdAsync(transferRequestId);
+            if (request == null)
+                throw new Exception("Không tìm thấy phiếu điều phối ở trạng thái Approved.");
+
+            // ✅ Kiểm tra quyền user với kho đích
+            var userId = await _warehouseRepository.GetUserIdByWarehouseIdAsync(request.DestinationWarehouseId);
+            if (userId != currentUserId)
+                throw new UnauthorizedAccessException("Không có quyền thao tác với kho này.");
+
+            // ✅ Lấy tên kho xuất từ SourceWarehouseId
+            var sourceWarehouseName = await _warehouseRepository.GetWarehouseNameByIdAsync(request.SourceWarehouseId);
+
+            List<BatchResponseDto> batchDtos = new();
+            List<Batch> batchEntities = new();
+
+            foreach (var tp in request.TransferProducts)
+            {
+                if (tp.Batch == null)
+                    throw new Exception($"Không tìm thấy batch cho sản phẩm {tp.ProductId}");
+
+                string status = tp.Batch.ExpiryDate < DateTime.Now ? "EXPIRED" : tp.Batch.Status;
+                decimal totalAmount = tp.Quantity * tp.Batch.UnitCost;
+
+                var dto = new BatchResponseDto
+                {
+                    BatchCode = tp.Batch.BatchCode,
+                    ProductId = tp.ProductId,
+                    Unit = tp.Batch.Unit,
+                    Quantity = tp.Quantity,
+                    UnitCost = tp.Batch.UnitCost,
+                    TotalAmount = totalAmount,
+                    SellingPrice = tp.Batch.SellingPrice ?? 0,
+                    Status = status,
+                    DateOfManufacture = tp.Batch.DateOfManufacture,
+                    ExpiryDate = tp.Batch.ExpiryDate
+                };
+
+                var entity = new Batch
+                {
+                    ProductId = tp.ProductId,
+                    BatchCode = tp.Batch.BatchCode,
+                    Quantity = tp.Quantity,
+                    UnitCost = tp.Batch.UnitCost,
+                    TotalAmount = totalAmount,
+                    SellingPrice = tp.Batch.SellingPrice,
+                    Unit = tp.Batch.Unit,
+                    DateOfManufacture = tp.Batch.DateOfManufacture,
+                    ExpiryDate = tp.Batch.ExpiryDate,
+                    Status = status
+                };
+
+                batchDtos.Add(dto);
+                batchEntities.Add(entity);
+            }
+
+            var warehouseReceipt = new WarehouseReceipt
+            {
+                DocumentNumber = $"IMP-TF-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
+                DocumentDate = DateTime.Now,
+                WarehouseId = request.DestinationWarehouseId,
+                ImportType = "ImportCoordination",
+                Supplier = sourceWarehouseName,
+                DateImport = DateTime.Now,
+                TotalQuantity = batchDtos.Sum(x => x.Quantity),
+                TotalPrice = batchDtos.Sum(x => x.TotalAmount),
+                IsApproved = true,
+                BatchesJson = JsonConvert.SerializeObject(batchDtos, Formatting.Indented)
+            };
+
+            await _receiptRepo.AddAsync(warehouseReceipt);
+            await _receiptRepo.SaveChangesAsync();
+
+            var importTransaction = new ImportTransaction
+            {
+                DocumentNumber = warehouseReceipt.DocumentNumber,
+                DocumentDate = warehouseReceipt.DocumentDate,
+                TypeImport = warehouseReceipt.ImportType,
+                Note = $"Tạo từ phiếu điều phối #{request.Id}",
+                Supplier = warehouseReceipt.Supplier,
+                WarehouseId = warehouseReceipt.WarehouseId,
+                DateImport = warehouseReceipt.DateImport
+            };
+
+            await _receiptRepo.AddImportTransactionAsync(importTransaction);
+            await _receiptRepo.SaveChangesAsync();
+
+            for (int i = 0; i < batchEntities.Count; i++)
+            {
+                var batchEntity = batchEntities[i];
+                var dto = batchDtos[i];
+
+                var detail = new ImportTransactionDetail
+                {
+                    ImportTransactionId = importTransaction.ImportTransactionId,
+                    TotalQuantity = dto.Quantity,
+                    TotalPrice = dto.TotalAmount,
+                    Note = $"SP #{dto.ProductId} - Batch: {dto.BatchCode}"
+                };
+
+                await _receiptRepo.AddImportTransactionDetailAsync(detail);
+                await _receiptRepo.SaveChangesAsync();
+
+                batchEntity.ImportTransactionDetailId = detail.ImportTransactionDetailId;
+                await _batchRepo.AddAsync(batchEntity);
+                await _batchRepo.SaveChangesAsync();
+
+                dto.BatchId = batchEntity.BatchId;
+            }
+
+            await _exportWarehouseService.UpdateExportFromCoordinationImportAsync(request.RequestExportId, batchDtos);
+
+            return true;
         }
+
 
 
         public async Task<int> GetTodayReceiptCountAsync(Guid userId)

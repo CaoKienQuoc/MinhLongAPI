@@ -106,14 +106,14 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
-        public async Task<List<WarehouseTransferRequest>> GetApprovedTransfersByDestinationAsync(long destinationWarehouseId)
+        public async Task<WarehouseTransferRequest> GetApprovedTransferByIdAsync(long id)
         {
             return await _context.WarehouseTransferRequests
-                .Include(r => r.TransferProducts)
-                    .ThenInclude(tp => tp.Batch) // 🔥 Cần dòng này!
-                .Where(r => r.DestinationWarehouseId == destinationWarehouseId && r.Status == "Approved")
-                .ToListAsync();
+                .Include(x => x.TransferProducts)
+                    .ThenInclude(tp => tp.Batch)
+                .FirstOrDefaultAsync(x => x.Id == id && x.Status == "Approved");
         }
+
 
 
     }

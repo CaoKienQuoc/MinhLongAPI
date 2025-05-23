@@ -19,8 +19,8 @@ namespace MLHR.Controllers
             _httpContextAccessor = httpContextAccessor;
         }
 
-        [HttpPost("import-transfer-approved/{DestinationWarehouseId}")]
-        public async Task<IActionResult> ImportApprovedTransfer(long DestinationWarehouseId)
+        [HttpPost("import-transfer-approved/{transferRequestId}")]
+        public async Task<IActionResult> ImportApprovedTransfer(long transferRequestId)
         {
             var currentUserId = GetLoggedInUserId();
             if (currentUserId == null)
@@ -30,7 +30,7 @@ namespace MLHR.Controllers
 
             try
             {
-                await _service.ImportApprovedTransfersAsync(DestinationWarehouseId, currentUserId.Value);
+                await _service.ImportApprovedTransferAsync(transferRequestId, currentUserId.Value);
                 return Ok("Nhập kho điều phối thành công.");
             }
             catch (Exception ex)
@@ -42,17 +42,23 @@ namespace MLHR.Controllers
 
         private Guid? GetLoggedInUserId()
         {
-            var claimsIdentity = _httpContextAccessor.HttpContext?.User.Identity as ClaimsIdentity;
-            if (claimsIdentity != null)
-            {
-                var userIdClaim = claimsIdentity.FindFirst("userId");
-                if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out Guid userId))
-                {
-                    return userId;
-                }
-            }
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null || user.Identity == null || !user.Identity.IsAuthenticated)
+                return null;
+
+
+            // ✅ Ưu tiên lấy "UserId"
+            var userIdClaim = user.Claims.FirstOrDefault(c =>
+                string.Equals(c.Type, "UserId", StringComparison.OrdinalIgnoreCase) || // key tùy chỉnh
+                c.Type == ClaimTypes.NameIdentifier);                                   // fallback chuẩn .NET
+
+            if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out Guid userId))
+                return userId;
+
             return null;
         }
+
+
 
 
 

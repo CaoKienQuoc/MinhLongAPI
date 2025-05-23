@@ -18,7 +18,7 @@ namespace Services.IService
 
         Task<WarehouseReceiptDTO?> GetReceiptByIdAsync(long id, Guid userId);
 
-        Task<bool> ImportApprovedTransfersAsync(long destinationWarehouseId, Guid currentUserId);
+        Task<bool> ImportApprovedTransferAsync(long transferRequestId, Guid currentUserId);
 
         Task<byte[]> GenerateReceiptPdfAsync(long warehouseReceiptId, Guid userId);
         Task<int> GetTodayReceiptCountAsync(Guid userId);
