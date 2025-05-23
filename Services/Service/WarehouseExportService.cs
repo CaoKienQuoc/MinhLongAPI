@@ -164,7 +164,7 @@ namespace Services.Service
                             WarehouseProductId = item.WarehouseProductId,
                             Status = "Pending",
                             RequestDate = DateTime.UtcNow,
-                            Notes = $"Transfer for order {order.OrderCode}",
+                            Notes = $"Điều Phối Cho {order.OrderCode}",
                             TranferRequestCode = $"PDP-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
                             TransferProducts = new List<WarehouseTransferProduct>()
                         };

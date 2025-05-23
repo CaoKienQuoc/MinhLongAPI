@@ -94,13 +94,13 @@ namespace Services.Service
             // 3) Lưu vào DB
             var createdRoom = await _roomRepo.AddAsync(room);
 
-            // 4) Gửi tin nhắn chào mừng từ Hệ thống đến người tạo (creatorId)
-            var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
+            // 4) Tìm người gửi tin chào mừng ≠ creator
+            var saleId = memberIds.FirstOrDefault(id => id != creatorId);
 
             var welcomeMessage = new ChatMessage
             {
                 ChatRoomId = createdRoom.ChatRoomId,
-                SenderId = systemUserId,
+                SenderId = saleId,
                 MessageText = "Cảm ơn bạn đã lựa chọn mua sắm ở Minh Long, nếu có thắc mắc cần giải đáp gì hãy nhắn tin cho chúng tôi, đội ngũ nhân viên sẽ giúp đỡ bạn!",
                 Timestamp = GetVietnamTime()
             };
@@ -110,7 +110,7 @@ namespace Services.Service
             // 5) GỬI SIGNALR + NOTIFICATION cho người nhận đầu tiên (creatorId)
 
             // Gửi SignalR đến người nhận đầu tiên (A)
-            await _hub.Clients.User(creatorId.ToString()).SendAsync("UnActive", new
+            await _hub.Clients.User(creatorId.ToString()).SendAsync("isRead", new
             {
                 title = "Tin nhắn mới",
                 payload = createdRoom.ChatRoomId
