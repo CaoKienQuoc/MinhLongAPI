@@ -95,7 +95,7 @@ namespace Services.Service
             var createdRoom = await _roomRepo.AddAsync(room);
 
             // 4) Tìm người gửi tin chào mừng ≠ creator
-            var saleId = memberIds.FirstOrDefault(id => id != creatorId);
+            var saleId = memberIds.FirstOrDefault(id => id == creatorId);
 
             var welcomeMessage = new ChatMessage
             {
