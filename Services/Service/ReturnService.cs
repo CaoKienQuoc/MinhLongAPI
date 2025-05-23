@@ -641,6 +641,7 @@ namespace Services.Service
                         ProductName = d.Product.ProductName,
                         Quantity = d.Quantity,
                         BatchId = d.BatchId,
+                        BatchCode = d.Batch.BatchCode,
                         Reason = d.Reason
                     };
                 }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>(),
@@ -681,6 +682,7 @@ namespace Services.Service
                         ProductName = d.Product.ProductName,
                         Quantity = d.Quantity,
                         BatchId = d.BatchId,
+                        BatchCode = d.Batch.BatchCode,
                         Reason = d.Reason,
                     };
                 }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>(),
@@ -723,6 +725,7 @@ namespace Services.Service
                         ProductName = d.Product.ProductName,
                         Quantity = d.Quantity,
                         BatchId = d.BatchId,
+                        BatchCode = d.Batch.BatchCode,
                         Reason = d.Reason,
                     };
                 }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()

@@ -51,6 +51,9 @@ namespace Repo.Repository
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
+                .Include(r => r.Warehouse)
+                .ThenInclude(r => r.WarehouseProducts)
+                .ThenInclude(r => r.Batch)
                 .FirstOrDefaultAsync(r => r.ReturnWarehouseReceiptId == receiptId);
         }
 
@@ -75,6 +78,9 @@ namespace Repo.Repository
                     .ThenInclude(r => r.RequestProduct)
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
+                .Include(r => r.Warehouse)
+                .ThenInclude(r => r.WarehouseProducts)
+                .ThenInclude(r => r.Batch)
                 .ToListAsync();
         }
 
@@ -94,6 +100,9 @@ namespace Repo.Repository
                     .ThenInclude(r => r.AgencyAccount)
                     .ThenInclude(r => r.User)
                     .OrderByDescending(r => r.ReceiptDate)
+                .Include (r => r.Warehouse)
+                .ThenInclude (r => r.WarehouseProducts)
+                .ThenInclude(r => r.Batch)
                 .ToListAsync();
         }
 
