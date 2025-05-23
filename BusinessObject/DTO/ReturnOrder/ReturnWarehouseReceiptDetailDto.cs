@@ -13,6 +13,7 @@ namespace BusinessObject.DTO.ReturnOrder
 
         public int Quantity { get; set; }
         public long? BatchId { get; set; }
+        public string? BatchCode { get; set; }
         public string Reason { get; set; }
 
         

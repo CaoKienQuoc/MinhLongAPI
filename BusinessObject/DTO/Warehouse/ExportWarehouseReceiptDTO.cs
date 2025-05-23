@@ -18,6 +18,7 @@ namespace BusinessObject.DTO.Warehouse
         public string Status { get; set; }
         public long WarehouseId { get; set; }
 
+        public string WarehouseName { get; set; }
         public int RequestExportId { get; set; }
 
         public string? OrderCode { get; set; }
