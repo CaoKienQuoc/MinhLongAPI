@@ -505,7 +505,7 @@ namespace Services.Service
                 OrderId = r.OrderId,
                 OrderCode = r.Order.OrderCode,
                 CreatedAt = r.CreatedAt,
-                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.AgencyName,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
                 //Note = r.Note,
@@ -541,7 +541,7 @@ namespace Services.Service
                 OrderId = r.OrderId,
                 OrderCode = r.Order.OrderCode,
                 CreatedAt = r.CreatedAt,
-                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.AgencyName,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
                 //Note = r.Note,
@@ -572,7 +572,7 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 OrderId = r.OrderId,
                 CreatedAt = r.CreatedAt,
-                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
+                CreatedByUserName = r.Order.RequestProduct.AgencyAccount.AgencyName,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
                 //Note = r.Note,
@@ -738,6 +738,7 @@ namespace Services.Service
         {
             var requests = await _returnRepo.GetByUserIdAsync(userId) ?? new List<ReturnRequest>(); ;
             var user = await _employeeRepo.GetByIdAsync(userId);
+            var agencyName = user?.AgencyAccount?.AgencyName ?? "Unknown";
 
             return requests.Select(r => new ReturnRequestProdductDto
             {
@@ -745,7 +746,7 @@ namespace Services.Service
                 OrderId = r.OrderId,
                 OrderCode = r.Order?.OrderCode ?? "Unknown",
                 CreatedAt = r.CreatedAt,
-                CreatedByUserName = user?.Username ?? "Unknown",
+                CreatedByUserName = agencyName,
                 Status = r.Status,
                 ReturnRequestCode = r.ReturnRequestCode,
                 //Note = r.Note,
@@ -772,6 +773,7 @@ namespace Services.Service
             if (request == null) return null;
 
             var user = await _employeeRepo.GetByIdAsync(userId);
+            var agencyName = user?.AgencyAccount?.AgencyName ?? "Unknown";
 
             return new ReturnRequestProdductDto
             {
@@ -779,7 +781,7 @@ namespace Services.Service
                 OrderId = request.OrderId,
                 OrderCode = request.Order?.OrderCode ?? "Unknown",
                 CreatedAt = request.CreatedAt,
-                CreatedByUserName = user?.Username ?? "Unknown",
+                CreatedByUserName = agencyName,
                 Status = request.Status,
                 ReturnRequestCode = request.ReturnRequestCode,
                 //Note = request.Note,

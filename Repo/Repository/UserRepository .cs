@@ -486,7 +486,9 @@ namespace Repo.Repository
 
         public async Task<User> GetByIdAsync(Guid userId)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            return await _context.Users
+        .Include(u => u.AgencyAccount)
+        .FirstOrDefaultAsync(u => u.UserId == userId);
         }
 
 
