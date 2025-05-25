@@ -40,6 +40,14 @@ namespace Services.Service
             _userRepository = userRepository;
             _notificationRepository = notificationRepository;
         }
+
+        public DateTime GetVietnamTime()
+        {
+            // Lấy múi giờ Việt Nam (GMT+7)
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+            return vietnamTime;
+        }
         public async Task<ExportWarehouseReceipt> ApproveTransferRequestAndCreateReceiptAsync(int transferRequestId)
         {
             var random = new Random();
@@ -54,9 +62,9 @@ namespace Services.Service
             // ✅ Tạo phiếu xuất kho điều phối từ kho phụ
             var exportReceipt = new ExportWarehouseReceipt
             {
-                DocumentNumber = $"PXK-DP-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
-                DocumentDate = DateTime.UtcNow,
-                ExportDate = DateTime.UtcNow,
+                DocumentNumber = $"PXK-DP-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
+                DocumentDate = GetVietnamTime(),
+                ExportDate = GetVietnamTime(),
                 ExportType = "ExportCoordination",
                 Status = "Completed",
                 WarehouseId = transferRequest.SourceWarehouseId,

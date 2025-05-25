@@ -39,6 +39,8 @@ namespace Services.Service
 
             var availableStock = await GetAvailableStockAsync(product.ProductId);
 
+
+
             return new ProductResponseDto
             {
                 ProductId = product.ProductId,

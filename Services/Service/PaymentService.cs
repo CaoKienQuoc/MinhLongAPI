@@ -502,7 +502,8 @@ namespace Services.Service
                         var nextLevel = orderedLevels[currentIndex + 1]; // Cấp cao hơn gần nhất
                         decimal ratio = 1.0m; // 1 triệu = 1 điểm
 
-                        int addedScore = (int)(transaction.Amount / 1_000_000m * ratio);
+                        // ❗ Không ép kiểu int — cho phép điểm lẻ
+                        decimal addedScore = (transaction.Amount / 1_000_000m) * ratio;
                         var paymentId = transaction.PaymentHistoryId;
                         var payment = await _repository.GetByIdAsync(paymentId);
                         var orderCode = await _orderRepository.GetOrderByIdAsync(payment.OrderId);
@@ -515,7 +516,7 @@ namespace Services.Service
                             var scoreEntry = new AgencyScoreHistory
                             {
                                 AgencyId = agency.AgencyId,
-                                ScoreChange = addedScore,
+                                ScoreChange = (long)addedScore,
                                 Reason = reason,
                                 CreatedDate = transaction.PaymentDate
                             };

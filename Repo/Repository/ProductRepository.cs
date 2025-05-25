@@ -63,7 +63,24 @@ namespace Repo.Repository
                 query = query.AsNoTracking();
             }
 
-            return await query.FirstOrDefaultAsync();
+            var product = await query.FirstOrDefaultAsync();
+            if (product == null) return null;
+
+            // ✅ JOIN WarehouseProduct -> Batch để lấy giá của lô hàng mới nhất
+            var latestSellingPrice = await (
+                from wp in _context.WarehouseProduct
+                join b in _context.Batches on wp.BatchId equals b.BatchId
+                where wp.ProductId == product.ProductId && wp.Status == "ACTIVE" && b.Status == "ACTIVE"
+                orderby b.BatchId descending // hoặc b.DateOfManufacture descending nếu muốn theo ngày
+                select b.SellingPrice
+            ).FirstOrDefaultAsync();
+
+            if (latestSellingPrice > 0)
+            {
+                product.Price = latestSellingPrice;
+            }
+
+            return product;
         }
 
 

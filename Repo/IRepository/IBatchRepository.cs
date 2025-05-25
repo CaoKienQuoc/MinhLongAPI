@@ -43,6 +43,8 @@ namespace Repo.IRepository
 
         Task<List<Batch>> GetExpiredSoonBatchesByCategoryAsync(long categoryId);
         Task<List<Batch>> GetExpiredSoonBatchesByProductIdAsync(long productId);
-    }
 
+        Task<Dictionary<long, decimal>> GetHighestSellingPricesByProductIdsAsync(List<long> productIds);
+    }
 }
+

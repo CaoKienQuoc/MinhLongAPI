@@ -29,7 +29,7 @@ namespace Services.Service
         private readonly IOrderRepository _orderRepo;
         private readonly IUserRepository _userRepository;
         private readonly INotificationRepository _notificationRepository;
-
+        private readonly IBatchRepository _batchRepository;
         private readonly IHubContext<NotificationHub> _hub;
 
         public WarehouseExportService(
@@ -42,7 +42,8 @@ namespace Services.Service
             IRequestExportRepository requestExportRepo,
             IOrderRepository orderRepository,
             IUserRepository userRepository,
-            INotificationRepository notificationRepository)
+            INotificationRepository notificationRepository,
+            IBatchRepository batchRepository)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -54,6 +55,15 @@ namespace Services.Service
             _orderRepo = orderRepository;
             _userRepository = userRepository;
             _notificationRepository = notificationRepository;
+            _batchRepository = batchRepository;
+        }
+
+        public DateTime GetVietnamTime()
+        {
+            // Lấy múi giờ Việt Nam (GMT+7)
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+            return vietnamTime;
         }
 
         public async Task<ExportWarehouseReceipt> CreateExportReceiptForMainWarehouseAsync(int requestExportId, Guid currentUserId)
@@ -75,6 +85,10 @@ namespace Services.Service
             if (tempStockExports == null || !tempStockExports.Any())
                 throw new InvalidOperationException("Không tìm thấy kho xuất tạm nào.");
 
+            // ✅ Lấy giá bán cao nhất (SellingPrice) theo ProductId từ BatchRepository
+            var productIds = tempStockExports.Select(t => t.ProductId).Distinct().ToList();
+            var batchPrices = await _batchRepository.GetHighestSellingPricesByProductIdsAsync(productIds);
+
             var exportDetails = new List<ExportWarehouseReceiptDetail>();
             var transferRequests = new List<WarehouseTransferRequest>();
 
@@ -87,14 +101,16 @@ namespace Services.Service
                 foreach (var item in tempStockExports)
                 {
                     var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    var unitPrice = batchPrices[item.ProductId];
+
                     exportDetails.Add(new ExportWarehouseReceiptDetail
                     {
                         ProductId = item.ProductId,
                         ProductName = product?.ProductName ?? "Unknown",
                         BatchNumber = item.BatchNumber,
                         Quantity = (int)item.Quantity,
-                        UnitPrice = item.UnitPrice,
-                        TotalProductAmount = item.UnitPrice * item.Quantity,
+                        UnitPrice = unitPrice,
+                        TotalProductAmount = unitPrice * item.Quantity,
                         ExpiryDate = item.ExpiryDate,
                         WarehouseProductId = item.WarehouseProductId,
                         BatchId = item.BatchId
@@ -103,9 +119,9 @@ namespace Services.Service
 
                 var receipt = new ExportWarehouseReceipt
                 {
-                    DocumentNumber = $"PXK-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
-                    DocumentDate = DateTime.UtcNow,
-                    ExportDate = DateTime.UtcNow,
+                    DocumentNumber = $"PXK-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
+                    DocumentDate = GetVietnamTime(),
+                    ExportDate = GetVietnamTime(),
                     ExportType = "AvailableExport",
                     Status = "Pending",
                     WarehouseId = warehouseId,
@@ -135,6 +151,7 @@ namespace Services.Service
 
             foreach (var item in tempStockExports)
             {
+                var unitPrice = batchPrices[item.ProductId];
                 if (item.WarehouseId == mainWarehouseId)
                 {
                     var product = await _productRepository.GetByIdAsync(item.ProductId);
@@ -144,8 +161,8 @@ namespace Services.Service
                         ProductName = product?.ProductName ?? "Unknown",
                         BatchNumber = item.BatchNumber,
                         Quantity = (int)item.Quantity,
-                        UnitPrice = item.UnitPrice,
-                        TotalProductAmount = item.UnitPrice * item.Quantity,
+                        UnitPrice = unitPrice,
+                        TotalProductAmount = unitPrice * item.Quantity,
                         ExpiryDate = item.ExpiryDate,
                         WarehouseProductId = item.WarehouseProductId,
                         BatchId = item.BatchId
@@ -163,9 +180,9 @@ namespace Services.Service
                             RequestExportId = requestExportId,
                             WarehouseProductId = item.WarehouseProductId,
                             Status = "Pending",
-                            RequestDate = DateTime.UtcNow,
+                            RequestDate = GetVietnamTime(),
                             Notes = $"Điều Phối Cho {order.OrderCode}",
-                            TranferRequestCode = $"PDP-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
+                            TranferRequestCode = $"PDP-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
                             TransferProducts = new List<WarehouseTransferProduct>()
                         };
                         transferRequests.Add(existing);
@@ -182,9 +199,9 @@ namespace Services.Service
 
             var transferReceipt = new ExportWarehouseReceipt
             {
-                DocumentNumber = $"PXK-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
-                DocumentDate = DateTime.UtcNow,
-                ExportDate = DateTime.UtcNow,
+                DocumentNumber = $"PXK-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
+                DocumentDate = GetVietnamTime(),
+                ExportDate = GetVietnamTime(),
                 ExportType = "PendingTransfer",
                 Status = "Pending",
                 WarehouseId = mainWarehouseId,
@@ -508,7 +525,7 @@ namespace Services.Service
         public async Task<int> GetThisMonthExportCountAsync(Guid userId)
         {
             var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
-            var now = DateTime.Now;
+            var now = GetVietnamTime();
             return receipts.Count(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year);
         }
 
@@ -522,7 +539,7 @@ namespace Services.Service
 
         public async Task<int> GetThisMonthExportQuantityAsync(Guid userId)
         {
-            var now = DateTime.Now;
+            var now = GetVietnamTime();
             var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
             return receipts
                 .Where(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year)
@@ -539,7 +556,7 @@ namespace Services.Service
 
         public async Task<decimal> GetThisMonthExportValueAsync(Guid userId)
         {
-            var now = DateTime.Now;
+            var now = GetVietnamTime();
             var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
             return receipts
                 .Where(r => r.DocumentDate.Month == now.Month && r.DocumentDate.Year == now.Year)

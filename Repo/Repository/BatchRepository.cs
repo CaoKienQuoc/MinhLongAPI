@@ -21,6 +21,23 @@ namespace Repo.Repository
             _context = context;
         }
 
+        public async Task<Dictionary<long, decimal>> GetHighestSellingPricesByProductIdsAsync(List<long> productIds)
+        {
+            return await _context.Batches
+                .Where(b => productIds.Contains(b.ProductId) && b.Status == "ACTIVE")
+                .GroupBy(b => b.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    MaxSellingPrice = g.Max(x => x.SellingPrice)
+                })
+                .ToDictionaryAsync(
+                    x => x.ProductId,
+                    x => x.MaxSellingPrice ?? 0m // xử lý nullable
+                );
+        }
+
+
         public async Task<Batch?> GetLatestBatchByProductIdAsync(long productId)
         {
             /*return await _context.Batches
