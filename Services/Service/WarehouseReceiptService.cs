@@ -100,7 +100,25 @@ namespace Services.Service
             {
                 string batchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
 
-                foreach (var b in request.Batches)
+                var groupedBatches = request.Batches
+                        .GroupBy(b => new
+                                {
+                                b.ProductId,
+                                DateOfManufacture = b.DateOfManufacture.Date, // ✅ sửa tên key tại đây
+                            b.UnitCost,
+                            b.Unit
+                        })
+                                .Select(g => new
+                                {
+                                    ProductId = g.Key.ProductId,
+                                    DateOfManufacture = g.Key.DateOfManufacture, // ✅ giờ dùng được
+                                    UnitCost = g.Key.UnitCost,
+                                    Unit = g.Key.Unit,
+                                    TotalQuantity = g.Sum(x => x.Quantity)
+                                });
+
+
+                /*foreach (var b in request.Batches)
                 {
                     var product = await _productRepo.GetByIdAsync(b.ProductId);
                     if (product == null)
@@ -130,7 +148,37 @@ namespace Services.Service
 
                     totalQuantity += b.Quantity;
                     totalPrice += b.Quantity * b.UnitCost;
+                }*/
+
+                foreach (var group in groupedBatches)
+                {
+                    var product = await _productRepo.GetByIdAsync(group.ProductId);
+                    if (product == null)
+                        throw new Exception($"Không tìm thấy sản phẩm (ProductId: {group.ProductId})");
+
+                    int defaultExpirationDays = product.DefaultExpiration ?? 720;
+                    DateTime expiryDate = group.DateOfManufacture.AddDays(defaultExpirationDays).AddDays(1);
+
+                    string status = expiryDate < DateTime.Now ? "EXPIRED" : "CALCULATING_PRICE";
+
+                    processedBatches.Add(new BatchResponseDto
+                    {
+                        BatchCode = batchCode,
+                        ProductId = group.ProductId,
+                        Unit = group.Unit,
+                        Quantity = group.TotalQuantity,
+                        UnitCost = group.UnitCost,
+                        TotalAmount = group.TotalQuantity * group.UnitCost,
+                        SellingPrice = 0,
+                        Status = status,
+                        DateOfManufacture = group.DateOfManufacture,
+                        ExpiryDate = expiryDate,
+                    });
+
+                    totalQuantity += group.TotalQuantity;
+                    totalPrice += group.TotalQuantity * group.UnitCost;
                 }
+
             }
 
             string batchesJson = JsonConvert.SerializeObject(processedBatches, Formatting.Indented);
