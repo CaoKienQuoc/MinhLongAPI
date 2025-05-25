@@ -109,8 +109,8 @@ namespace Services.Service
                         ProductName = product?.ProductName ?? "Unknown",
                         BatchNumber = item.BatchNumber,
                         Quantity = (int)item.Quantity,
-                        UnitPrice = unitPrice,
-                        TotalProductAmount = unitPrice * item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        TotalProductAmount = item.UnitPrice * item.Quantity,
                         ExpiryDate = item.ExpiryDate,
                         WarehouseProductId = item.WarehouseProductId,
                         BatchId = item.BatchId
@@ -161,8 +161,8 @@ namespace Services.Service
                         ProductName = product?.ProductName ?? "Unknown",
                         BatchNumber = item.BatchNumber,
                         Quantity = (int)item.Quantity,
-                        UnitPrice = unitPrice,
-                        TotalProductAmount = unitPrice * item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        TotalProductAmount = item.UnitPrice * item.Quantity,
                         ExpiryDate = item.ExpiryDate,
                         WarehouseProductId = item.WarehouseProductId,
                         BatchId = item.BatchId
