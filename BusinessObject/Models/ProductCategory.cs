@@ -16,11 +16,6 @@ namespace BusinessObject.Models
         [Required, MaxLength(255)]
         public string CategoryName { get; set; }
 
-        public long? ParentCategoryId { get; set; }
-        [ForeignKey("ParentCategoryId")]
-        public ProductCategory ParentCategory { get; set; }
-
-        public int? SortOrder { get; set; }
 
         public string Notes { get; set; }
 

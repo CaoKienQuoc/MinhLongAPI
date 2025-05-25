@@ -323,8 +323,6 @@ namespace DataAccessLayer.Migrations
                     CategoryId = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CategoryName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    ParentCategoryId = table.Column<long>(type: "bigint", nullable: true),
-                    SortOrder = table.Column<int>(type: "int", nullable: true),
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -335,12 +333,6 @@ namespace DataAccessLayer.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ProductCategory", x => x.CategoryId);
-                    table.ForeignKey(
-                        name: "FK_ProductCategory_ProductCategory_ParentCategoryId",
-                        column: x => x.ParentCategoryId,
-                        principalTable: "ProductCategory",
-                        principalColumn: "CategoryId",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ProductCategory_User_CreatedBy",
                         column: x => x.CreatedBy,
@@ -1888,11 +1880,6 @@ namespace DataAccessLayer.Migrations
                 name: "IX_ProductCategory_CreatedBy",
                 table: "ProductCategory",
                 column: "CreatedBy");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductCategory_ParentCategoryId",
-                table: "ProductCategory",
-                column: "ParentCategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductCategory_UpdatedBy",

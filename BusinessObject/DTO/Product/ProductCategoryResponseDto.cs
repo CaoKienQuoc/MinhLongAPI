@@ -10,8 +10,6 @@ namespace BusinessObject.DTO.Product
     {
         public long CategoryId { get; set; }
         public string CategoryName { get; set; }
-        public long? ParentCategoryId { get; set; }
-        public int? SortOrder { get; set; }
         public string Notes { get; set; }
         public bool IsActive { get; set; }
         public Guid CreatedBy { get; set; }

@@ -45,8 +45,6 @@ namespace Services.Service
             {
                 CategoryId = c.CategoryId,
                 CategoryName = c.CategoryName,
-                ParentCategoryId = c.ParentCategoryId,
-                SortOrder = c.SortOrder,
                 Notes = c.Notes,
                 IsActive = c.IsActive,
                 CreatedBy = c.CreatedBy,
@@ -88,8 +86,6 @@ namespace Services.Service
             {
                 CategoryId = category.CategoryId,
                 CategoryName = category.CategoryName,
-                ParentCategoryId = category.ParentCategoryId,
-                SortOrder = category.SortOrder,
                 Notes = category.Notes,
                 IsActive = category.IsActive,
                 CreatedBy = category.CreatedBy,
@@ -107,8 +103,6 @@ namespace Services.Service
             var category = new ProductCategory
             {
                 CategoryName = categoryDto.CategoryName,
-                ParentCategoryId = categoryDto.ParentCategoryId,
-                SortOrder = categoryDto.SortOrder,
                 Notes = categoryDto.Notes,
                 IsActive = categoryDto.IsActive,
                 CreatedBy = userId,
@@ -121,8 +115,6 @@ namespace Services.Service
             {
                 CategoryId = createdCategory.CategoryId,
                 CategoryName = createdCategory.CategoryName,
-                ParentCategoryId = createdCategory.ParentCategoryId,
-                SortOrder = createdCategory.SortOrder,
                 Notes = createdCategory.Notes,
                 IsActive = createdCategory.IsActive,
                 CreatedBy = createdCategory.CreatedBy,
@@ -136,8 +128,6 @@ namespace Services.Service
             if (existingCategory == null) return null;
 
             existingCategory.CategoryName = categoryDto.CategoryName;
-            existingCategory.ParentCategoryId = categoryDto.ParentCategoryId;
-            existingCategory.SortOrder = categoryDto.SortOrder;
             existingCategory.Notes = categoryDto.Notes;
             existingCategory.IsActive = categoryDto.IsActive;
             existingCategory.UpdatedBy = userId;
@@ -149,8 +139,6 @@ namespace Services.Service
             {
                 CategoryId = updatedCategory.CategoryId,
                 CategoryName = updatedCategory.CategoryName,
-                ParentCategoryId = updatedCategory.ParentCategoryId,
-                SortOrder = updatedCategory.SortOrder,
                 Notes = updatedCategory.Notes,
                 IsActive = updatedCategory.IsActive,
                 CreatedBy = updatedCategory.CreatedBy,

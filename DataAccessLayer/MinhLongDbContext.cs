@@ -276,12 +276,6 @@ namespace DataAccessLayer
                 .WithOne(a => a.Warehouse) // 🔥 1-1 Mapping
                 .HasForeignKey<Warehouse>(w => w.AddressId)
                 .OnDelete(DeleteBehavior.Cascade);
-            // Cấu hình quan hệ ProductCategory
-            modelBuilder.Entity<ProductCategory>()
-                .HasOne(pc => pc.ParentCategory)
-                .WithMany()
-                .HasForeignKey(pc => pc.ParentCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ProductCategory>()
                 .HasOne(c => c.Creator)

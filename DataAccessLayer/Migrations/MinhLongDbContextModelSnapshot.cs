@@ -1181,12 +1181,6 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("ParentCategoryId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int?>("SortOrder")
-                        .HasColumnType("int");
-
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uniqueidentifier");
 
@@ -1196,8 +1190,6 @@ namespace DataAccessLayer.Migrations
                     b.HasKey("CategoryId");
 
                     b.HasIndex("CreatedBy");
-
-                    b.HasIndex("ParentCategoryId");
 
                     b.HasIndex("UpdatedBy");
 
@@ -2660,19 +2652,12 @@ namespace DataAccessLayer.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("BusinessObject.Models.ProductCategory", "ParentCategory")
-                        .WithMany()
-                        .HasForeignKey("ParentCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("BusinessObject.Models.User", "Updater")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Creator");
-
-                    b.Navigation("ParentCategory");
 
                     b.Navigation("Updater");
                 });
