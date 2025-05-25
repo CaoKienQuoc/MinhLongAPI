@@ -516,7 +516,7 @@ namespace Services.Service
                             var scoreEntry = new AgencyScoreHistory
                             {
                                 AgencyId = agency.AgencyId,
-                                ScoreChange = (long)addedScore,
+                                ScoreChange = addedScore,
                                 Reason = reason,
                                 CreatedDate = transaction.PaymentDate
                             };
@@ -552,8 +552,6 @@ namespace Services.Service
                         }
                     }
                 }
-
-
 
 
                 return new StatusPayment

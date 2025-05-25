@@ -19,7 +19,7 @@ namespace BusinessObject.DTO
 
         // Nếu là AGENCY
         public string AgencyLevelName { get; set; }
-        public long AgencyScore { get; set; }
+        public decimal AgencyScore { get; set; }
         public decimal? CreditLimit { get; set; }
 
         public string? Position { get; set; }

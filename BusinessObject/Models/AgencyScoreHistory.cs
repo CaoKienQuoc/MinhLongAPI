@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,8 @@ namespace BusinessObject.Models
     {
         public Guid AgencyScoreHistoryId { get; set; }
         public long AgencyId { get; set; }
-        public long ScoreChange { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal ScoreChange { get; set; }
         public string Reason { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 

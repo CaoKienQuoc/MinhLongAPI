@@ -31,8 +31,8 @@ namespace BusinessObject.Models
 
         [ForeignKey("ManagedByEmployeeId")]
         public Employee ManagedByEmployee { get; set; }
-
-        public long AgencyScore { get; set; } = 0;
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal AgencyScore { get; set; } = 0;
 
         public ICollection<AgencyAccountLevel> AgencyAccountLevels { get; set; }
 

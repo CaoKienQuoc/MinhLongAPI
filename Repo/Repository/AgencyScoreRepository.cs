@@ -24,7 +24,7 @@ namespace Repo.Repository
             await _context.AgencyScoreHistory.AddAsync(scoreEntry);
         }
 
-        public async Task<long> GetTotalScoreByAgencyIdAsync(long agencyId)
+        public async Task<decimal> GetTotalScoreByAgencyIdAsync(long agencyId)
         {
             return await _context.AgencyScoreHistory
                 .Where(s => s.AgencyId == agencyId)
