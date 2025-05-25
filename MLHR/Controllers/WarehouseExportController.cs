@@ -155,12 +155,20 @@ namespace MLHR.Controllers
             return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalAmount = value });
         }
 
-        [HttpGet("dashboard/export-count-monthly-all")]
-        public async Task<IActionResult> GetMonthlyExportStatsAll()
+        [HttpGet("dashboard/monthly-export-stats")]
+        public async Task<IActionResult> GetMonthlyExportStats()
         {
-            var stats = await _exportService.GetMonthlyExportStatsAllAsync();
-            return Ok(stats);
+            try
+            {
+                var stats = await _exportService.GetMonthlyExportStatsAllAsync();
+                return Ok(new { success = true, data = stats });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
+
 
     }
 

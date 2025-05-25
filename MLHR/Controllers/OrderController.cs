@@ -233,12 +233,13 @@ namespace MLHR.Controllers
             return Ok(new { realRevenue = revenue });
         }
 
-        [HttpGet("dashboard/exported-orders-by-month")]
+        [HttpGet("dashboard/monthly-export-stats")]
         public async Task<IActionResult> GetMonthlyExportedOrderStats()
         {
-            var result = await _orderService.GetMonthlyExportedOrderStatsAsync();
-            return Ok(result);
+            var stats = await _orderService.GetMonthlyExportedOrderStatsAsync();
+            return Ok(new { success = true, data = stats });
         }
+
 
 
 

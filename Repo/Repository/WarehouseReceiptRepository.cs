@@ -68,17 +68,20 @@ namespace Repo.Repository
             var currentYear = DateTime.Now.Year;
 
             return await _context.WarehouseReceipts
-                .Where(wr => wr.DocumentDate.Year == currentYear)
-                .GroupBy(wr => wr.DocumentDate.Month)
+                .Where(r => r.DocumentDate.Year == currentYear)
+                .GroupBy(r => r.DocumentDate.Month)
                 .Select(g => new
                 {
                     Month = g.Key,
-                    ReceiptCount = g.Count()
+                    TotalReceipts = g.Count(),
+                    TotalImportValue = g.Sum(r => r.TotalPrice),
+                    TotalQuantityImported = g.Sum(r => r.TotalQuantity)
                 })
                 .OrderBy(x => x.Month)
                 .Select(x => (object)x)
                 .ToListAsync();
         }
+
 
     }
 }

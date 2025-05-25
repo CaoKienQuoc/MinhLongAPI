@@ -212,12 +212,20 @@ namespace MLHR.Controllers
             return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalPrice = totalPrice });
         }
 
-        [HttpGet("dashboard/monthly-receipt-count/all")]
-        public async Task<IActionResult> GetMonthlyReceiptStatsAll()
+        [HttpGet("dashboard/monthly-receipt-stats")]
+        public async Task<IActionResult> GetMonthlyReceiptStats()
         {
-            var result = await _service.GetMonthlyReceiptStatsAllAsync();
-            return Ok(result);
+            try
+            {
+                var stats = await _service.GetMonthlyReceiptStatsAllAsync(); // Gọi từ service
+                return Ok(new { success = true, data = stats });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
+
 
 
     }

@@ -247,12 +247,16 @@ namespace Repo.Repository
                 .Select(g => new
                 {
                     Month = g.Key,
-                    ExportedOrderCount = g.Count()
+                    ExportedOrderCount = g.Count(),
+                    TotalRevenue = g.Sum(o => o.FinalPrice),
+                    TotalProductSold = g.Sum(o => o.OrderDetails.Sum(d => d.Quantity))
                 })
                 .OrderBy(x => x.Month)
                 .Select(x => (object)x)
                 .ToListAsync();
         }
+
+
 
     }
 }

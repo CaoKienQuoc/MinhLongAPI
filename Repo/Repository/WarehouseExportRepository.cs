@@ -196,12 +196,15 @@ namespace Repo.Repository
                 .Select(g => new
                 {
                     Month = g.Key,
-                    ExportCount = g.Count()
+                    TotalExports = g.Count(),
+                    TotalExportValue = g.Sum(x => x.TotalAmount),
+                    TotalQuantityExported = g.SelectMany(x => x.ExportWarehouseReceiptDetails).Sum(d => d.Quantity)
                 })
                 .OrderBy(x => x.Month)
                 .Select(x => (object)x)
                 .ToListAsync();
         }
+
 
     }
 
