@@ -66,14 +66,18 @@ namespace Repo.Repository
             var product = await query.FirstOrDefaultAsync();
             if (product == null) return null;
 
-            // ✅ JOIN WarehouseProduct -> Batch để lấy giá của lô hàng mới nhất
+            // ✅ JOIN WarehouseProduct -> Batch để lấy giá của lô hàng mới nhất (còn tồn kho)
             var latestSellingPrice = await (
                 from wp in _context.WarehouseProduct
                 join b in _context.Batches on wp.BatchId equals b.BatchId
-                where wp.ProductId == product.ProductId && wp.Status == "ACTIVE" && b.Status == "ACTIVE"
+                where wp.ProductId == product.ProductId
+                      && wp.Status == "ACTIVE"
+                      && b.Status == "ACTIVE"
+                      && wp.Quantity > 0 // ✅ Bỏ qua lô hết hàng
                 orderby b.BatchId descending // hoặc b.DateOfManufacture descending nếu muốn theo ngày
                 select b.SellingPrice
             ).FirstOrDefaultAsync();
+
 
             if (latestSellingPrice > 0)
             {
