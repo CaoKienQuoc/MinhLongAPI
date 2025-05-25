@@ -13,7 +13,7 @@ namespace BusinessObject.DTO
         public string AgencyName { get; set; }
         public long CurrentLevelId { get; set; }
         public long SuggestedLevelId { get; set; }
-        public long TotalScore { get; set; }
+        public decimal TotalScore { get; set; }
         public string Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? ReviewedAt { get; set; }
