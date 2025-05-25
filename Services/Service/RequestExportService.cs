@@ -195,6 +195,9 @@ namespace Services.Service
                     RequestExportCode = re.RequestExportCode,
                     WarehouseId = warehouseId,
                     WarehouseName = warehouseName,
+                    Discount = re.Discount,
+                    TotalPrice = re.TotalPrice,
+                    FinalPrice = re.FinalPrice,
                     RequestExportDetails = re.RequestExportDetails.Select(red => new RequestExportDetailDto
                     {
                         RequestExportDetailId = red.RequestItemId,

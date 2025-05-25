@@ -15,6 +15,7 @@ namespace BusinessObject.DTO.RequestExport
         public decimal? Price { get; set; }          // ✅ Nếu cần
         public int RequestedQuantity { get; set; }
         public decimal TotalAmount { get; set; }
+
     }
 
 

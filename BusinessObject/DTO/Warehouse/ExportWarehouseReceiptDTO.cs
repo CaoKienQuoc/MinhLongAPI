@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +25,12 @@ namespace BusinessObject.DTO.Warehouse
         public string? OrderCode { get; set; }
         public string? AgencyName { get; set; }
         public List<ExportWarehouseReceiptDetailDTO> Details { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Discount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal FinalPrice { get; set; }
     }
 
     public class ExportWarehouseReceiptDetailDTO

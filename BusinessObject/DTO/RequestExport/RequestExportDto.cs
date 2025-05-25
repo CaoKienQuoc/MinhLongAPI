@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,5 +26,13 @@ namespace BusinessObject.DTO.RequestExport
         public List<RequestExportDetailDto> RequestExportDetails { get; set; }
         // ✅ Thêm dòng này:
         public List<TemporaryStockExportDto> TemporaryStockExportDetails { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Discount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalPrice { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal FinalPrice { get; set; }
     }
 }

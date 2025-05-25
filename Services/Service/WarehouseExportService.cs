@@ -396,6 +396,8 @@ namespace Services.Service
                     RequestExportId = receipt.RequestExportId,
                     OrderCode = receipt.RequestExport?.Order?.OrderCode ?? "",
                     AgencyName = receipt.RequestExport?.Order?.RequestProduct?.AgencyAccount?.AgencyName ?? "",
+                    Discount = receipt.Discount,
+                    FinalPrice = receipt.FinalPrice,
                     Details = receipt.ExportWarehouseReceiptDetails.Select(detail =>
                     {
                         var requestedQuantity = requestExportDetails
