@@ -27,6 +27,8 @@ namespace Services.IService
         Task<int> GetThisMonthTotalQuantityAsync(Guid userId);
         Task<decimal> GetTodayTotalPriceAsync(Guid userId);
         Task<decimal> GetThisMonthTotalPriceAsync(Guid userId);
+        Task<List<object>> GetMonthlyReceiptStatsAllAsync();
+
 
     }
 }

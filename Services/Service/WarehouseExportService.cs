@@ -661,6 +661,12 @@ namespace Services.Service
                 .BorderColor(Colors.Grey.Lighten2);
         }
 
+        public async Task<List<object>> GetMonthlyExportStatsAllAsync()
+        {
+            return await _exportReceiptRepo.GetMonthlyExportStatsAllAsync();
+        }
+
+
     }
 
 }

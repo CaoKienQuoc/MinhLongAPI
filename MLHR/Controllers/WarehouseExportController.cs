@@ -155,6 +155,12 @@ namespace MLHR.Controllers
             return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalAmount = value });
         }
 
+        [HttpGet("dashboard/export-count-monthly-all")]
+        public async Task<IActionResult> GetMonthlyExportStatsAll()
+        {
+            var stats = await _exportService.GetMonthlyExportStatsAllAsync();
+            return Ok(stats);
+        }
 
     }
 

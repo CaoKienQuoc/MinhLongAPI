@@ -740,6 +740,12 @@ namespace Services.Service
                 .BorderColor(Colors.Grey.Lighten2);
         }
 
+        public async Task<List<object>> GetMonthlyReceiptStatsAllAsync()
+        {
+            return await _receiptRepo.GetMonthlyReceiptStatsAllAsync();
+        }
+
+
     }
 
 }

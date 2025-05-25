@@ -236,5 +236,23 @@ namespace Repo.Repository
 
             return orderDetail;
         }
+
+        public async Task<List<object>> GetMonthlyExportedOrderStatsAsync()
+        {
+            var currentYear = DateTime.Now.Year;
+
+            return await _context.Orders
+                .Where(o => o.OrderDate.Year == currentYear)
+                .GroupBy(o => o.OrderDate.Month)
+                .Select(g => new
+                {
+                    Month = g.Key,
+                    ExportedOrderCount = g.Count()
+                })
+                .OrderBy(x => x.Month)
+                .Select(x => (object)x)
+                .ToListAsync();
+        }
+
     }
 }

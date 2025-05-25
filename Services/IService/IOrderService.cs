@@ -49,6 +49,10 @@ namespace Services.IService
         Task<decimal> GetThisMonthRevenueByUserIdAsync(Guid userId);
         Task<decimal> GetTotalRevenueByUserIdAsync(Guid userId);
 
+        Task<List<object>> GetMonthlyExportedOrderStatsAsync();
+
+
+
 
     }
 }

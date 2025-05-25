@@ -33,6 +33,8 @@ namespace Services.IService
         Task<decimal> GetTodayExportValueAsync(Guid userId);
         Task<decimal> GetThisMonthExportValueAsync(Guid userId);
 
+        Task<List<object>> GetMonthlyExportStatsAllAsync();
+
     }
 
 }

@@ -212,5 +212,13 @@ namespace MLHR.Controllers
             return Ok(new { Month = DateTime.Now.Month, Year = DateTime.Now.Year, TotalPrice = totalPrice });
         }
 
+        [HttpGet("dashboard/monthly-receipt-count/all")]
+        public async Task<IActionResult> GetMonthlyReceiptStatsAll()
+        {
+            var result = await _service.GetMonthlyReceiptStatsAllAsync();
+            return Ok(result);
+        }
+
+
     }
 }

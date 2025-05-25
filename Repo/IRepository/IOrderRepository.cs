@@ -44,5 +44,7 @@ namespace Repo.IRepository
         Task<Order> GetOrderWithDetailsAsync(Guid orderId); // ✅ đổi kiểu orderId
 
         Task<OrderDetail> GetOrderDetailByIdAsync(Guid orderDetailId);
+        Task<List<object>> GetMonthlyExportedOrderStatsAsync();
+
     }
 }

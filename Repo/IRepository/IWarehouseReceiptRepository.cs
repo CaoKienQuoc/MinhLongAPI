@@ -20,6 +20,9 @@ namespace Repo.IRepository
 
         Task<ImportTransactionDetail> GetImportTransactionDetailByIdAsync(long id);
         Task<ImportTransaction> GetImportTransactionByIdAsync(long id);
+        Task<List<object>> GetMonthlyReceiptStatsAllAsync();
+
+
 
     }
 }

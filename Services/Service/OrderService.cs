@@ -581,6 +581,11 @@ namespace Services.Service
             return await _orderRepository.GetTotalPaymentAmountManagedBySalesAsync(salesUserId);
         }
 
+        public async Task<List<object>> GetMonthlyExportedOrderStatsAsync()
+        {
+            return await _orderRepository.GetMonthlyExportedOrderStatsAsync();
+        }
+
 
 
 

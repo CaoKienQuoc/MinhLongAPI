@@ -62,5 +62,23 @@ namespace Repo.Repository
             return await _context.Set<ImportTransaction>()
                 .FirstOrDefaultAsync(x => x.ImportTransactionId == id);
         }
+
+        public async Task<List<object>> GetMonthlyReceiptStatsAllAsync()
+        {
+            var currentYear = DateTime.Now.Year;
+
+            return await _context.WarehouseReceipts
+                .Where(wr => wr.DocumentDate.Year == currentYear)
+                .GroupBy(wr => wr.DocumentDate.Month)
+                .Select(g => new
+                {
+                    Month = g.Key,
+                    ReceiptCount = g.Count()
+                })
+                .OrderBy(x => x.Month)
+                .Select(x => (object)x)
+                .ToListAsync();
+        }
+
     }
 }

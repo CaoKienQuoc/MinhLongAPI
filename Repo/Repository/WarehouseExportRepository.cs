@@ -185,6 +185,24 @@ namespace Repo.Repository
 
             return exportReceipt.WarehouseId;
         }
+
+        public async Task<List<object>> GetMonthlyExportStatsAllAsync()
+        {
+            var currentYear = DateTime.Now.Year;
+
+            return await _context.ExportWarehouseReceipts
+                .Where(r => r.DocumentDate.Year == currentYear)
+                .GroupBy(r => r.DocumentDate.Month)
+                .Select(g => new
+                {
+                    Month = g.Key,
+                    ExportCount = g.Count()
+                })
+                .OrderBy(x => x.Month)
+                .Select(x => (object)x)
+                .ToListAsync();
+        }
+
     }
 
 
