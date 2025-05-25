@@ -410,6 +410,7 @@ namespace Services.Service
                 OrderCode = o.OrderCode,
                 OrderDate = o.OrderDate,
                 Discount = discount,
+                TotalPrice = o.TotalPrice,
                 FinalPrice = (decimal)Math.Ceiling((double)o.FinalPrice),
                 Status = o.Status,
                 // ✅ Thêm AgencyId

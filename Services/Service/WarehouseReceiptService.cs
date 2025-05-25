@@ -225,10 +225,12 @@ namespace Services.Service
             // ✅ Sắp xếp theo DateImport mới nhất trước
             receipts = receipts.OrderByDescending(r => r.DateImport).ToList();
 
+            // ✅ Sắp xếp: DateImport mới nhất trước, trong cùng ngày thì đơn mới (theo Id) lên trước
             receipts = receipts
-                     .OrderByDescending(r => r.DateImport)
-                    .ThenByDescending(r => r.WarehouseReceiptId) // hoặc CreatedDate nếu có
-                    .ToList();
+                .OrderByDescending(r => r.DateImport.Date) // Sắp xếp theo ngày nhập (không tính giờ)
+                .ThenByDescending(r => r.DateImport)       // Nếu cần phân biệt giờ trong ngày
+                .ThenByDescending(r => r.WarehouseReceiptId) // Nếu hai đơn trùng DateImport thì lấy đơn mới hơn
+                .ToList();
             var result = new List<WarehouseReceiptDTO>();
 
             foreach (var receipt in receipts)

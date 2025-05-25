@@ -181,7 +181,7 @@ namespace Services.Service
                             WarehouseProductId = item.WarehouseProductId,
                             Status = "Pending",
                             RequestDate = GetVietnamTime(),
-                            Notes = $"Điều Phối Cho {order.OrderCode}",
+                            Notes = $"Điều Phối Đơn Hàng #{order.OrderCode}",
                             TranferRequestCode = $"PDP-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
                             TransferProducts = new List<WarehouseTransferProduct>()
                         };

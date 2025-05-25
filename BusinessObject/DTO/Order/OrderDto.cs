@@ -13,6 +13,7 @@ namespace BusinessObject.DTO.Order
         public DateTime OrderDate { get; set; }
         public decimal Discount { get; set; }
         public decimal FinalPrice { get; set; }
+        public decimal TotalPrice { get; set; }
         public string Status { get; set; }
         public long AgencyId { get; set; }
         public string SalesName { get; set; } // 👈 Lấy từ ApprovedByEmployee
