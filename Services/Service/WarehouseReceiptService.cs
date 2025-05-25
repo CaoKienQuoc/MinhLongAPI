@@ -224,6 +224,11 @@ namespace Services.Service
             var receipts = await _receiptRepo.GetAllByUserIdAsync(userId);
             // ✅ Sắp xếp theo DateImport mới nhất trước
             receipts = receipts.OrderByDescending(r => r.DateImport).ToList();
+
+            receipts = receipts
+                     .OrderByDescending(r => r.DateImport)
+                    .ThenByDescending(r => r.WarehouseReceiptId) // hoặc CreatedDate nếu có
+                    .ToList();
             var result = new List<WarehouseReceiptDTO>();
 
             foreach (var receipt in receipts)
