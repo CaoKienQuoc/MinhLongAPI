@@ -87,7 +87,7 @@ namespace Services.Service
 
             // ✅ Lấy giá bán cao nhất (SellingPrice) theo ProductId từ BatchRepository
             var productIds = tempStockExports.Select(t => t.ProductId).Distinct().ToList();
-            var batchPrices = await _batchRepository.GetHighestSellingPricesByProductIdsAsync(productIds);
+            //var batchPrices = await _batchRepository.GetHighestSellingPricesByProductIdsAsync(productIds);
 
             var exportDetails = new List<ExportWarehouseReceiptDetail>();
             var transferRequests = new List<WarehouseTransferRequest>();
@@ -100,8 +100,12 @@ namespace Services.Service
                 var warehouseId = warehouseIds.First();
                 foreach (var item in tempStockExports)
                 {
-                    var product = await _productRepository.GetByIdAsync(item.ProductId);
-                    var unitPrice = batchPrices[item.ProductId];
+                    var products = await _productRepository.GetListByIdsAsync(new List<long> { item.ProductId });
+                    var product = products.FirstOrDefault()
+                        ?? throw new InvalidOperationException($"Không tìm thấy sản phẩm với ID: {item.ProductId}");
+
+                    var unitPrice = product.Price ?? 0;
+
 
                     exportDetails.Add(new ExportWarehouseReceiptDetail
                     {
@@ -109,8 +113,8 @@ namespace Services.Service
                         ProductName = product?.ProductName ?? "Unknown",
                         BatchNumber = item.BatchNumber,
                         Quantity = (int)item.Quantity,
-                        UnitPrice = item.UnitPrice,
-                        TotalProductAmount = item.UnitPrice * item.Quantity,
+                        UnitPrice = unitPrice,
+                        TotalProductAmount = unitPrice * item.Quantity,
                         ExpiryDate = item.ExpiryDate,
                         WarehouseProductId = item.WarehouseProductId,
                         BatchId = item.BatchId
@@ -151,18 +155,22 @@ namespace Services.Service
 
             foreach (var item in tempStockExports)
             {
-                var unitPrice = batchPrices[item.ProductId];
                 if (item.WarehouseId == mainWarehouseId)
                 {
-                    var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    var products = await _productRepository.GetListByIdsAsync(new List<long> { item.ProductId });
+                    var product = products.FirstOrDefault()
+                        ?? throw new InvalidOperationException($"Không tìm thấy sản phẩm với ID: {item.ProductId}");
+
+                    var unitPrice = product.Price ?? 0;
+
                     exportDetails.Add(new ExportWarehouseReceiptDetail
                     {
                         ProductId = item.ProductId,
                         ProductName = product?.ProductName ?? "Unknown",
                         BatchNumber = item.BatchNumber,
                         Quantity = (int)item.Quantity,
-                        UnitPrice = item.UnitPrice,
-                        TotalProductAmount = item.UnitPrice * item.Quantity,
+                        UnitPrice = unitPrice,
+                        TotalProductAmount = unitPrice * item.Quantity,
                         ExpiryDate = item.ExpiryDate,
                         WarehouseProductId = item.WarehouseProductId,
                         BatchId = item.BatchId
@@ -181,7 +189,7 @@ namespace Services.Service
                             WarehouseProductId = item.WarehouseProductId,
                             Status = "Pending",
                             RequestDate = GetVietnamTime(),
-                            Notes = $"Điều Phối Đơn Hàng #{order.OrderCode}",
+                            Notes = $"Điều Phối Đơn Hàng {order.OrderCode}",
                             TranferRequestCode = $"PDP-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
                             TransferProducts = new List<WarehouseTransferProduct>()
                         };
