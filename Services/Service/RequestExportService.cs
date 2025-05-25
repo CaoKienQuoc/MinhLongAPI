@@ -202,7 +202,6 @@ namespace Services.Service
                         ProductName = red.Product?.ProductName ?? "N/A",
                         Unit = red.Unit,
                         Price = red.SellingPrice,
-                        TotalAmount = red.TotalAmount,
                         RequestedQuantity = red.RequestedQuantity
                     }).ToList(),
                     TemporaryStockExportDetails = tempExportDict.ContainsKey(re.OrderId)

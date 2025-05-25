@@ -264,6 +264,10 @@ namespace Services.Service
                     Note = "Order approved and exported",
                     OrderId = order.OrderId,
                     RequestExportCode = requestExportCode,
+                    Discount = order.Discount,
+                    TotalPrice = order.TotalPrice,
+                    FinalPrice = order.FinalPrice,
+
                 };
 
                 // ✅ Lưu RequestExport vào database
@@ -278,8 +282,8 @@ namespace Services.Service
                         ProductId = od.ProductId,
                         RequestedQuantity = od.Quantity,
                         SellingPrice = od.UnitPrice,
-                        Unit = od.Unit,
-                        TotalAmount = od.UnitPrice * od.Quantity
+                        Unit = od.Unit
+
                     }).ToList();
 
                 // ✅ Lưu danh sách RequestExportDetail vào database

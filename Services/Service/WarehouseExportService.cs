@@ -93,7 +93,8 @@ namespace Services.Service
             var transferRequests = new List<WarehouseTransferRequest>();
 
             var warehouseIds = tempStockExports.Select(t => t.WarehouseId).Distinct().ToList();
-
+            var discount = order.Discount; // Nếu Discount có thể null
+            var finalPrice = order.FinalPrice; // Nếu Discount có thể null
             // ✅ Trường hợp 1: chỉ 1 kho duy nhất đủ tất cả
             if (warehouseIds.Count == 1)
             {
@@ -132,7 +133,9 @@ namespace Services.Service
                     RequestExportId = requestExportId,
                     ExportWarehouseReceiptDetails = exportDetails,
                     TotalQuantity = exportDetails.Sum(x => x.Quantity),
-                    TotalAmount = exportDetails.Sum(x => x.TotalProductAmount)
+                    TotalAmount = exportDetails.Sum(x => x.TotalProductAmount),
+                    Discount = discount,
+                    FinalPrice = finalPrice
                 };
 
                 await _exportReceiptRepo.AddRangeAsync(new[] { receipt });
@@ -216,7 +219,9 @@ namespace Services.Service
                 RequestExportId = requestExportId,
                 ExportWarehouseReceiptDetails = exportDetails,
                 TotalQuantity = exportDetails.Sum(x => x.Quantity),
-                TotalAmount = exportDetails.Sum(x => x.TotalProductAmount)
+                TotalAmount = exportDetails.Sum(x => x.TotalProductAmount),
+                Discount = discount,
+                FinalPrice = finalPrice
             };
 
             await _exportReceiptRepo.AddRangeAsync(new[] { transferReceipt });

@@ -29,7 +29,5 @@ namespace BusinessObject.Models
 
         [MaxLength(50)]
         public string Unit { get; set; }
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal TotalAmount { get; set; }
     }
 }

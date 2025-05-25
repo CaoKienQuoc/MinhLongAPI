@@ -51,6 +51,7 @@ namespace BusinessObject.Models
         [ForeignKey("BatchId")]
         public Batch Batch { get; set; }
 
+
     }
 
 }

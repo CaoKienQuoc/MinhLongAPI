@@ -32,6 +32,14 @@ namespace BusinessObject.Models
         public AgencyAccount RequestedByAgency { get; set; }
 
         public ICollection<RequestExportDetail> RequestExportDetails { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Discount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalPrice { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal FinalPrice { get; set; }
     }
 
 }

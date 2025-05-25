@@ -43,6 +43,11 @@ namespace BusinessObject.Models
         public Warehouse Warehouse { get; set; }
 
         public ICollection<ExportWarehouseReceiptDetail> ExportWarehouseReceiptDetails { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Discount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal FinalPrice { get; set; }
     }
 
 }
