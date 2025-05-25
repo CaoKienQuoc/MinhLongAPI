@@ -52,8 +52,10 @@ namespace Repo.Repository
         {
             var query = _context.Products
                 .Include(p => p.Images)
-                .Include(p => p.Creator).ThenInclude(u => u.Employee)
-                .Include(p => p.Updater).ThenInclude(u => u.Employee)
+                .Include(p => p.Creator)
+                    .ThenInclude(u => u.Employee)
+                .Include(p => p.Updater)
+                    .ThenInclude(u => u.Employee)
                 .Where(p => p.ProductId == id);
 
             if (asNoTracking)
@@ -61,41 +63,8 @@ namespace Repo.Repository
                 query = query.AsNoTracking();
             }
 
-            var product = await query.FirstOrDefaultAsync();
-            if (product == null) return null;
-
-            // ✅ Tìm ngày sản xuất mới nhất trong các lô hàng còn hàng, còn hoạt động
-            var latestManufactureDate = await (
-                from wp in _context.WarehouseProduct
-                join b in _context.Batches on wp.BatchId equals b.BatchId
-                where wp.ProductId == product.ProductId
-                      && wp.Status == "ACTIVE"
-                      && b.Status == "ACTIVE"
-                      && wp.Quantity > 0
-                select b.DateOfManufacture
-            ).MaxAsync();
-
-            // ✅ Lọc các lô có ngày sản xuất bằng ngày mới nhất đó, và lấy giá cao nhất
-            var latestSellingPrice = await (
-                from wp in _context.WarehouseProduct
-                join b in _context.Batches on wp.BatchId equals b.BatchId
-                where wp.ProductId == product.ProductId
-                      && wp.Status == "ACTIVE"
-                      && b.Status == "ACTIVE"
-                      && wp.Quantity > 0
-                      && b.DateOfManufacture == latestManufactureDate
-                select b.SellingPrice
-            ).MaxAsync();
-
-            if (latestSellingPrice > 0)
-            {
-                product.Price = latestSellingPrice;
-            }
-
-            return product;
+            return await query.FirstOrDefaultAsync();
         }
-
-
 
 
         public async Task<Product> AddAsync(Product product)
