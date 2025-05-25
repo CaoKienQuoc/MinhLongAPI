@@ -276,7 +276,10 @@ namespace Services.Service
                     {
                         RequestExportId = requestExport.RequestExportId,
                         ProductId = od.ProductId,
-                        RequestedQuantity = od.Quantity
+                        RequestedQuantity = od.Quantity,
+                        SellingPrice = od.UnitPrice,
+                        Unit = od.Unit,
+                        TotalAmount = od.UnitPrice * od.Quantity
                     }).ToList();
 
                 // ✅ Lưu danh sách RequestExportDetail vào database

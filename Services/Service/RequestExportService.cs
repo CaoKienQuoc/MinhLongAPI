@@ -200,8 +200,9 @@ namespace Services.Service
                         RequestExportDetailId = red.RequestItemId,
                         ProductId = red.ProductId,
                         ProductName = red.Product?.ProductName ?? "N/A",
-                        Unit = red.Product?.Unit ?? "N/A",
-                        Price = red.Product?.Price ?? 0,
+                        Unit = red.Unit,
+                        Price = red.SellingPrice,
+                        TotalAmount = red.TotalAmount,
                         RequestedQuantity = red.RequestedQuantity
                     }).ToList(),
                     TemporaryStockExportDetails = tempExportDict.ContainsKey(re.OrderId)
