@@ -32,6 +32,7 @@ namespace Services.Service
         private readonly IBatchRepository _batchRepository;
         private readonly IHubContext<NotificationHub> _hub;
         private readonly IRequestProductRepository _requestProductRepository;
+        private readonly IEmailService _emailService;
 
         public WarehouseExportService(
             ITemporaryWarehouseExportRepository tempExportRepo,
@@ -45,7 +46,8 @@ namespace Services.Service
             IUserRepository userRepository,
             INotificationRepository notificationRepository,
             IBatchRepository batchRepository,
-                IRequestProductRepository requestProductRepository)
+                IRequestProductRepository requestProductRepository,
+                IEmailService emailService)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -59,6 +61,7 @@ namespace Services.Service
             _notificationRepository = notificationRepository;
             _batchRepository = batchRepository;
             _requestProductRepository = requestProductRepository;
+            _emailService = emailService;
         }
 
         public DateTime GetVietnamTime()
@@ -678,6 +681,26 @@ namespace Services.Service
             await _requestExportRepository.UpdateExportAsync(requestExport);
             await _orderRepo.UpdateOrderAsync(order);
             await _requestProductRepository.UpdateRequestAsync(requestProduct);
+
+            var agencyId = requestProduct.AgencyId;
+            // 3. Lấy AgencyAccount (hoặc bảng đại lý) từ AgencyId
+            var agencyAccount = await _userRepository.GetAgencyAccountByIdAsync(agencyId)
+                ?? throw new Exception("Không tìm thấy tài khoản đại lý.");
+
+            var agencyUserId = agencyAccount.UserId; // Đổi tên biến
+            var customerUser = await _userRepository.GetByIdAsync(agencyUserId)
+                ?? throw new Exception("Không tìm thấy người dùng của đại lý.");
+
+            // 6. Lấy email và tên
+            var customerEmail = customerUser.Email;
+            var customerName = agencyAccount.AgencyName; // hoặc user.FullName nếu có
+            // ==== ĐẶT LỆNH GỬI EMAIL Ở ĐÂY ====
+            await _emailService.SendOrderCancelNotificationEmailAsync(
+                customerEmail,
+                customerName,
+                order.OrderCode,
+                order.FinalPrice
+            );
         }
 
 

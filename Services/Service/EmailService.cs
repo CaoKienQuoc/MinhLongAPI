@@ -235,5 +235,57 @@ namespace Services.Service
             }
         }
 
+        public async Task<bool> SendOrderCancelNotificationEmailAsync(
+    string toEmail,
+    string customerName,
+    string orderCode,
+    decimal? refundAmount)
+        {
+            // 1. Lấy template từ appsettings
+            var template = _configuration["EmailSetting:EmailOrderCancelTemplate"];
+
+            // 2. Build nội dung hoàn tiền
+            string refundText = refundAmount.HasValue && refundAmount.Value > 0
+                ? $"Số tiền <b>{refundAmount.Value:N0} VNĐ</b> sẽ được hoàn trả trong thời gian sớm nhất."
+                : "Quý khách không phát sinh thanh toán, không cần hoàn tiền.";
+
+            // 3. Thay placeholder
+            var body = template
+                .Replace("{CUSTOMER_NAME}", customerName)
+                .Replace("{ORDER_CODE}", orderCode)
+                .Replace("{REFUND_TEXT}", refundText)
+                .Replace("{PROJECT_NAME}", _configuration["Project_MinhLong:PROJECT_NAME"])
+                .Replace("{EMAIL_ADDRESS}", _configuration["Project_MinhLong:EMAIL_ADDRESS"])
+                .Replace("{PHONE_NUMBER}", _configuration["Project_MinhLong:PHONE_NUMBER"]);
+
+            // 4. Tạo email
+            var emailHost = _configuration["EmailSetting:EmailHost"];
+            var userName = _configuration["EmailSetting:EmailUsername"];
+            var password = _configuration["EmailSetting:EmailPassword"];
+
+            var email = new MimeMessage();
+            email.From.Add(MailboxAddress.Parse(emailHost));
+            email.To.Add(MailboxAddress.Parse(toEmail));
+            email.Subject = "Thông báo huỷ đơn xuất kho & hoàn tiền";
+            email.Body = new TextPart(TextFormat.Html) { Text = body };
+
+            // 5. Gửi
+            try
+            {
+                using var smtp = new SmtpClient();
+                await smtp.ConnectAsync(emailHost, 587, SecureSocketOptions.StartTls);
+                await smtp.AuthenticateAsync(userName, password);
+                await smtp.SendAsync(email);
+                await smtp.DisconnectAsync(true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Error Sending OrderCancel Email]: {ex.Message}");
+                return false;
+            }
+        }
+
+
     }
 }

@@ -507,10 +507,15 @@ namespace Repo.Repository
                 .Select(e => e.FullName)
                 .FirstOrDefaultAsync();
         }
+        public async Task<AgencyAccount> GetAgencyAccountByIdAsync(long agencyId)
+        {
+            return await _context.AgencyAccounts
+                .FirstOrDefaultAsync(x => x.AgencyId == agencyId);
+        }
 
     }
 
-
+    
 
 
     public static class PasswordHelper

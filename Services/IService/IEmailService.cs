@@ -15,5 +15,13 @@ namespace Services.IService
         Task<bool> SendEmailAsync(SendOtpEmailRequest sendEmailRequest);
         Task<bool> SendEmailDebtReminderAsync(string emailRequest, string fullName, string orderId, DateTime dueDate);
         Task<bool> SendDamagedStockNotificationEmailAsync(string toEmail,string warehouseName,IEnumerable<DamagedStock> items);
+        Task<bool> SendOrderCancelNotificationEmailAsync(
+    string toEmail,
+    string customerName,
+    string orderCode,
+    decimal? refundAmount
+);
+
+
     }
 }

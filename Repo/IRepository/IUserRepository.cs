@@ -67,7 +67,7 @@ namespace Repo.IRepository
 
         Task<string?> GetEmployeeFullNameByUserIdAsync(Guid userId);
 
-
+        Task<AgencyAccount> GetAgencyAccountByIdAsync(long agencyId);
     }
 
 }
