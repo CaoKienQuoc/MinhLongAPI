@@ -67,6 +67,31 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpPut("cancel/{requestExportId}")]
+        public async Task<IActionResult> CancelRequestExport(int requestExportId)
+        {
+            try
+            {
+                var currentUserId = GetLoggedInUserId(); // Nếu cần check quyền có thể bổ sung
+                await _requestExportService.CancelRequestExportAsync(requestExportId, currentUserId);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Đã hủy đơn xuất kho thành công."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+
         [HttpGet("manage-by-sales")]
         public async Task<IActionResult> GetAllRequestExportsBySales([FromQuery] string? sortBy)
         {

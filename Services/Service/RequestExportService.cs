@@ -14,12 +14,18 @@ namespace Services.Service
     {
         private readonly IRequestExportRepository _requestExportRepository;
         private readonly ITemporaryWarehouseExportRepository _temporaryWarehouseRepository;
+        private readonly IRequestProductRepository _requestProductRepository;
+        private readonly IOrderRepository _orderRepository;
 
         public RequestExportService(IRequestExportRepository requestExportRepository
-            , ITemporaryWarehouseExportRepository temporaryWarehouseRepository)
+            , ITemporaryWarehouseExportRepository temporaryWarehouseRepository,
+                IOrderRepository orderRepository,
+                IRequestProductRepository productRepository)
         {
             _requestExportRepository = requestExportRepository;
             _temporaryWarehouseRepository = temporaryWarehouseRepository;
+            _orderRepository = orderRepository;
+            _requestProductRepository = productRepository;
         }
 
         public async Task<List<RequestExportDto>> GetAllRequestExportsAsync(string? sortBy = null)
@@ -281,7 +287,30 @@ namespace Services.Service
                 : (0, "Unknown");
         }
 
+        public async Task CancelRequestExportAsync(int requestExportId, Guid userId)
+        {
+            // 1. Lấy RequestExport
+            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
+                ?? throw new Exception("Không tìm thấy đơn xuất kho.");
 
+            // 2. Lấy Order liên quan
+            var order = await _orderRepository.GetOrderByIdAsync(requestExport.OrderId)
+                ?? throw new Exception("Không tìm thấy đơn đặt hàng liên quan.");
+
+            // 3. Lấy RequestProduct liên quan
+            var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
+                ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
+
+            // 4. Set status = "Canceled"
+            requestExport.Status = "Canceled";
+            order.Status = "Canceled";
+            requestProduct.RequestStatus = "Canceled";
+
+            // 5. Update
+            await _requestExportRepository.UpdateExportAsync(requestExport);
+            await _orderRepository.UpdateOrderAsync(order);
+            await _requestProductRepository.UpdateRequestAsync(requestProduct);
+        }
 
     }
 }
