@@ -31,6 +31,7 @@ namespace Services.Service
         private readonly INotificationRepository _notificationRepository;
         private readonly IBatchRepository _batchRepository;
         private readonly IHubContext<NotificationHub> _hub;
+        private readonly IRequestProductRepository _requestProductRepository;
 
         public WarehouseExportService(
             ITemporaryWarehouseExportRepository tempExportRepo,
@@ -43,7 +44,8 @@ namespace Services.Service
             IOrderRepository orderRepository,
             IUserRepository userRepository,
             INotificationRepository notificationRepository,
-            IBatchRepository batchRepository)
+            IBatchRepository batchRepository,
+                IRequestProductRepository requestProductRepository)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -56,6 +58,7 @@ namespace Services.Service
             _userRepository = userRepository;
             _notificationRepository = notificationRepository;
             _batchRepository = batchRepository;
+            _requestProductRepository = requestProductRepository;
         }
 
         public DateTime GetVietnamTime()
@@ -651,6 +654,32 @@ namespace Services.Service
 
             return document.GeneratePdf();
         }
+
+        public async Task CancelRequestExportAsync(int requestExportId, Guid userId)
+        {
+            // 1. Lấy RequestExport
+            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
+                ?? throw new Exception("Không tìm thấy đơn xuất kho.");
+
+            // 2. Lấy Order liên quan
+            var order = await _orderRepo.GetOrderByIdAsync(requestExport.OrderId)
+                ?? throw new Exception("Không tìm thấy đơn đặt hàng liên quan.");
+
+            // 3. Lấy RequestProduct liên quan
+            var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
+                ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
+
+            // 4. Set status = "Canceled"
+            requestExport.Status = "Canceled";
+            order.Status = "Canceled";
+            requestProduct.RequestStatus = "Canceled";
+
+            // 5. Update
+            await _requestExportRepository.UpdateExportAsync(requestExport);
+            await _orderRepo.UpdateOrderAsync(order);
+            await _requestProductRepository.UpdateRequestAsync(requestProduct);
+        }
+
 
         private static IContainer CellStyle(IContainer container)
         {

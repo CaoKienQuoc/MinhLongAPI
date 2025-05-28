@@ -73,7 +73,7 @@ namespace MLHR.Controllers
             try
             {
                 var currentUserId = GetLoggedInUserId(); // Nếu cần check quyền có thể bổ sung
-                await _requestExportService.CancelRequestExportAsync(requestExportId, currentUserId);
+                await _warehouseExportService.CancelRequestExportAsync(requestExportId, currentUserId);
 
                 return Ok(new
                 {

@@ -32,7 +32,7 @@ namespace Services.IService
         Task<int> GetThisMonthExportQuantityAsync(Guid userId);
         Task<decimal> GetTodayExportValueAsync(Guid userId);
         Task<decimal> GetThisMonthExportValueAsync(Guid userId);
-
+        Task CancelRequestExportAsync(int requestExportId, Guid userId);
         Task<List<object>> GetMonthlyExportStatsAllAsync();
 
     }
