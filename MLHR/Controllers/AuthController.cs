@@ -334,5 +334,21 @@ namespace MLHR.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [Authorize] // Chỉ Admin
+        [HttpGet("admin/account-dashboard")]
+        public async Task<IActionResult> GetDashboard()
+        {
+            try
+            {
+                var dashboard = await _userService.GetAdminDashboardAsync();
+                return Ok(dashboard);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
     }
 }

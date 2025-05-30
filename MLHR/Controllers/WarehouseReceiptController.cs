@@ -226,6 +226,25 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpGet("dashboard/range-summary")]
+        public async Task<IActionResult> GetDashboardByRange([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            try
+            {
+                var dashboard = await _service.GetDashboardByDateRangeAsync(startDate, endDate);
+                return Ok(new { success = true, data = dashboard });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+
 
 
     }

@@ -16,6 +16,7 @@ using Services.IService;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
 using static Org.BouncyCastle.Asn1.Cmp.Challenge;
+using BusinessObject.DTO.Dashboard;
 
 namespace Services.Service
 {
@@ -744,6 +745,47 @@ namespace Services.Service
         {
             return await _receiptRepo.GetMonthlyReceiptStatsAllAsync();
         }
+
+        public async Task<WarehouseDashboardRangeDto> GetDashboardByDateRangeAsync(DateTime? startDate, DateTime? endDate)
+        {
+            var today = DateTime.Today;
+            var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
+
+            DateTime start = startDate ?? firstDayOfMonth;
+            DateTime end = endDate ?? today;
+
+            if (start > end)
+                throw new ArgumentException("startDate phải nhỏ hơn hoặc bằng endDate");
+
+            var receiptsInRange = await _receiptRepo.GetReceiptsByDateRangeAsync(start, end);
+
+            var groupedByDate = receiptsInRange
+                .GroupBy(r => r.DocumentDate.Date)
+                .Select(g => new DailyWarehouseSummaryDto
+                {
+                    Date = g.Key,
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    TotalReceipts = g.Count(),
+                    TotalQuantity = g.Sum(r => r.TotalQuantity),
+                    TotalPrice = g.Sum(r => r.TotalPrice)
+                })
+                .OrderBy(d => d.Date)
+                .ToList();
+
+            var totalReceipts = groupedByDate.Sum(d => d.TotalReceipts);
+            var totalQuantity = groupedByDate.Sum(d => d.TotalQuantity);
+            var totalPrice = groupedByDate.Sum(d => d.TotalPrice);
+
+            return new WarehouseDashboardRangeDto
+            {
+                DailySummaries = groupedByDate,
+                TotalReceipts = totalReceipts,
+                TotalQuantity = totalQuantity,
+                TotalPrice = totalPrice
+            };
+        }
+
 
 
     }

@@ -21,6 +21,10 @@ namespace Repo.IRepository
         Task<ImportTransactionDetail> GetImportTransactionDetailByIdAsync(long id);
         Task<ImportTransaction> GetImportTransactionByIdAsync(long id);
         Task<List<object>> GetMonthlyReceiptStatsAllAsync();
+        Task<List<WarehouseReceipt>> GetReceiptsByDateRangeAsync(DateTime startDate, DateTime endDate);
+
+        Task<List<WarehouseReceipt>> GetAllByYearAsync(int year);
+        Task<List<WarehouseReceipt>> GetAllByYearMonthAsync(int year, int month);
 
 
 

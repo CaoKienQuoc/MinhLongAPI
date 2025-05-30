@@ -308,5 +308,20 @@ namespace MLHR.Controllers
             return Ok(request);
         }
 
+        [HttpGet("dashboard/return-receipts-summary")]
+        public async Task<IActionResult> GetReturnWarehouseReceiptDashboard([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                var dashboard = await _returnService.GetReturnWarehouseReceiptDashboardAsync(fromDate, toDate);
+                return Ok(new { success = true, data = dashboard });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+
     }
 }

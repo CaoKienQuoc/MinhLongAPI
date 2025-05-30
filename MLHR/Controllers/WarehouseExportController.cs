@@ -169,6 +169,49 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpGet("dashboard/export-summary")]
+        public async Task<IActionResult> GetExportDashboard([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                var dashboardData = await _exportService.GetExportDashboardAsync(fromDate, toDate);
+                return Ok(new { success = true, data = dashboardData });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/profit")]
+        public async Task<IActionResult> GetProfitStats([FromQuery] int? year, [FromQuery] int? month)
+        {
+            try
+            {
+                var profitStats = await _exportService.GetProfitStatsAsync(year, month);
+                return Ok(new { success = true, data = profitStats });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/profit-year")]
+        public async Task<IActionResult> GetAnnualProfit([FromQuery] int? year)
+        {
+            try
+            {
+                var result = await _exportService.GetAnnualProfitAsync(year);
+                return Ok(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+
 
     }
 

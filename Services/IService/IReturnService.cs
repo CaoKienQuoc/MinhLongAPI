@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO.Dashboard;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.Http;
@@ -36,6 +37,7 @@ namespace Services.IService
         Task<IEnumerable<ReturnRequestProdductDto>> GetReturnRequestsByUserIdAsync(Guid userId);
         Task<ReturnRequestProdductDto> GetReturnRequestByIdAsync(Guid returnRequestId, Guid userId);
         Task RejectReturnRequestAsync(Guid returnRequestId, Guid userId, string rejectReason);
+        Task<ReturnWarehouseReceiptDashboardDto> GetReturnWarehouseReceiptDashboardAsync(DateTime? fromDate, DateTime? toDate);
     }
 
 }

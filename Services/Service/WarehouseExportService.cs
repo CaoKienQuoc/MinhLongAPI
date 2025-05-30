@@ -15,6 +15,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using static Org.BouncyCastle.Asn1.Cmp.Challenge;
+using BusinessObject.DTO.Dashboard;
 
 namespace Services.Service
 {
@@ -33,6 +34,7 @@ namespace Services.Service
         private readonly IHubContext<NotificationHub> _hub;
         private readonly IRequestProductRepository _requestProductRepository;
         private readonly IEmailService _emailService;
+        private readonly IWarehouseReceiptRepository _receiptRepo;
 
         public WarehouseExportService(
             ITemporaryWarehouseExportRepository tempExportRepo,
@@ -47,7 +49,8 @@ namespace Services.Service
             INotificationRepository notificationRepository,
             IBatchRepository batchRepository,
                 IRequestProductRepository requestProductRepository,
-                IEmailService emailService)
+                IEmailService emailService,
+                IWarehouseReceiptRepository receiptRepo)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -62,6 +65,7 @@ namespace Services.Service
             _batchRepository = batchRepository;
             _requestProductRepository = requestProductRepository;
             _emailService = emailService;
+            _receiptRepo = receiptRepo;
         }
 
         public DateTime GetVietnamTime()
@@ -717,6 +721,129 @@ namespace Services.Service
         {
             return await _exportReceiptRepo.GetMonthlyExportStatsAllAsync();
         }
+
+        public async Task<ExportDashboardResponseDto> GetExportDashboardAsync(DateTime? fromDate, DateTime? toDate)
+        {
+            // Nếu không truyền ngày, lấy từ đầu tháng đến hôm nay (giờ VN)
+            var vietnamNow = GetVietnamTime();
+            var startDate = fromDate ?? new DateTime(vietnamNow.Year, vietnamNow.Month, 1);
+            var endDate = toDate ?? vietnamNow.Date;
+
+            var exports = await _exportReceiptRepo.GetAllAsync(); // hoặc repo method lấy tất cả phiếu xuất
+
+            var filteredExports = exports
+                .Where(e => e.DocumentDate.Date >= startDate && e.DocumentDate.Date <= endDate)
+                .ToList();
+
+            var groupedByDate = filteredExports
+                .GroupBy(e => e.DocumentDate.Date)
+                .Select(g => new DailyExportSummaryDto
+                {
+                    Date = g.Key,
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    TotalExports = g.Count(),
+                    TotalQuantity = g.Sum(x => x.TotalQuantity),
+                    TotalAmount = g.Sum(x => x.TotalAmount)
+                })
+                .OrderBy(d => d.Date)
+                .ToList();
+
+            return new ExportDashboardResponseDto
+            {
+                DailySummaries = groupedByDate,
+                TotalExports = filteredExports.Count,
+                TotalQuantity = filteredExports.Sum(x => x.TotalQuantity),
+                TotalAmount = filteredExports.Sum(x => x.TotalAmount)
+            };
+        }
+
+        public async Task<List<ProfitByMonthDto>> GetProfitStatsAsync(int? year = null, int? month = null)
+        {
+            var now = DateTime.Now;
+            int queryYear = year ?? now.Year;
+
+            // Nếu month null => tính cho cả năm, else tính cho tháng đó
+            if (month.HasValue)
+            {
+                // Lấy dữ liệu nhập trong tháng, năm đó
+                var importData = await _receiptRepo.GetAllByYearMonthAsync(queryYear, month.Value);
+                var exportData = await _exportReceiptRepo.GetAllByYearMonthAsync(queryYear, month.Value);
+
+                decimal importCost = importData.Sum(r => r.TotalPrice);
+                decimal exportRevenue = exportData.Sum(r => r.TotalAmount);
+
+                decimal profit = exportRevenue - importCost;
+                decimal profitPercent = importCost > 0 ? (profit / importCost) * 100 : 0;
+
+                return new List<ProfitByMonthDto>
+        {
+            new ProfitByMonthDto
+            {
+                Year = queryYear,
+                Month = month.Value,
+                TotalImportCost = importCost,
+                TotalExportRevenue = exportRevenue,
+                ProfitAmount = profit,
+                ProfitPercentage = profitPercent
+            }
+        };
+            }
+            else
+            {
+                // Tính cho toàn bộ năm, theo từng tháng
+                var importData = await _receiptRepo.GetAllByYearAsync(queryYear);
+                var exportData = await _exportReceiptRepo.GetAllByYearAsync(queryYear);
+
+                var profitStats = new List<ProfitByMonthDto>();
+
+                for (int m = 1; m <= 12; m++)
+                {
+                    decimal importCost = importData.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalPrice);
+                    decimal exportRevenue = exportData.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalAmount);
+
+                    decimal profit = exportRevenue - importCost;
+                    decimal profitPercent = importCost > 0 ? (profit / importCost) * 100 : 0;
+
+                    profitStats.Add(new ProfitByMonthDto
+                    {
+                        Year = queryYear,
+                        Month = m,
+                        TotalImportCost = importCost,
+                        TotalExportRevenue = exportRevenue,
+                        ProfitAmount = profit,
+                        ProfitPercentage = profitPercent
+                    });
+                }
+
+                return profitStats;
+            }
+        }
+
+        public async Task<ProfitByYearDto> GetAnnualProfitAsync(int? year = null)
+        {
+            var now = DateTime.Now;
+            int queryYear = year ?? now.Year;
+
+            var importData = await _receiptRepo.GetAllByYearAsync(queryYear);
+            var exportData = await _exportReceiptRepo.GetAllByYearAsync(queryYear);
+
+            decimal totalImportCost = importData.Sum(r => r.TotalPrice);
+            decimal totalExportRevenue = exportData.Sum(r => r.TotalAmount);
+
+            decimal profit = totalExportRevenue - totalImportCost;
+            decimal profitPercent = totalImportCost > 0 ? (profit / totalImportCost) * 100 : 0;
+
+            return new ProfitByYearDto
+            {
+                Year = queryYear,
+                TotalImportCost = totalImportCost,
+                TotalExportRevenue = totalExportRevenue,
+                ProfitAmount = profit,
+                ProfitPercentage = profitPercent
+            };
+        }
+
 
 
     }

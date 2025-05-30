@@ -32,6 +32,9 @@ namespace Services.IService
         Task<User> GetEmployeeByIdAsync(Guid userId);
         Task<(bool Success, string Message)> RefreshTokenAsync();
 
+        Task<AdminDashboardDto> GetAdminDashboardAsync();
+
+
     }
 
 

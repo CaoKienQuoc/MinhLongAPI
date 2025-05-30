@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO.Dashboard;
 using BusinessObject.DTO.Product;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
@@ -798,6 +799,41 @@ namespace Services.Service
                     ReturnRequestImageId = img.ReturnRequestImageId,
                     ImageUrl = img.ImageUrl
                 }).ToList() ?? new List<ReturnRequestImageDto>()
+            };
+        }
+
+        public async Task<ReturnWarehouseReceiptDashboardDto> GetReturnWarehouseReceiptDashboardAsync(DateTime? fromDate, DateTime? toDate)
+        {
+            var vietnamNow = GetVietnamTime();
+            var startDate = fromDate ?? new DateTime(vietnamNow.Year, vietnamNow.Month, 1);
+            var endDate = toDate ?? vietnamNow.Date;
+
+            var receipts = await _returnWarehouseReceiptRepo.GetAllAsync();
+
+            // Lọc phiếu trả trong khoảng thời gian
+            var filteredReceipts = receipts
+                .Where(r => r.ReceiptDate.Date >= startDate && r.ReceiptDate.Date <= endDate)
+                .ToList();
+
+            // Tổng số lượng trả = tổng sum Quantity trong Details
+            var groupedByDate = filteredReceipts
+                .GroupBy(r => r.ReceiptDate.Date)
+                .Select(g => new DailyReturnWarehouseReceiptSummaryDto
+                {
+                    Date = g.Key,
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    TotalReturnReceipts = g.Count(),
+                    TotalQuantity = g.Sum(r => r.Details?.Sum(d => d.Quantity) ?? 0),
+                })
+                .OrderBy(d => d.Date)
+                .ToList();
+
+            return new ReturnWarehouseReceiptDashboardDto
+            {
+                DailySummaries = groupedByDate,
+                TotalReturnReceipts = filteredReceipts.Count,
+                TotalQuantity = filteredReceipts.Sum(r => r.Details?.Sum(d => d.Quantity) ?? 0),
             };
         }
 

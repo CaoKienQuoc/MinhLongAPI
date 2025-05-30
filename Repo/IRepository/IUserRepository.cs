@@ -68,6 +68,13 @@ namespace Repo.IRepository
         Task<string?> GetEmployeeFullNameByUserIdAsync(Guid userId);
 
         Task<AgencyAccount> GetAgencyAccountByIdAsync(long agencyId);
+
+        Task<List<User>> GetUsersWithEmployeeAsync();
+
+        Task<int> CountRegisterAccountsByStatusAsync(string status);
+        Task<int> CountTotalRegisterAccountsAsync();
+
+
     }
 
 }
