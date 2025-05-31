@@ -320,7 +320,7 @@ namespace Repo.Repository
             return await query.ToListAsync();
         }
 
-        public async Task<decimal?> GetUnitPriceAsync(Guid orderId, int productId)
+        public async Task<decimal?> GetUnitPriceAsync(Guid orderId, long productId)
         {
             return await _context.OrderDetails
                 .Where(od => od.OrderId == orderId && od.ProductId == productId)

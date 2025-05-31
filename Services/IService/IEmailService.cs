@@ -14,7 +14,7 @@ namespace Services.IService
         Task<bool> CheckOtpEmail(CheckOtpRequest checkOtpRequest);
         Task<bool> SendEmailAsync(SendOtpEmailRequest sendEmailRequest);
         Task<bool> SendEmailDebtReminderAsync(string emailRequest, string fullName, string orderId, DateTime dueDate);
-        Task<bool> SendDamagedStockNotificationEmailAsync(string toEmail,string warehouseName,IEnumerable<DamagedStock> items);
+        Task<bool> SendDamagedStockNotificationEmailAsync(string toEmail,string warehouseName, decimal? totalAmount, IEnumerable<DamagedStock> items);
         Task<bool> SendOrderCancelNotificationEmailAsync(
     string toEmail,
     string customerName,

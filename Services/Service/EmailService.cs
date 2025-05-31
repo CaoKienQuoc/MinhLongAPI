@@ -188,6 +188,7 @@ namespace Services.Service
         public async Task<bool> SendDamagedStockNotificationEmailAsync(
         string toEmail,
         string warehouseName,
+        decimal? totalAmount,
         IEnumerable<DamagedStock> items)
         {
             // 1. Lấy template từ appsettings
@@ -203,6 +204,7 @@ namespace Services.Service
                 .Replace("{WAREHOUSE}", warehouseName)
                 .Replace("{COUNT}", items.Count().ToString())
                 .Replace("{ITEMS}", itemListHtml)
+                .Replace("{TOTAL_AMOUNT}", totalAmount?.ToString("N0") ?? "0") // ➕ Thêm dòng này
                 .Replace("{PROJECT_NAME}", _configuration["Project_MinhLong:PROJECT_NAME"])
                 .Replace("{EMAIL_ADDRESS}", _configuration["Project_MinhLong:EMAIL_ADDRESS"])
                 .Replace("{PHONE_NUMBER}", _configuration["Project_MinhLong:PHONE_NUMBER"]);
