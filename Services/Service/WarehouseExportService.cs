@@ -82,8 +82,8 @@ namespace Services.Service
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
                 ?? throw new InvalidOperationException("Không tìm thấy RequestExport.");
 
-            if (requestExport.Status == "Requested" || requestExport.Status == "Approved")
-                throw new InvalidOperationException("Yêu cầu này đã được xử lý.");
+            if (requestExport.Status == "Requested" || requestExport.Status == "Approved" || requestExport.Status == "Canceled")
+                throw new InvalidOperationException("Yêu cầu này hiện tại không thực hiện được.");
 
             if (requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
                 throw new InvalidOperationException("Không có chi tiết sản phẩm trong yêu cầu.");
@@ -305,6 +305,10 @@ namespace Services.Service
             {
                 throw new InvalidOperationException("Số lượng tồn kho không đủ, vui lòng điều phối hoặc nhập hàng thêm.");
             }
+
+            if (receipt.Status == "Canceled")
+                throw new InvalidOperationException("Phiếu xuất kho đã bị huỷ không thể xuất kho.");
+
             var requestExport = await _requestExportRepo.GetRequestExportById(receipt.RequestExportId);
             // 2. Truy vết Order từ RequestExport
             var orderId = await _requestExportRepo.GetOrderIdByRequestExportIdAsync(receipt.RequestExportId);
@@ -662,50 +666,7 @@ namespace Services.Service
             return document.GeneratePdf();
         }
 
-        public async Task CancelRequestExportAsync(int requestExportId, Guid userId)
-        {
-            // 1. Lấy RequestExport
-            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
-                ?? throw new Exception("Không tìm thấy đơn xuất kho.");
-
-            // 2. Lấy Order liên quan
-            var order = await _orderRepo.GetOrderByIdAsync(requestExport.OrderId)
-                ?? throw new Exception("Không tìm thấy đơn đặt hàng liên quan.");
-
-            // 3. Lấy RequestProduct liên quan
-            var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
-                ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
-
-            // 4. Set status = "Canceled"
-            requestExport.Status = "Canceled";
-            order.Status = "Canceled";
-            requestProduct.RequestStatus = "Canceled";
-
-            // 5. Update
-            await _requestExportRepository.UpdateExportAsync(requestExport);
-            await _orderRepo.UpdateOrderAsync(order);
-            await _requestProductRepository.UpdateRequestAsync(requestProduct);
-
-            var agencyId = requestProduct.AgencyId;
-            // 3. Lấy AgencyAccount (hoặc bảng đại lý) từ AgencyId
-            var agencyAccount = await _userRepository.GetAgencyAccountByIdAsync(agencyId)
-                ?? throw new Exception("Không tìm thấy tài khoản đại lý.");
-
-            var agencyUserId = agencyAccount.UserId; // Đổi tên biến
-            var customerUser = await _userRepository.GetByIdAsync(agencyUserId)
-                ?? throw new Exception("Không tìm thấy người dùng của đại lý.");
-
-            // 6. Lấy email và tên
-            var customerEmail = customerUser.Email;
-            var customerName = agencyAccount.AgencyName; // hoặc user.FullName nếu có
-            // ==== ĐẶT LỆNH GỬI EMAIL Ở ĐÂY ====
-            await _emailService.SendOrderCancelNotificationEmailAsync(
-                customerEmail,
-                customerName,
-                order.OrderCode,
-                order.FinalPrice
-            );
-        }
+        
 
 
         private static IContainer CellStyle(IContainer container)
@@ -844,7 +805,58 @@ namespace Services.Service
             };
         }
 
+        public async Task CancelRequestExportAsync(long warehouseRequestExportId, Guid? userId, string reason)
+        {
+            var warehouseRequestExport = await _exportReceiptRepo.GetExportWarehouseReceiptByIdAsync(warehouseRequestExportId);
+            // 1. Lấy RequestExport
+            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(warehouseRequestExport.RequestExportId)
+                ?? throw new Exception("Không tìm thấy đơn xuất kho.");
 
+            // 2. Lấy Order liên quan
+            var order = await _orderRepo.GetOrderByIdAsync(requestExport.OrderId)
+                ?? throw new Exception("Không tìm thấy đơn đặt hàng liên quan.");
+
+            // 3. Lấy RequestProduct liên quan
+            var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
+                ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
+
+            // 4. Set status = "Canceled"
+            requestExport.Status = "Canceled";
+            requestExport.Reason = reason; // Lưu lý do hủy
+            order.Status = "Canceled";
+            order.Reason = reason; // Lưu lý do hủy
+            requestProduct.RequestStatus = "Canceled";
+            warehouseRequestExport.Status = "Canceled";
+            warehouseRequestExport.Reason = reason; // Lưu lý do hủy
+
+
+            // 5. Update
+            await _requestExportRepository.UpdateExportAsync(requestExport);
+            await _orderRepo.UpdateOrderAsync(order);
+            await _requestProductRepository.UpdateRequestAsync(requestProduct);
+            await _exportReceiptRepo.UpdateReceiptAsync(warehouseRequestExport);
+            await _exportReceiptRepo.SaveChangesAsync();
+
+            var agencyId = requestProduct.AgencyId;
+            // 3. Lấy AgencyAccount (hoặc bảng đại lý) từ AgencyId
+            var agencyAccount = await _userRepository.GetAgencyAccountByIdAsync(agencyId)
+                ?? throw new Exception("Không tìm thấy tài khoản đại lý.");
+
+            var agencyUserId = agencyAccount.UserId; // Đổi tên biến
+            var customerUser = await _userRepository.GetByIdAsync(agencyUserId)
+                ?? throw new Exception("Không tìm thấy người dùng của đại lý.");
+
+            // 6. Lấy email và tên
+            var customerEmail = customerUser.Email;
+            var customerName = agencyAccount.AgencyName; // hoặc user.FullName nếu có
+            // ==== ĐẶT LỆNH GỬI EMAIL Ở ĐÂY ====
+            await _emailService.SendOrderCancelNotificationEmailAsync(
+                customerEmail,
+                customerName,
+                order.OrderCode,
+                order.FinalPrice
+            );
+        }
 
     }
 

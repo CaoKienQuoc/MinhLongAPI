@@ -1,6 +1,8 @@
-﻿using System.Security.Claims;
+﻿using BusinessObject.DTO.RequestExport;
 using Microsoft.AspNetCore.Mvc;
 using Services.IService;
+using Services.Service;
+using System.Security.Claims;
 
 namespace MLHR.Controllers
 {
@@ -87,7 +89,29 @@ namespace MLHR.Controllers
             }
             return null;
         }
+        [HttpPost("cancel-WarehouseRequest-Export")]
+        public async Task<IActionResult> CancelRequestExport([FromBody] CancelWarehouseRequestExportModel model)
+        {
+            try
+            {
+                var currentUserId = GetLoggedInUserId();
+                await _exportService.CancelRequestExportAsync(model.WarehouseRequestExportId, currentUserId, model.Reason);
 
+                return Ok(new
+                {
+                    success = true,
+                    message = "Đã hủy đơn xuất kho thành công."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
 
         [HttpGet("print/{exportReceiptId}")]
         public async Task<IActionResult> PrintExportReceipt(int exportReceiptId)

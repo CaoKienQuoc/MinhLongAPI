@@ -1,7 +1,8 @@
-﻿using System.Security.Claims;
+﻿using BusinessObject.DTO.RequestExport;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.IService;
+using System.Security.Claims;
 
 namespace MLHR.Controllers
 {
@@ -67,13 +68,13 @@ namespace MLHR.Controllers
             }
         }
 
-        [HttpPut("cancel/{requestExportId}")]
-        public async Task<IActionResult> CancelRequestExport(int requestExportId)
+        [HttpPost("cancel-Request-Export")]
+        public async Task<IActionResult> CancelRequestExport([FromBody] CancelRequestExportModel model)
         {
             try
             {
-                var currentUserId = GetLoggedInUserId(); // Nếu cần check quyền có thể bổ sung
-                await _warehouseExportService.CancelRequestExportAsync(requestExportId, currentUserId);
+                var currentUserId = GetLoggedInUserId();
+                await _requestExportService.CancelRequestExportAsync(model.RequestExportId, currentUserId, model.Reason);
 
                 return Ok(new
                 {

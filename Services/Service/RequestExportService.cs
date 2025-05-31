@@ -1,6 +1,7 @@
 ﻿using BusinessObject.DTO.RequestExport;
 using BusinessObject.Models;
 using Repo.IRepository;
+using Repo.Repository;
 using Services.IService;
 using System;
 using System.Collections.Generic;
@@ -16,16 +17,22 @@ namespace Services.Service
         private readonly ITemporaryWarehouseExportRepository _temporaryWarehouseRepository;
         private readonly IRequestProductRepository _requestProductRepository;
         private readonly IOrderRepository _orderRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IEmailService _emailService;
 
         public RequestExportService(IRequestExportRepository requestExportRepository
             , ITemporaryWarehouseExportRepository temporaryWarehouseRepository,
                 IOrderRepository orderRepository,
-                IRequestProductRepository productRepository)
+                IRequestProductRepository productRepository,
+                IUserRepository userRepository,
+                IEmailService emailService)
         {
             _requestExportRepository = requestExportRepository;
             _temporaryWarehouseRepository = temporaryWarehouseRepository;
             _orderRepository = orderRepository;
             _requestProductRepository = productRepository;
+            _userRepository = userRepository;
+            _emailService = emailService;
         }
 
         public async Task<List<RequestExportDto>> GetAllRequestExportsAsync(string? sortBy = null)
@@ -287,6 +294,53 @@ namespace Services.Service
                 : (0, "Unknown");
         }
 
-       
+        public async Task CancelRequestExportAsync(int requestExportId, Guid userId, string reason)
+        {
+            // 1. Lấy RequestExport
+            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
+                ?? throw new Exception("Không tìm thấy đơn xuất kho.");
+
+            // 2. Lấy Order liên quan
+            var order = await _orderRepository.GetOrderByIdAsync(requestExport.OrderId)
+                ?? throw new Exception("Không tìm thấy đơn đặt hàng liên quan.");
+
+            // 3. Lấy RequestProduct liên quan
+            var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
+                ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
+
+            // 4. Set status = "Canceled"
+            requestExport.Status = "Canceled";
+            requestExport.Reason = reason; // Lưu lý do hủy
+            order.Status = "Canceled";
+            order.Reason = reason; // Lưu lý do hủy
+            requestProduct.RequestStatus = "Canceled";
+
+            // 5. Update
+            await _requestExportRepository.UpdateExportAsync(requestExport);
+            await _orderRepository.UpdateOrderAsync(order);
+            await _requestProductRepository.UpdateRequestAsync(requestProduct);
+            await _requestExportRepository.SaveChangesAsync();
+
+            var agencyId = requestProduct.AgencyId;
+            // 3. Lấy AgencyAccount (hoặc bảng đại lý) từ AgencyId
+            var agencyAccount = await _userRepository.GetAgencyAccountByIdAsync(agencyId)
+                ?? throw new Exception("Không tìm thấy tài khoản đại lý.");
+
+            var agencyUserId = agencyAccount.UserId; // Đổi tên biến
+            var customerUser = await _userRepository.GetByIdAsync(agencyUserId)
+                ?? throw new Exception("Không tìm thấy người dùng của đại lý.");
+
+            // 6. Lấy email và tên
+            var customerEmail = customerUser.Email;
+            var customerName = agencyAccount.AgencyName; // hoặc user.FullName nếu có
+            // ==== ĐẶT LỆNH GỬI EMAIL Ở ĐÂY ====
+            await _emailService.SendOrderCancelNotificationEmailAsync(
+                customerEmail,
+                customerName,
+                order.OrderCode,
+                order.FinalPrice
+            );
+        }
+
     }
 }

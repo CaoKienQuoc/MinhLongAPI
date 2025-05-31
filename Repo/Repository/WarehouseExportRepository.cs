@@ -227,7 +227,12 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
-
+        public async Task<ExportWarehouseReceipt> GetExportWarehouseReceiptByIdAsync(long warehouseRequestExportId)
+        {
+            return await _context.ExportWarehouseReceipts
+                .Include(re => re.ExportWarehouseReceiptDetails)
+                .FirstOrDefaultAsync(re => re.ExportWarehouseReceiptId == warehouseRequestExportId);
+        }
     }
 
 

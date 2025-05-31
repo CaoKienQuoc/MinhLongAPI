@@ -32,6 +32,8 @@ namespace BusinessObject.Models
 
         [ForeignKey("WarehouseTransferRequest")]
         public long? WarehouseTransferRequestId { get; set; }
+
+        public string? Reason { get; set; } // Lý do hủy đơn hàng
         public WarehouseTransferRequest? WarehouseTransferRequest { get; set; }
         public ICollection<ExportTransactionDetail> ExportTransactionDetail { get; set; }
     }

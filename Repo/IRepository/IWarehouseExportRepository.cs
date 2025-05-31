@@ -45,6 +45,8 @@ namespace Repo.IRepository
 
         Task<List<ExportWarehouseReceipt>> GetAllByYearAsync(int year);
         Task<List<ExportWarehouseReceipt>> GetAllByYearMonthAsync(int year, int month);
+
+        Task<ExportWarehouseReceipt> GetExportWarehouseReceiptByIdAsync(long warehouseRequestExportId);
     }
 
 }

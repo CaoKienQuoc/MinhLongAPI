@@ -320,6 +320,12 @@ namespace Repo.Repository
             return await query.ToListAsync();
         }
 
-
+        public async Task<decimal?> GetUnitPriceAsync(Guid orderId, int productId)
+        {
+            return await _context.OrderDetails
+                .Where(od => od.OrderId == orderId && od.ProductId == productId)
+                .Select(od => (decimal?)od.UnitPrice)
+                .FirstOrDefaultAsync();
+        }
     }
 }

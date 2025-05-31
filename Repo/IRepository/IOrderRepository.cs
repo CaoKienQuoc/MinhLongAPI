@@ -53,7 +53,7 @@ namespace Repo.IRepository
         Task<Dictionary<Guid, decimal>> GetRevenuePerOrderAsync(List<Guid> orderIds);
         Task<List<Order>> GetOrdersManagedBySalesAsync(Guid salesUserId, DateTime? fromDate, DateTime? toDate);
 
-
+        Task<decimal?> GetUnitPriceAsync(Guid orderId, int productId);
 
 
     }
