@@ -786,6 +786,53 @@ namespace Services.Service
             };
         }
 
+        public async Task<WarehouseDashboardRangeDto> GetDashboardByDateRangeByUserWarehouseAsync(Guid userId, DateTime? startDate, DateTime? endDate)
+        {
+            var today = DateTime.Today;
+            var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
+
+            DateTime start = startDate ?? firstDayOfMonth;
+            DateTime end = endDate ?? today;
+
+            if (start > end)
+                throw new ArgumentException("startDate phải nhỏ hơn hoặc bằng endDate");
+
+            // 🔍 Lấy danh sách WarehouseId thuộc user hiện tại
+            var userWarehouses = await _warehouseRepository.GetWarehousesByUserIdAsync(userId);
+            var warehouseIds = userWarehouses.Select(w => w.WarehouseId).ToHashSet();
+
+            // 🔍 Lấy toàn bộ phiếu nhập trong khoảng thời gian
+            var allReceiptsInRange = await _receiptRepo.GetReceiptsByDateRangeAsync(start, end);
+
+            // 🔍 Chỉ lấy phiếu của những kho thuộc user này
+            var receipts = allReceiptsInRange
+                .Where(r => warehouseIds.Contains(r.WarehouseId))
+                .ToList();
+
+            var groupedByDate = receipts
+                .GroupBy(r => r.DocumentDate.Date)
+                .Select(g => new DailyWarehouseSummaryDto
+                {
+                    Date = g.Key,
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    TotalReceipts = g.Count(),
+                    TotalQuantity = g.Sum(r => r.TotalQuantity),
+                    TotalPrice = g.Sum(r => r.TotalPrice)
+                })
+                .OrderBy(d => d.Date)
+                .ToList();
+
+            return new WarehouseDashboardRangeDto
+            {
+                DailySummaries = groupedByDate,
+                TotalReceipts = groupedByDate.Sum(d => d.TotalReceipts),
+                TotalQuantity = groupedByDate.Sum(d => d.TotalQuantity),
+                TotalPrice = groupedByDate.Sum(d => d.TotalPrice)
+            };
+        }
+
+
 
 
     }

@@ -39,6 +39,12 @@ namespace Services.IService
         Task<List<ProfitByMonthDto>> GetProfitStatsAsync(int? year = null, int? month = null);
         Task<ProfitByYearDto> GetAnnualProfitAsync(int? year = null);
 
+        Task<ExportDashboardResponseDto> GetExportDashboardByUserWarehouseAsync(Guid userId, DateTime? fromDate, DateTime? toDate);
+        Task<List<TopExportedProductDto>> GetTopExportedProductsAsync(Guid userId, int top);
+
+        Task<List<ProfitByMonthDto>> GetProfitByUserWarehouseAsync(Guid userId, int? year = null, int? month = null);
+
+
     }
 
 }

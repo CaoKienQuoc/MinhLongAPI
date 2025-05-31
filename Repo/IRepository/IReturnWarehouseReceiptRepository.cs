@@ -16,8 +16,11 @@ namespace Repo.IRepository
         Task SaveChangesAsync(); // ✅ thêm dòng này
         Task<IEnumerable<ReturnWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId);
         Task<List<ReturnWarehouseReceipt>> GetAllAsync();
+        Task<List<ReturnWarehouseReceipt>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate);
 
-        
+        Task<List<ReturnWarehouseReceipt>> GetByWarehouseIdsAndDateRangeAsync(List<long> warehouseIds, DateTime fromDate, DateTime toDate);
+
+
     }
 
 }

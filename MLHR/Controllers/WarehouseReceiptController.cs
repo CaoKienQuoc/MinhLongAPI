@@ -245,6 +245,26 @@ namespace MLHR.Controllers
         }
 
 
+        [HttpGet("dashboard/warehouse-receipts")]
+        public async Task<IActionResult> GetDashboardByRangeByUserWarehouse([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var dashboard = await _service.GetDashboardByDateRangeByUserWarehouseAsync(userId, startDate, endDate);
+                return Ok(new { success = true, data = dashboard });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+
 
 
     }

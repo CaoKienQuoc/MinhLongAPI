@@ -31,6 +31,8 @@ namespace Services.IService
         Task<List<object>> GetMonthlyReceiptStatsAllAsync();
         Task<WarehouseDashboardRangeDto> GetDashboardByDateRangeAsync(DateTime? startDate, DateTime? endDate);
 
+        Task<WarehouseDashboardRangeDto> GetDashboardByDateRangeByUserWarehouseAsync(Guid userId, DateTime? startDate, DateTime? endDate);
+
 
 
     }

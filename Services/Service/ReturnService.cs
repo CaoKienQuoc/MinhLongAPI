@@ -808,15 +808,11 @@ namespace Services.Service
             var startDate = fromDate ?? new DateTime(vietnamNow.Year, vietnamNow.Month, 1);
             var endDate = toDate ?? vietnamNow.Date;
 
-            var receipts = await _returnWarehouseReceiptRepo.GetAllAsync();
-
-            // Lọc phiếu trả trong khoảng thời gian
-            var filteredReceipts = receipts
-                .Where(r => r.ReceiptDate.Date >= startDate && r.ReceiptDate.Date <= endDate)
-                .ToList();
+            // Lấy danh sách phiếu nhập trả hàng theo khoảng ngày
+            var receipts = await _returnWarehouseReceiptRepo.GetByDateRangeAsync(startDate, endDate);
 
             // Tổng số lượng trả = tổng sum Quantity trong Details
-            var groupedByDate = filteredReceipts
+            var groupedByDate = receipts
                 .GroupBy(r => r.ReceiptDate.Date)
                 .Select(g => new DailyReturnWarehouseReceiptSummaryDto
                 {
@@ -832,10 +828,54 @@ namespace Services.Service
             return new ReturnWarehouseReceiptDashboardDto
             {
                 DailySummaries = groupedByDate,
-                TotalReturnReceipts = filteredReceipts.Count,
-                TotalQuantity = filteredReceipts.Sum(r => r.Details?.Sum(d => d.Quantity) ?? 0),
+                TotalReturnReceipts = receipts.Count,
+                TotalQuantity = receipts.Sum(r => r.Details?.Sum(d => d.Quantity) ?? 0),
             };
         }
+
+
+        public async Task<ReturnWarehouseReceiptDashboardDto> GetReturnWarehouseDashboardByUserWarehouseAsync(Guid userId, DateTime? fromDate, DateTime? toDate)
+        {
+            var warehouses = await _warehouseRepo.GetWarehousesByUserIdAsync(userId);
+            var warehouseIds = warehouses.Select(w => w.WarehouseId).ToList();
+
+            if (!warehouseIds.Any())
+            {
+                return new ReturnWarehouseReceiptDashboardDto
+                {
+                    TotalReturnReceipts = 0,
+                    TotalQuantity = 0,
+                    DailySummaries = new List<DailyReturnWarehouseReceiptSummaryDto>()
+                };
+            }
+
+            var nowVN = GetVietnamTime();
+            var from = fromDate ?? new DateTime(nowVN.Year, nowVN.Month, 1);
+            var to = toDate ?? nowVN.Date;
+
+            var receipts = await _returnWarehouseReceiptRepo.GetByWarehouseIdsAndDateRangeAsync(warehouseIds, from, to);
+
+            var groupedByDate = receipts
+                .GroupBy(r => r.ReceiptDate.Date)
+                .Select(g => new DailyReturnWarehouseReceiptSummaryDto
+                {
+                    Date = g.Key,
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    TotalReturnReceipts = g.Count(),
+                    TotalQuantity = g.Sum(r => r.Details?.Sum(d => d.Quantity) ?? 0)
+                })
+                .OrderBy(r => r.Date)
+                .ToList();
+
+            return new ReturnWarehouseReceiptDashboardDto
+            {
+                DailySummaries = groupedByDate,
+                TotalReturnReceipts = receipts.Count,
+                TotalQuantity = receipts.Sum(r => r.Details?.Sum(d => d.Quantity) ?? 0)
+            };
+        }
+
 
 
     }

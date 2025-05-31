@@ -38,6 +38,8 @@ namespace Services.IService
         Task<ReturnRequestProdductDto> GetReturnRequestByIdAsync(Guid returnRequestId, Guid userId);
         Task RejectReturnRequestAsync(Guid returnRequestId, Guid userId, string rejectReason);
         Task<ReturnWarehouseReceiptDashboardDto> GetReturnWarehouseReceiptDashboardAsync(DateTime? fromDate, DateTime? toDate);
+        Task<ReturnWarehouseReceiptDashboardDto> GetReturnWarehouseDashboardByUserWarehouseAsync(Guid userId, DateTime? fromDate, DateTime? toDate);
+
     }
 
 }

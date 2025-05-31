@@ -532,6 +532,12 @@ namespace Repo.Repository
             return await _context.RegisterAccounts.CountAsync();
         }
 
+        public async Task<List<Warehouse>> GetWarehousesByUserIdAsync(Guid userId)
+        {
+            return await _context.Warehouses
+                .Where(w => w.UserId == userId)
+                .ToListAsync();
+        }
 
 
 

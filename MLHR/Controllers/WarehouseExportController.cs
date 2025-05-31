@@ -235,6 +235,50 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpGet("dashboard/warehouse-export")]
+        public async Task<IActionResult> GetExportDashboardByUserWarehouse([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var dashboardData = await _exportService.GetExportDashboardByUserWarehouseAsync(userId, fromDate, toDate);
+                return Ok(new { success = true, data = dashboardData });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/top-exported-products")]
+        public async Task<IActionResult> GetTopExportedProducts([FromQuery] int top = 5)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var result = await _exportService.GetTopExportedProductsAsync(userId, top);
+                return Ok(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/profit-warehouse")]
+        public async Task<IActionResult> GetProfitByUserWarehouse([FromQuery] int? year, [FromQuery] int? month)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var result = await _exportService.GetProfitByUserWarehouseAsync(userId, year, month);
+                return Ok(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
 
 
     }

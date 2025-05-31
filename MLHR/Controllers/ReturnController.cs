@@ -322,6 +322,25 @@ namespace MLHR.Controllers
             }
         }
 
+        [HttpGet("dashboard/warehouse-return-receipts")]
+        [Authorize]
+        public async Task<IActionResult> GetReturnWarehouseDashboardByCurrentUser([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            try
+            {
+                var dashboard = await _returnService.GetReturnWarehouseDashboardByUserWarehouseAsync(userId, fromDate, toDate);
+                return Ok(new { success = true, data = dashboard });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
 
     }
 }

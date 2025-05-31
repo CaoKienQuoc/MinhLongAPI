@@ -805,6 +805,149 @@ namespace Services.Service
             };
         }
 
+        public async Task<ExportDashboardResponseDto> GetExportDashboardByUserWarehouseAsync(Guid userId, DateTime? fromDate, DateTime? toDate)
+        {
+            var vietnamNow = GetVietnamTime();
+            var startDate = fromDate ?? new DateTime(vietnamNow.Year, vietnamNow.Month, 1);
+            var endDate = toDate ?? vietnamNow.Date;
+
+            // ✅ Lấy toàn bộ phiếu xuất từ kho thuộc user này
+            var userExports = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+
+            // ✅ Lọc theo khoảng thời gian
+            var filteredExports = userExports
+                .Where(e => e.DocumentDate.Date >= startDate && e.DocumentDate.Date <= endDate)
+                .ToList();
+
+            var groupedByDate = filteredExports
+                .GroupBy(e => e.DocumentDate.Date)
+                .Select(g => new DailyExportSummaryDto
+                {
+                    Date = g.Key,
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    TotalExports = g.Count(),
+                    TotalQuantity = g.Sum(x => x.TotalQuantity),
+                    TotalAmount = g.Sum(x => x.TotalAmount)
+                })
+                .OrderBy(d => d.Date)
+                .ToList();
+
+            return new ExportDashboardResponseDto
+            {
+                DailySummaries = groupedByDate,
+                TotalExports = filteredExports.Count,
+                TotalQuantity = filteredExports.Sum(x => x.TotalQuantity),
+                TotalAmount = filteredExports.Sum(x => x.TotalAmount)
+            };
+        }
+
+        public async Task<List<TopExportedProductDto>> GetTopExportedProductsAsync(Guid userId, int top)
+        {
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+
+            // Flatten all details
+            var allDetails = receipts
+                .SelectMany(r => r.ExportWarehouseReceiptDetails)
+                .GroupBy(d => d.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    TotalQuantity = g.Sum(x => x.Quantity)
+                })
+                .OrderByDescending(x => x.TotalQuantity)
+                .Take(top)
+                .ToList();
+
+            var productIds = allDetails.Select(x => x.ProductId).ToList();
+            var products = await _productRepository.GetListByIdsAsync(productIds);
+
+            var result = allDetails.Select(item =>
+            {
+                var product = products.FirstOrDefault(p => p.ProductId == item.ProductId);
+                return new TopExportedProductDto
+                {
+                    ProductId = item.ProductId,
+                    ProductCode = product?.ProductCode ?? $"SP-{item.ProductId}",
+                    ProductName = product?.ProductName ?? "Không rõ",
+                    TotalExportedQuantity = item.TotalQuantity
+                };
+            }).ToList();
+
+            return result;
+        }
+
+        public async Task<List<ProfitByMonthDto>> GetProfitByUserWarehouseAsync(Guid userId, int? year = null, int? month = null)
+        {
+            int queryYear = year ?? DateTime.Now.Year;
+
+            // Lấy warehouseId mà user sở hữu
+            var warehouseIds = (await _userRepository.GetWarehousesByUserIdAsync(userId))
+                                .Select(w => w.WarehouseId)
+                                .ToList();
+
+            if (!warehouseIds.Any())
+                return new List<ProfitByMonthDto>();
+
+            // Lấy phiếu nhập và xuất thuộc các kho này
+            var allImports = (await _receiptRepo.GetAllByYearAsync(queryYear))
+                                .Where(r => warehouseIds.Contains(r.WarehouseId))
+                                .ToList();
+
+            var allExports = (await _exportReceiptRepo.GetAllByYearAsync(queryYear))
+                                .Where(r => warehouseIds.Contains(r.WarehouseId))
+                                .ToList();
+
+            if (month.HasValue)
+            {
+                var importInMonth = allImports.Where(r => r.DocumentDate.Month == month.Value).ToList();
+                var exportInMonth = allExports.Where(r => r.DocumentDate.Month == month.Value).ToList();
+
+                decimal importCost = importInMonth.Sum(r => r.TotalPrice);
+                decimal exportRevenue = exportInMonth.Sum(r => r.TotalAmount);
+                decimal profit = exportRevenue - importCost;
+                decimal percent = importCost > 0 ? (profit / importCost) * 100 : 0;
+
+                return new List<ProfitByMonthDto>
+        {
+            new ProfitByMonthDto
+            {
+                Year = queryYear,
+                Month = month.Value,
+                TotalImportCost = importCost,
+                TotalExportRevenue = exportRevenue,
+                ProfitAmount = profit,
+                ProfitPercentage = percent
+            }
+        };
+            }
+            else
+            {
+                var result = new List<ProfitByMonthDto>();
+                for (int m = 1; m <= 12; m++)
+                {
+                    var importCost = allImports.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalPrice);
+                    var exportRevenue = allExports.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalAmount);
+                    var profit = exportRevenue - importCost;
+                    var percent = importCost > 0 ? (profit / importCost) * 100 : 0;
+
+                    result.Add(new ProfitByMonthDto
+                    {
+                        Year = queryYear,
+                        Month = m,
+                        TotalImportCost = importCost,
+                        TotalExportRevenue = exportRevenue,
+                        ProfitAmount = profit,
+                        ProfitPercentage = percent
+                    });
+                }
+
+                return result;
+            }
+        }
+
+
+
         public async Task CancelRequestExportAsync(long warehouseRequestExportId, Guid? userId, string reason)
         {
             var warehouseRequestExport = await _exportReceiptRepo.GetExportWarehouseReceiptByIdAsync(warehouseRequestExportId);

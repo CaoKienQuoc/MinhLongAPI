@@ -73,6 +73,7 @@ namespace Repo.IRepository
 
         Task<int> CountRegisterAccountsByStatusAsync(string status);
         Task<int> CountTotalRegisterAccountsAsync();
+        Task<List<Warehouse>> GetWarehousesByUserIdAsync(Guid userId);
 
 
     }
