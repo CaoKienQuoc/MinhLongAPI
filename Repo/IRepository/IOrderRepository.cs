@@ -1,4 +1,5 @@
-﻿using BusinessObject.Models;
+﻿using BusinessObject.DTO.Dashboard;
+using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,15 @@ namespace Repo.IRepository
 
         Task<OrderDetail> GetOrderDetailByIdAsync(Guid orderDetailId);
         Task<List<object>> GetMonthlyExportedOrderStatsAsync();
+
+        Task<List<Guid>> GetOrderIdsManagedBySalesAsync(Guid salesUserId);
+        Task<Dictionary<Guid, decimal>> GetImportCostPerOrderFromTemporaryStockExportAsync(List<Guid> orderIds);
+
+        Task<Dictionary<Guid, decimal>> GetRevenuePerOrderAsync(List<Guid> orderIds);
+        Task<List<Order>> GetOrdersManagedBySalesAsync(Guid salesUserId, DateTime? fromDate, DateTime? toDate);
+
+
+
 
     }
 }

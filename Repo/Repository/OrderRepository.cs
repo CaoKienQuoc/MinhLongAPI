@@ -256,6 +256,69 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<List<Guid>> GetOrderIdsManagedBySalesAsync(Guid salesUserId)
+        {
+            return await _context.Orders
+                .Where(o => o.RequestProduct.AgencyAccount.ManagedByEmployee.User.UserId == salesUserId &&
+                    (o.Status == "Paid" || o.Status == "WaitingDelivery" || o.Status == "Exported"))
+                .Select(o => o.OrderId)
+                .ToListAsync();
+        }
+
+        // Tính số tiền nhập hàng cho từng đơn hàng
+        public async Task<Dictionary<Guid, decimal>> GetImportCostPerOrderFromTemporaryStockExportAsync(List<Guid> orderIds)
+        {
+            var temporaryStockExports = await _context.TemporaryStockExports
+                .Where(tse => orderIds.Contains(tse.OrderId))
+                .Include(tse => tse.Batch) // Include Batch để lấy thông tin giá nhập
+                .ToListAsync();
+
+            // Tính tiền nhập kho cho từng đơn hàng
+            var importCostsPerOrder = temporaryStockExports
+                .GroupBy(tse => tse.OrderId)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Sum(tse => tse.Quantity * tse.Batch.UnitCost)
+                );
+
+            return importCostsPerOrder;
+        }
+
+
+        public async Task<Dictionary<Guid, decimal>> GetRevenuePerOrderAsync(List<Guid> orderIds)
+        {
+            var orders = await _context.Orders
+                .Include(o => o.PaymentHistories)
+                .Where(o => orderIds.Contains(o.OrderId))
+                .ToListAsync();
+
+            var revenuePerOrder = orders
+                .ToDictionary(
+                    order => order.OrderId,
+                    order => order.FinalPrice
+                );
+
+            return revenuePerOrder;
+        }
+
+        public async Task<List<Order>> GetOrdersManagedBySalesAsync(Guid salesUserId, DateTime? fromDate, DateTime? toDate)
+        {
+            var query = _context.Orders
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .Include(o => o.RequestProduct)
+                    .ThenInclude(rp => rp.AgencyAccount)
+                        .ThenInclude(a => a.ManagedByEmployee)
+                .Where(o => o.RequestProduct.AgencyAccount.ManagedByEmployee.User.UserId == salesUserId &&
+                            (o.Status == "Paid" || o.Status == "WaitingDelivery" || o.Status == "Exported"));
+
+            if (fromDate.HasValue)
+                query = query.Where(o => o.OrderDate.Date >= fromDate.Value.Date);
+            if (toDate.HasValue)
+                query = query.Where(o => o.OrderDate.Date <= toDate.Value.Date);
+
+            return await query.ToListAsync();
+        }
 
 
     }

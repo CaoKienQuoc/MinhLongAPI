@@ -1,4 +1,5 @@
-﻿using BusinessObject.DTO.Order;
+﻿using BusinessObject.DTO.Dashboard;
+using BusinessObject.DTO.Order;
 using BusinessObject.Models;
 using System;
 using System.Collections.Generic;
@@ -51,6 +52,9 @@ namespace Services.IService
 
         Task<List<object>> GetMonthlyExportedOrderStatsAsync();
 
+        Task<Dictionary<Guid, decimal>> GetImportCostForSalesOrdersAsync(Guid salesUserId);
+        Task<List<object>> GetProfitStatsForSalesOrdersAsync(Guid salesUserId);
+        Task<SalesDashboardStatsDto> GetSalesDashboardAsync(Guid salesUserId, DateTime? fromDate, DateTime? toDate);
 
 
 
