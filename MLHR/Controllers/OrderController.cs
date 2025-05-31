@@ -240,27 +240,27 @@ namespace MLHR.Controllers
             return Ok(new { success = true, data = stats });
         }
 
-        [HttpGet("dashboard/sales/import-cost-per-order")]
-        public async Task<IActionResult> GetImportCostForSalesOrders()
-        {
-            var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+        //[HttpGet("dashboard/sales/import-cost-per-order")]
+        //public async Task<IActionResult> GetImportCostForSalesOrders()
+        //{
+        //    var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
-            var importCostsPerOrder = await _orderService.GetImportCostForSalesOrdersAsync(salesUserId);
+        //    var importCostsPerOrder = await _orderService.GetImportCostForSalesOrdersAsync(salesUserId);
 
-            return Ok(new { success = true, importCostsPerOrder });
-        }
+        //    return Ok(new { success = true, importCostsPerOrder });
+        //}
 
-        [HttpGet("dashboard/sales/profit-stats")]
-        public async Task<IActionResult> GetProfitStatsForSalesOrders()
-        {
-            var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+        //[HttpGet("dashboard/sales/profit-stats")]
+        //public async Task<IActionResult> GetProfitStatsForSalesOrders()
+        //{
+        //    var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
-            var profitStats = await _orderService.GetProfitStatsForSalesOrdersAsync(salesUserId);
+        //    var profitStats = await _orderService.GetProfitStatsForSalesOrdersAsync(salesUserId);
 
-            return Ok(new { success = true, profitStats });
-        }
+        //    return Ok(new { success = true, profitStats });
+        //}
 
-        [HttpGet("dashboard/sales")]
+        [HttpGet("dashboard/order-sales")]
         public async Task<IActionResult> GetDashboard([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
         {
             var salesUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());

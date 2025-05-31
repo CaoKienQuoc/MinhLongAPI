@@ -639,6 +639,15 @@ namespace Services.Service
 
         public async Task<SalesDashboardStatsDto> GetSalesDashboardAsync(Guid salesUserId, DateTime? fromDate, DateTime? toDate)
         {
+            if (!fromDate.HasValue || !toDate.HasValue)
+            {
+                var now = DateTime.Today;
+                var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+
+                fromDate ??= firstDayOfMonth;
+                toDate ??= DateTime.Today;
+            }
+
             var orders = await _orderRepository.GetOrdersManagedBySalesAsync(salesUserId, fromDate, toDate);
             var orderIds = orders.Select(o => o.OrderId).ToList();
 
