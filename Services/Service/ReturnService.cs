@@ -812,6 +812,7 @@ namespace Services.Service
             var receipts = await _returnWarehouseReceiptRepo.GetByDateRangeAsync(startDate, endDate);
 
             // Tổng số lượng trả = tổng sum Quantity trong Details
+            //them comment ở chỗ này để test
             var groupedByDate = receipts
                 .GroupBy(r => r.ReceiptDate.Date)
                 .Select(g => new DailyReturnWarehouseReceiptSummaryDto
