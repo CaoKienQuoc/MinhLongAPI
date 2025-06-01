@@ -31,6 +31,7 @@ namespace BusinessObject.DTO.Warehouse
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal FinalPrice { get; set; }
+        public string? Reason { get; set; }
     }
 
     public class ExportWarehouseReceiptDetailDTO

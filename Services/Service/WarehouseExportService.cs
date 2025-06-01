@@ -412,6 +412,7 @@ namespace Services.Service
                     AgencyName = receipt.RequestExport?.Order?.RequestProduct?.AgencyAccount?.AgencyName ?? "",
                     Discount = receipt.Discount,
                     FinalPrice = receipt.FinalPrice,
+                    Reason = receipt.Reason,
                     Details = receipt.ExportWarehouseReceiptDetails.Select(detail =>
                     {
                         var requestedQuantity = requestExportDetails
@@ -461,6 +462,7 @@ namespace Services.Service
                 RequestExportId = receipt.RequestExportId,
                 OrderCode = receipt.RequestExport?.Order?.OrderCode ?? "",
                 AgencyName = receipt.RequestExport?.Order?.RequestProduct?.AgencyAccount?.AgencyName ?? "",
+                Reason = receipt.Reason,
                 Details = receipt.ExportWarehouseReceiptDetails.Select(detail =>
                 {
                     var requestedQuantity = requestExportDetails

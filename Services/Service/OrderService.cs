@@ -66,11 +66,9 @@ namespace Services.Service
                 Discount = o.Discount,
                 FinalPrice = o.FinalPrice,
                 Status = o.Status,
-
+                Reason = o.Reason,
                 // ✅ Thêm AgencyId
                 AgencyId = o.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
-
-
                 // ✅ Thông tin request
                 RequestCode = o.RequestProduct?.RequestCode ?? "N/A",
                 AgencyName = o.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -110,6 +108,7 @@ namespace Services.Service
                 Discount = o.Discount,
                 FinalPrice = (decimal)Math.Ceiling((double)o.FinalPrice),
                 Status = o.Status,
+                Reason = o.Reason,
                 AgencyId = o.RequestProduct?.AgencyId ?? 0,
                 RequestCode = o.RequestProduct?.RequestCode ?? "N/A",
                 AgencyName = o.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -156,6 +155,7 @@ namespace Services.Service
                 Discount = discount,
                 FinalPrice = (decimal)Math.Ceiling((double)order.FinalPrice),
                 Status = order.Status,
+                Reason = order.Reason,
                 // ✅ Thêm AgencyId
                 AgencyId = order.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
                 AgencyName = order.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -191,6 +191,7 @@ namespace Services.Service
                 Discount = order.Discount,
                 FinalPrice = (decimal)Math.Ceiling((double)order.FinalPrice),
                 Status = order.Status,
+                Reason = order.Reason,
                 AgencyId = order.RequestProduct?.AgencyId ?? 0,
                 RequestCode = order.RequestProduct?.RequestCode ?? "N/A",
                 AgencyName = order.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -419,6 +420,7 @@ namespace Services.Service
                 TotalPrice = o.TotalPrice,
                 FinalPrice = (decimal)Math.Ceiling((double)o.FinalPrice),
                 Status = o.Status,
+                Reason = o.Reason,
                 // ✅ Thêm AgencyId
                 AgencyId = o.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
                 AgencyName = o.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
