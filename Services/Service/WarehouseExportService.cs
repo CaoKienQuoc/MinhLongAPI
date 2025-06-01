@@ -1001,6 +1001,65 @@ namespace Services.Service
                 order.OrderCode,
                 order.FinalPrice
             );
+
+            var salesUserId = order?.RequestProduct?.AgencyAccount?.ManagedByEmployee?.User?.UserId;
+
+            if (salesUserId != null)
+            {
+                var agencyName = order?.RequestProduct?.AgencyAccount?.AgencyName;
+                var notifyMessage = $"❌ Phiếu xuất cho đơn hàng {order.OrderCode} của {agencyName} đã bị huỷ. Vui lòng liên hệ sales để biết thêm chi tiết.";
+
+                // Gửi SignalR đến đại lý
+                await _hub.Clients.User(salesUserId.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "huyguiSales",
+                    message = notifyMessage,
+                    payload = requestExport.RequestExportId
+                });
+
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                // Ghi vào bảng thông báo
+                var notification = new Notification
+                {
+                    UserId = salesUserId.Value,
+                    Title = "Phiếu xuất kho đơn hàng bị hủy",
+                    Message = notifyMessage,
+                    Url = $"/sales/export", // Cập nhật URL nếu cần
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                
+            }
+
+            if (agencyUserId != Guid.Empty)
+            {
+                string agencyMessage = $"❌ Phiếu xuất cho đơn hàng {order.OrderCode} của bạn đã bị huỷ. Vui lòng liên hệ sales để biết thêm chi tiết.";
+
+                await _hub.Clients.User(agencyUserId.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "huyguiAgency",
+                    message = agencyMessage,
+                    payload = requestExport.RequestExportId
+                });
+
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                var agencyNotification = new Notification
+                {
+                    UserId = agencyUserId,
+                    Title = "Phiếu xuất kho đơn hàng bị hủy",
+                    Message = agencyMessage,
+                    Url = $"/agency/orders",
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(agencyNotification);
+            }
+            await _notificationRepository.SaveChangesAsync();
         }
 
     }

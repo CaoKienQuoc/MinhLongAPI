@@ -1,5 +1,6 @@
 ﻿using BusinessObject.DTO.RequestExport;
 using BusinessObject.Models;
+using Microsoft.AspNetCore.SignalR;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
@@ -19,13 +20,17 @@ namespace Services.Service
         private readonly IOrderRepository _orderRepository;
         private readonly IUserRepository _userRepository;
         private readonly IEmailService _emailService;
+        private readonly INotificationRepository _notificationRepository;
+        private readonly IHubContext<NotificationHub> _hub;
 
         public RequestExportService(IRequestExportRepository requestExportRepository
             , ITemporaryWarehouseExportRepository temporaryWarehouseRepository,
                 IOrderRepository orderRepository,
                 IRequestProductRepository productRepository,
                 IUserRepository userRepository,
-                IEmailService emailService)
+                IEmailService emailService,
+                IHubContext<NotificationHub> hub,
+            INotificationRepository notificationRepository)
         {
             _requestExportRepository = requestExportRepository;
             _temporaryWarehouseRepository = temporaryWarehouseRepository;
@@ -33,6 +38,8 @@ namespace Services.Service
             _requestProductRepository = productRepository;
             _userRepository = userRepository;
             _emailService = emailService;
+            _hub = hub;
+            _notificationRepository = notificationRepository;
         }
 
         public async Task<List<RequestExportDto>> GetAllRequestExportsAsync(string? sortBy = null)
@@ -342,6 +349,38 @@ namespace Services.Service
                 order.OrderCode,
                 order.FinalPrice
             );
+
+            var managerUserId = requestExport?.RequestedByAgency?.User.UserId;
+            if (managerUserId != null && managerUserId != userId)
+            {
+                var salesName = requestExport.RequestedByAgency?.ManagedByEmployee?.FullName ?? "Không xác định";
+                var orderCode = requestExport.Order?.OrderCode ?? "chưa có mã";
+
+                string message = $"❌ Sales {salesName} đã hủy yêu cầu xuất kho cho đơn hàng {orderCode}.";
+
+                await _hub.Clients.User(managerUserId.Value.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "huyDaily",
+                    message,
+                    payload = requestExportId
+                });
+
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                var notification = new Notification
+                {
+                    UserId = managerUserId.Value,
+                    Title = "Yêu cầu xuất kho bị hủy",
+                    Message = message,
+                    Url = $"/agency/orders",
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                await _notificationRepository.SaveChangesAsync();
+            }
+
         }
 
     }
