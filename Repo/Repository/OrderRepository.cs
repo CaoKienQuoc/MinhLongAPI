@@ -211,7 +211,7 @@ namespace Repo.Repository
                     .ThenInclude(rp => rp.AgencyAccount)
                         .ThenInclude(aa => aa.ManagedByEmployee)
                 .Where(o => o.RequestProduct.AgencyAccount.ManagedByEmployee.User.UserId == salesUserId
-                            && (o.Status == "Paid" || o.Status == "WaitingDelivery"))
+                            && (o.Status == "Paid" || o.Status == "WaitingDelivery" || o.Status == "Exported"))
                 .CountAsync();
         }
 
