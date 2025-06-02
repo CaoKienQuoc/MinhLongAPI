@@ -114,7 +114,7 @@ namespace MLHR.Hubs
                 Images = uploadedImages.Select(img => img.ImageUrl).ToList()
             };
 
-            /*// 4) Gửi SignalR chỉ đến các thành viên khác người gửi
+            // 4) Gửi SignalR chỉ đến các thành viên khác người gửi
             var room = await _chatService.GetRoomByIdAsync(roomId);
             var receivers = room.Members
                                 .Where(m => m.UserId != senderId)
@@ -124,10 +124,10 @@ namespace MLHR.Hubs
             foreach (var userId in receivers)
             {
                 await Clients.User(userId).SendAsync("ReceiveMessage", payload);
-            }*/
+            }
 
-            await Clients.Group(roomId.ToString())
-                         .SendAsync("ReceiveMessage", payload);
+            /*await Clients.Group(roomId.ToString())
+                         .SendAsync("ReceiveMessage", payload);*/
         }
 
         public DateTime GetVietnamTime()
