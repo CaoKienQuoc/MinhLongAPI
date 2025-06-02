@@ -91,7 +91,7 @@ namespace Services.Service
 
             var createdRoom = await _roomRepo.AddAsync(room);
 
-            // Gửi tin nhắn chào mừng từ Sale tới Agency
+            /*// Gửi tin nhắn chào mừng từ Sale tới Agency
             var saleId = memberIds.FirstOrDefault(id => id != creatorId);
             var welcomeMessage = new ChatMessage
             {
@@ -119,7 +119,7 @@ namespace Services.Service
                 await _hub.Clients.User(memberId.ToString()).SendAsync("ReceiveMessageChatRoom", payload);
             }
 
-            // Gửi Notification cho creator (nếu muốn giữ logic thông báo ngoài luồng SignalR)
+           *//* // Gửi Notification cho creator (nếu muốn giữ logic thông báo ngoài luồng SignalR)
             await _notificationRepository.AddAsync(new Notification
             {
                 UserId = creatorId,
@@ -127,8 +127,8 @@ namespace Services.Service
                 Message = "Bạn vừa nhận được tin nhắn mới.",
                 Url = $"/chat/room/{createdRoom.ChatRoomId}",
                 CreatedAt = GetVietnamTime()
-            });
-            await _notificationRepository.SaveChangesAsync();
+            });*//*
+            await _notificationRepository.SaveChangesAsync();*/
 
             return createdRoom;
         }
