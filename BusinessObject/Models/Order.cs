@@ -29,12 +29,15 @@ namespace BusinessObject.Models
         // Navigation property
         public virtual List<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
         public ICollection<PaymentHistory> PaymentHistories { get; set; }
+
+        public string? Reason { get; set; } // Lý do hủy đơn hàng
         /*public ICollection<RequestExport> RequestExports { get; set; }*/
         // ✅ Quan hệ 1-1: Một Order chỉ có một RequestExport
         public virtual RequestExport RequestExport { get; set; }
 
         // 1-n: Một Order có thể có nhiều bản ghi tạm TemporaryStockExport
         public virtual ICollection<TemporaryStockExport> TemporaryStockExports { get; set; } = new List<TemporaryStockExport>();
+
 
     }
 }

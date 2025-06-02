@@ -19,7 +19,7 @@ namespace BusinessObject.DTO.Order
         public string SalesName { get; set; } // 👈 Lấy từ ApprovedByEmployee
         public string AgencyName { get; set; }
         public string RequestCode { get; set; }
-
+        public string? Reason { get; set; }
         public List<OrderDetailDto> OrderDetails { get; set; }
     }
 

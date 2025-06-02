@@ -205,7 +205,34 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<List<ExportWarehouseReceipt>> GetAllAsync()
+        {
+            return await _context.ExportWarehouseReceipts
+                .Include(e => e.Warehouse)
+                .Include(e => e.ExportWarehouseReceiptDetails)
+                .ToListAsync();
+        }
 
+        public async Task<List<ExportWarehouseReceipt>> GetAllByYearAsync(int year)
+        {
+            return await _context.ExportWarehouseReceipts
+                .Where(r => r.DocumentDate.Year == year)
+                .ToListAsync();
+        }
+
+        public async Task<List<ExportWarehouseReceipt>> GetAllByYearMonthAsync(int year, int month)
+        {
+            return await _context.ExportWarehouseReceipts
+                .Where(r => r.DocumentDate.Year == year && r.DocumentDate.Month == month)
+                .ToListAsync();
+        }
+
+        public async Task<ExportWarehouseReceipt> GetExportWarehouseReceiptByIdAsync(long warehouseRequestExportId)
+        {
+            return await _context.ExportWarehouseReceipts
+                .Include(re => re.ExportWarehouseReceiptDetails)
+                .FirstOrDefaultAsync(re => re.ExportWarehouseReceiptId == warehouseRequestExportId);
+        }
     }
 
 

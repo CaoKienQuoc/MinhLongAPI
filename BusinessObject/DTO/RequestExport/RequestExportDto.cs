@@ -34,5 +34,6 @@ namespace BusinessObject.DTO.RequestExport
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal FinalPrice { get; set; }
+        public string? Reason { get; set; }
     }
 }

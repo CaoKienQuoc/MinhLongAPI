@@ -106,6 +106,25 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<List<ReturnWarehouseReceipt>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate)
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Where(r => r.ReceiptDate.Date >= fromDate.Date && r.ReceiptDate.Date <= toDate.Date)
+                .Include(r => r.Details)
+                .ToListAsync();
+        }
+
+
+        public async Task<List<ReturnWarehouseReceipt>> GetByWarehouseIdsAndDateRangeAsync(List<long> warehouseIds, DateTime fromDate, DateTime toDate)
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Where(r =>
+                    warehouseIds.Contains(r.WarehouseId) &&
+                    r.ReceiptDate.Date >= fromDate.Date &&
+                    r.ReceiptDate.Date <= toDate.Date)
+                .Include(r => r.Details)
+                .ToListAsync();
+        }
 
     }
 

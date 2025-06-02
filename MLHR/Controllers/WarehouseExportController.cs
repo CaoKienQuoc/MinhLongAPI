@@ -1,6 +1,8 @@
-﻿using System.Security.Claims;
+﻿using BusinessObject.DTO.RequestExport;
 using Microsoft.AspNetCore.Mvc;
 using Services.IService;
+using Services.Service;
+using System.Security.Claims;
 
 namespace MLHR.Controllers
 {
@@ -87,7 +89,29 @@ namespace MLHR.Controllers
             }
             return null;
         }
+        [HttpPost("cancel-WarehouseRequest-Export")]
+        public async Task<IActionResult> CancelRequestExport([FromBody] CancelWarehouseRequestExportModel model)
+        {
+            try
+            {
+                var currentUserId = GetLoggedInUserId();
+                await _exportService.CancelRequestExportAsync(model.WarehouseRequestExportId, currentUserId, model.Reason);
 
+                return Ok(new
+                {
+                    success = true,
+                    message = "Đã hủy đơn xuất kho thành công."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
 
         [HttpGet("print/{exportReceiptId}")]
         public async Task<IActionResult> PrintExportReceipt(int exportReceiptId)
@@ -162,6 +186,93 @@ namespace MLHR.Controllers
             {
                 var stats = await _exportService.GetMonthlyExportStatsAllAsync();
                 return Ok(new { success = true, data = stats });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/export-summary")]
+        public async Task<IActionResult> GetExportDashboard([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                var dashboardData = await _exportService.GetExportDashboardAsync(fromDate, toDate);
+                return Ok(new { success = true, data = dashboardData });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/profit")]
+        public async Task<IActionResult> GetProfitStats([FromQuery] int? year, [FromQuery] int? month)
+        {
+            try
+            {
+                var profitStats = await _exportService.GetProfitStatsAsync(year, month);
+                return Ok(new { success = true, data = profitStats });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/profit-year")]
+        public async Task<IActionResult> GetAnnualProfit([FromQuery] int? year)
+        {
+            try
+            {
+                var result = await _exportService.GetAnnualProfitAsync(year);
+                return Ok(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/warehouse-export")]
+        public async Task<IActionResult> GetExportDashboardByUserWarehouse([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var dashboardData = await _exportService.GetExportDashboardByUserWarehouseAsync(userId, fromDate, toDate);
+                return Ok(new { success = true, data = dashboardData });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/top-exported-products")]
+        public async Task<IActionResult> GetTopExportedProducts([FromQuery] int top = 5)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var result = await _exportService.GetTopExportedProductsAsync(userId, top);
+                return Ok(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/profit-warehouse")]
+        public async Task<IActionResult> GetProfitByUserWarehouse([FromQuery] int? year, [FromQuery] int? month)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var result = await _exportService.GetProfitByUserWarehouseAsync(userId, year, month);
+                return Ok(new { success = true, data = result });
             }
             catch (Exception ex)
             {

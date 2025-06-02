@@ -103,23 +103,28 @@ namespace Services.Service
             await _msgRepo.AddAsync(welcomeMessage);
             await _msgRepo.SaveChangesAsync();
 
-            // Gửi SignalR đến cả room
-            await _hub.Clients.Group(createdRoom.ChatRoomId.ToString())
-                .SendAsync("ReceiveMessage", new
-                {
-                    MessageId = welcomeMessage.ChatMessageId,
-                    RoomId = createdRoom.ChatRoomId,
-                    SenderId = welcomeMessage.SenderId,
-                    Text = welcomeMessage.MessageText,
-                    Timestamp = welcomeMessage.Timestamp
-                });
+            // Gửi SignalR đến tất cả thành viên trong phòng với payload thật
+            var payload = new
+            {
+                ChatMessageId = welcomeMessage.ChatMessageId,
+                ChatRoomId = createdRoom.ChatRoomId,
+                SenderId = welcomeMessage.SenderId,
+                MessageText = welcomeMessage.MessageText,
+                Timestamp = welcomeMessage.Timestamp,
+                Images = new List<string>() // nếu sau này có ảnh thì truyền
+            };
 
-            // Gửi Notification cho Agency
+            foreach (var memberId in memberIds)
+            {
+                await _hub.Clients.User(memberId.ToString()).SendAsync("ReceiveMessage", payload);
+            }
+
+            // Gửi Notification cho creator (nếu muốn giữ logic thông báo ngoài luồng SignalR)
             await _notificationRepository.AddAsync(new Notification
             {
                 UserId = creatorId,
                 Title = "Tin nhắn mới",
-                Message = "Bạn vừa nhận được tin nhắn chào mừng từ hệ thống Minh Long.",
+                Message = "Bạn vừa nhận được tin nhắn mới.",
                 Url = $"/chat/room/{createdRoom.ChatRoomId}",
                 CreatedAt = GetVietnamTime()
             });
@@ -127,7 +132,6 @@ namespace Services.Service
 
             return createdRoom;
         }
-
 
 
 

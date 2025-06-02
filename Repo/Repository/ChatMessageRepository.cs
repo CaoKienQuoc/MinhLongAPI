@@ -41,9 +41,10 @@ namespace Repo.Repository
         public async Task<List<ChatMessage>> GetUnreadMessages(Guid chatRoomId, Guid userId)
         {
             return await _context.ChatMessages
-                .Where(m => m.ChatRoomId == chatRoomId && m.SenderId == userId && !m.IsRead)
+                .Where(m => m.ChatRoomId == chatRoomId && m.SenderId != userId && !m.IsRead)
                 .ToListAsync();
         }
+
 
     }
 }

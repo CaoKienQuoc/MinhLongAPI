@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using BusinessObject.Models;
 using BusinessObject.DTO.Warehouse;
 using BusinessObject.DTO.Product;
+using BusinessObject.DTO.Dashboard;
 
 namespace Services.IService
 {
@@ -32,8 +33,17 @@ namespace Services.IService
         Task<int> GetThisMonthExportQuantityAsync(Guid userId);
         Task<decimal> GetTodayExportValueAsync(Guid userId);
         Task<decimal> GetThisMonthExportValueAsync(Guid userId);
-        Task CancelRequestExportAsync(int requestExportId, Guid userId);
+        Task CancelRequestExportAsync(long warehouseRequestExportId, Guid? userId, string reason);
         Task<List<object>> GetMonthlyExportStatsAllAsync();
+        Task<ExportDashboardResponseDto> GetExportDashboardAsync(DateTime? fromDate, DateTime? toDate);
+        Task<List<ProfitByMonthDto>> GetProfitStatsAsync(int? year = null, int? month = null);
+        Task<ProfitByYearDto> GetAnnualProfitAsync(int? year = null);
+
+        Task<ExportDashboardResponseDto> GetExportDashboardByUserWarehouseAsync(Guid userId, DateTime? fromDate, DateTime? toDate);
+        Task<List<TopExportedProductDto>> GetTopExportedProductsAsync(Guid userId, int top);
+
+        Task<List<ProfitByMonthDto>> GetProfitByUserWarehouseAsync(Guid userId, int? year = null, int? month = null);
+
 
     }
 

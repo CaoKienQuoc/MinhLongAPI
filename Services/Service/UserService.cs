@@ -1046,6 +1046,56 @@ namespace Services.Service
             };
         }
 
+        public async Task<AdminDashboardDto> GetAdminDashboardAsync()
+        {
+            var users = await _userRepository.GetUsersWithEmployeeAsync();
+
+            var filteredUsers = users
+                .Where(u => !u.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            int totalAccounts = filteredUsers.Count;
+            int activeAccounts = filteredUsers.Count(u => u.Status);
+            int inactiveAccounts = filteredUsers.Count(u => !u.Status);
+            int totalAgencies = filteredUsers.Count(u => u.UserType.ToUpper() == "AGENCY");
+            int totalSalesManagers = filteredUsers.Count(u => u.Employee != null && u.Employee.Department.ToUpper() == "SALES MANAGER");
+            int totalWarehouseManagers = filteredUsers.Count(u => u.Employee != null && u.Employee.Department.ToUpper() == "WAREHOUSE MANAGER");
+
+            int approvedCount = await _userRepository.CountRegisterAccountsByStatusAsync("Approved");
+            int pendingCount = await _userRepository.CountRegisterAccountsByStatusAsync("Pending");
+            int canceledCount = await _userRepository.CountRegisterAccountsByStatusAsync("Canceled");
+
+            int totalRegisterAccounts = await _userRepository.CountTotalRegisterAccountsAsync();
+
+            int unverifiedEmailCount = filteredUsers
+                .Where(u => !u.VerifyEmail)
+                .Where(u => !(u.Employee != null && u.Employee.Department.ToUpper() == "WAREHOUSE MANAGER"))
+                .Count();
+
+            return new AdminDashboardDto
+            {
+                TotalAccounts = totalAccounts,
+                ActiveAccounts = activeAccounts,
+                InactiveAccounts = inactiveAccounts,
+                TotalAgencies = totalAgencies,
+                TotalSalesManagers = totalSalesManagers,
+                TotalWarehouseManagers = totalWarehouseManagers,
+
+                ApprovedRegisterAccounts = approvedCount,
+                PendingRegisterAccounts = pendingCount,
+                CanceledRegisterAccounts = canceledCount,
+
+                TotalRegisterAccounts = totalRegisterAccounts,
+
+                UnverifiedEmailCount = unverifiedEmailCount
+            };
+        }
+
+
+
+
+
+
     }
 
 }

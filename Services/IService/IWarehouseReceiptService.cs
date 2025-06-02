@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BusinessObject.DTO.Dashboard;
 using BusinessObject.DTO.Warehouse;
 using BusinessObject.Models;
 
@@ -28,6 +29,10 @@ namespace Services.IService
         Task<decimal> GetTodayTotalPriceAsync(Guid userId);
         Task<decimal> GetThisMonthTotalPriceAsync(Guid userId);
         Task<List<object>> GetMonthlyReceiptStatsAllAsync();
+        Task<WarehouseDashboardRangeDto> GetDashboardByDateRangeAsync(DateTime? startDate, DateTime? endDate);
+
+        Task<WarehouseDashboardRangeDto> GetDashboardByDateRangeByUserWarehouseAsync(Guid userId, DateTime? startDate, DateTime? endDate);
+
 
 
     }

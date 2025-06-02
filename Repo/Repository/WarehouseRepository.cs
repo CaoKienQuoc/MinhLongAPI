@@ -259,6 +259,12 @@ namespace Repo.Repository
             return warehouse;
         }
 
+        public async Task<List<Warehouse>> GetWarehousesByUserIdAsync(Guid userId)
+        {
+            return await _context.Warehouses
+                .Where(w => w.UserId == userId)
+                .ToListAsync();
+        }
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using BusinessObject.DTO.Order;
+﻿using BusinessObject.DTO.Dashboard;
+using BusinessObject.DTO.Order;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -65,11 +66,9 @@ namespace Services.Service
                 Discount = o.Discount,
                 FinalPrice = o.FinalPrice,
                 Status = o.Status,
-
+                Reason = o.Reason,
                 // ✅ Thêm AgencyId
                 AgencyId = o.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
-
-
                 // ✅ Thông tin request
                 RequestCode = o.RequestProduct?.RequestCode ?? "N/A",
                 AgencyName = o.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -109,6 +108,7 @@ namespace Services.Service
                 Discount = o.Discount,
                 FinalPrice = (decimal)Math.Ceiling((double)o.FinalPrice),
                 Status = o.Status,
+                Reason = o.Reason,
                 AgencyId = o.RequestProduct?.AgencyId ?? 0,
                 RequestCode = o.RequestProduct?.RequestCode ?? "N/A",
                 AgencyName = o.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -155,6 +155,7 @@ namespace Services.Service
                 Discount = discount,
                 FinalPrice = (decimal)Math.Ceiling((double)order.FinalPrice),
                 Status = order.Status,
+                Reason = order.Reason,
                 // ✅ Thêm AgencyId
                 AgencyId = order.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
                 AgencyName = order.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -190,6 +191,7 @@ namespace Services.Service
                 Discount = order.Discount,
                 FinalPrice = (decimal)Math.Ceiling((double)order.FinalPrice),
                 Status = order.Status,
+                Reason = order.Reason,
                 AgencyId = order.RequestProduct?.AgencyId ?? 0,
                 RequestCode = order.RequestProduct?.RequestCode ?? "N/A",
                 AgencyName = order.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -418,6 +420,7 @@ namespace Services.Service
                 TotalPrice = o.TotalPrice,
                 FinalPrice = (decimal)Math.Ceiling((double)o.FinalPrice),
                 Status = o.Status,
+                Reason = o.Reason,
                 // ✅ Thêm AgencyId
                 AgencyId = o.RequestProduct?.AgencyId ?? 0, // nếu AgencyId là long
                 AgencyName = o.RequestProduct?.AgencyAccount?.AgencyName ?? "Unknown",
@@ -586,7 +589,125 @@ namespace Services.Service
             return await _orderRepository.GetMonthlyExportedOrderStatsAsync();
         }
 
+        public async Task<Dictionary<Guid, decimal>> GetImportCostForSalesOrdersAsync(Guid salesUserId)
+        {
+            // Lấy tất cả orderId của các đại lý mà Sales đang quản lý
+            var orderIds = await _orderRepository.GetOrderIdsManagedBySalesAsync(salesUserId);
 
+            // Lấy số tiền nhập hàng cho từng đơn hàng từ TemporaryStockExport
+            var importCostsPerOrder = await _orderRepository.GetImportCostPerOrderFromTemporaryStockExportAsync(orderIds);
+
+            return importCostsPerOrder;
+        }
+
+
+
+        public async Task<List<object>> GetProfitStatsForSalesOrdersAsync(Guid salesUserId)
+        {
+            // Lấy tất cả orderId của các đại lý mà Sales đang quản lý
+            var orderIds = await _orderRepository.GetOrderIdsManagedBySalesAsync(salesUserId);
+
+            // Lấy số tiền nhập kho cho từng đơn hàng từ TemporaryStockExport
+            var importCostsPerOrder = await _orderRepository.GetImportCostPerOrderFromTemporaryStockExportAsync(orderIds);
+
+            // Lấy doanh thu cho từng đơn hàng
+            var revenuePerOrder = await _orderRepository.GetRevenuePerOrderAsync(orderIds);
+
+            var profitStats = new List<object>();
+
+            foreach (var orderId in orderIds)
+            {
+                if (revenuePerOrder.ContainsKey(orderId) && importCostsPerOrder.ContainsKey(orderId))
+                {
+                    var revenue = revenuePerOrder[orderId];
+                    var importCost = importCostsPerOrder[orderId];
+
+                    var profit = revenue - importCost; // Tiền lãi
+                    var profitMarginPercent = (importCost != 0) ? (profit / importCost) * 100 : 0; // Phần trăm lãi
+
+                    profitStats.Add(new
+                    {
+                        OrderId = orderId,
+                        Revenue = revenue,
+                        ImportCost = importCost,
+                        Profit = profit,
+                        ProfitMarginPercent = profitMarginPercent
+                    });
+                }
+            }
+
+            return profitStats;
+        }
+
+        public async Task<SalesDashboardStatsDto> GetSalesDashboardAsync(Guid salesUserId, DateTime? fromDate, DateTime? toDate)
+        {
+            if (!fromDate.HasValue || !toDate.HasValue)
+            {
+                var now = DateTime.Today;
+                var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+
+                fromDate ??= firstDayOfMonth;
+                toDate ??= DateTime.Today;
+            }
+
+            var orders = await _orderRepository.GetOrdersManagedBySalesAsync(salesUserId, fromDate, toDate);
+            var orderIds = orders.Select(o => o.OrderId).ToList();
+
+            var importCosts = await _orderRepository.GetImportCostPerOrderFromTemporaryStockExportAsync(orderIds);
+
+            var totalOrders = orders.Count;
+            var totalRevenue = orders.Sum(o => o.FinalPrice);
+            var totalImportCost = importCosts.Sum(kvp => kvp.Value);
+            var totalProfit = totalRevenue - totalImportCost;
+            var profitMarginPercent = totalImportCost != 0 ? (totalProfit / totalImportCost) * 100 : 0;
+
+            var topProducts = orders
+                .SelectMany(o => o.OrderDetails)
+                .GroupBy(od => new { od.ProductId, od.Product.ProductName })
+                .Select(g => new TopProductDto
+                {
+                    ProductId = g.Key.ProductId,
+                    ProductName = g.Key.ProductName,
+                    QuantitySold = g.Sum(od => od.Quantity)
+                })
+                .OrderByDescending(x => x.QuantitySold)
+                .Take(5)
+                .ToList();
+
+            var dailyStats = orders
+                .GroupBy(o => o.OrderDate.Date)
+                .Select(g =>
+                {
+                    var orderIdsInDay = g.Select(o => o.OrderId).ToList();
+                    var revenue = g.Sum(o => o.FinalPrice);
+                    var import = importCosts
+                        .Where(i => orderIdsInDay.Contains(i.Key))
+                        .Sum(i => i.Value);
+                    var profit = revenue - import;
+                    var margin = import != 0 ? (profit / import) * 100 : 0;
+
+                    return new DailySalesStatDto
+                    {
+                        Date = g.Key,
+                        OrderCount = g.Count(),
+                        Revenue = revenue,
+                        Profit = profit,
+                        ProfitMarginPercent = margin
+                    };
+                })
+                .OrderBy(x => x.Date)
+                .ToList();
+
+            return new SalesDashboardStatsDto
+            {
+                TotalOrders = totalOrders,
+                TotalRevenue = totalRevenue,
+                TotalProfit = totalProfit,
+                ProfitMarginPercent = profitMarginPercent,
+                TopProducts = topProducts,
+                DailyStats = dailyStats
+            };
+        }
 
 
     }

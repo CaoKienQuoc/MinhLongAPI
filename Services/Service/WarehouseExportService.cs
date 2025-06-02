@@ -15,6 +15,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using static Org.BouncyCastle.Asn1.Cmp.Challenge;
+using BusinessObject.DTO.Dashboard;
 
 namespace Services.Service
 {
@@ -33,6 +34,7 @@ namespace Services.Service
         private readonly IHubContext<NotificationHub> _hub;
         private readonly IRequestProductRepository _requestProductRepository;
         private readonly IEmailService _emailService;
+        private readonly IWarehouseReceiptRepository _receiptRepo;
 
         public WarehouseExportService(
             ITemporaryWarehouseExportRepository tempExportRepo,
@@ -47,7 +49,8 @@ namespace Services.Service
             INotificationRepository notificationRepository,
             IBatchRepository batchRepository,
                 IRequestProductRepository requestProductRepository,
-                IEmailService emailService)
+                IEmailService emailService,
+                IWarehouseReceiptRepository receiptRepo)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -62,6 +65,7 @@ namespace Services.Service
             _batchRepository = batchRepository;
             _requestProductRepository = requestProductRepository;
             _emailService = emailService;
+            _receiptRepo = receiptRepo;
         }
 
         public DateTime GetVietnamTime()
@@ -78,8 +82,8 @@ namespace Services.Service
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
                 ?? throw new InvalidOperationException("Không tìm thấy RequestExport.");
 
-            if (requestExport.Status == "Requested" || requestExport.Status == "Approved")
-                throw new InvalidOperationException("Yêu cầu này đã được xử lý.");
+            if (requestExport.Status == "Requested" || requestExport.Status == "Approved" || requestExport.Status == "Canceled")
+                throw new InvalidOperationException("Yêu cầu này hiện tại không thực hiện được.");
 
             if (requestExport.RequestExportDetails == null || !requestExport.RequestExportDetails.Any())
                 throw new InvalidOperationException("Không có chi tiết sản phẩm trong yêu cầu.");
@@ -301,6 +305,10 @@ namespace Services.Service
             {
                 throw new InvalidOperationException("Số lượng tồn kho không đủ, vui lòng điều phối hoặc nhập hàng thêm.");
             }
+
+            if (receipt.Status == "Canceled")
+                throw new InvalidOperationException("Phiếu xuất kho đã bị huỷ không thể xuất kho.");
+
             var requestExport = await _requestExportRepo.GetRequestExportById(receipt.RequestExportId);
             // 2. Truy vết Order từ RequestExport
             var orderId = await _requestExportRepo.GetOrderIdByRequestExportIdAsync(receipt.RequestExportId);
@@ -404,6 +412,7 @@ namespace Services.Service
                     AgencyName = receipt.RequestExport?.Order?.RequestProduct?.AgencyAccount?.AgencyName ?? "",
                     Discount = receipt.Discount,
                     FinalPrice = receipt.FinalPrice,
+                    Reason = receipt.Reason,
                     Details = receipt.ExportWarehouseReceiptDetails.Select(detail =>
                     {
                         var requestedQuantity = requestExportDetails
@@ -453,6 +462,7 @@ namespace Services.Service
                 RequestExportId = receipt.RequestExportId,
                 OrderCode = receipt.RequestExport?.Order?.OrderCode ?? "",
                 AgencyName = receipt.RequestExport?.Order?.RequestProduct?.AgencyAccount?.AgencyName ?? "",
+                Reason = receipt.Reason,
                 Details = receipt.ExportWarehouseReceiptDetails.Select(detail =>
                 {
                     var requestedQuantity = requestExportDetails
@@ -658,10 +668,293 @@ namespace Services.Service
             return document.GeneratePdf();
         }
 
-        public async Task CancelRequestExportAsync(int requestExportId, Guid userId)
+        
+
+
+        private static IContainer CellStyle(IContainer container)
         {
+            return container
+                .PaddingVertical(5)
+                .PaddingHorizontal(2)
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten2);
+        }
+
+        public async Task<List<object>> GetMonthlyExportStatsAllAsync()
+        {
+            return await _exportReceiptRepo.GetMonthlyExportStatsAllAsync();
+        }
+
+        public async Task<ExportDashboardResponseDto> GetExportDashboardAsync(DateTime? fromDate, DateTime? toDate)
+        {
+            // Nếu không truyền ngày, lấy từ đầu tháng đến hôm nay (giờ VN)
+            var vietnamNow = GetVietnamTime();
+            var startDate = fromDate ?? new DateTime(vietnamNow.Year, vietnamNow.Month, 1);
+            var endDate = toDate ?? vietnamNow.Date;
+
+            var exports = await _exportReceiptRepo.GetAllAsync(); // hoặc repo method lấy tất cả phiếu xuất
+
+            var filteredExports = exports
+                .Where(e => e.DocumentDate.Date >= startDate && e.DocumentDate.Date <= endDate)
+                .ToList();
+
+            var groupedByDate = filteredExports
+                .GroupBy(e => e.DocumentDate.Date)
+                .Select(g => new DailyExportSummaryDto
+                {
+                    Date = g.Key,
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    TotalExports = g.Count(),
+                    TotalQuantity = g.Sum(x => x.TotalQuantity),
+                    TotalAmount = g.Sum(x => x.TotalAmount)
+                })
+                .OrderBy(d => d.Date)
+                .ToList();
+
+            return new ExportDashboardResponseDto
+            {
+                DailySummaries = groupedByDate,
+                TotalExports = filteredExports.Count,
+                TotalQuantity = filteredExports.Sum(x => x.TotalQuantity),
+                TotalAmount = filteredExports.Sum(x => x.TotalAmount)
+            };
+        }
+
+        public async Task<List<ProfitByMonthDto>> GetProfitStatsAsync(int? year = null, int? month = null)
+        {
+            var now = DateTime.Now;
+            int queryYear = year ?? now.Year;
+
+            // Nếu month null => tính cho cả năm, else tính cho tháng đó
+            if (month.HasValue)
+            {
+                // Lấy dữ liệu nhập trong tháng, năm đó
+                var importData = await _receiptRepo.GetAllByYearMonthAsync(queryYear, month.Value);
+                var exportData = await _exportReceiptRepo.GetAllByYearMonthAsync(queryYear, month.Value);
+
+                decimal importCost = importData.Sum(r => r.TotalPrice);
+                decimal exportRevenue = exportData.Sum(r => r.TotalAmount);
+
+                decimal profit = exportRevenue - importCost;
+                decimal profitPercent = importCost > 0 ? (profit / importCost) * 100 : 0;
+
+                return new List<ProfitByMonthDto>
+        {
+            new ProfitByMonthDto
+            {
+                Year = queryYear,
+                Month = month.Value,
+                TotalImportCost = importCost,
+                TotalExportRevenue = exportRevenue,
+                ProfitAmount = profit,
+                ProfitPercentage = profitPercent
+            }
+        };
+            }
+            else
+            {
+                // Tính cho toàn bộ năm, theo từng tháng
+                var importData = await _receiptRepo.GetAllByYearAsync(queryYear);
+                var exportData = await _exportReceiptRepo.GetAllByYearAsync(queryYear);
+
+                var profitStats = new List<ProfitByMonthDto>();
+
+                for (int m = 1; m <= 12; m++)
+                {
+                    decimal importCost = importData.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalPrice);
+                    decimal exportRevenue = exportData.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalAmount);
+
+                    decimal profit = exportRevenue - importCost;
+                    decimal profitPercent = importCost > 0 ? (profit / importCost) * 100 : 0;
+
+                    profitStats.Add(new ProfitByMonthDto
+                    {
+                        Year = queryYear,
+                        Month = m,
+                        TotalImportCost = importCost,
+                        TotalExportRevenue = exportRevenue,
+                        ProfitAmount = profit,
+                        ProfitPercentage = profitPercent
+                    });
+                }
+
+                return profitStats;
+            }
+        }
+
+        public async Task<ProfitByYearDto> GetAnnualProfitAsync(int? year = null)
+        {
+            var now = DateTime.Now;
+            int queryYear = year ?? now.Year;
+
+            var importData = await _receiptRepo.GetAllByYearAsync(queryYear);
+            var exportData = await _exportReceiptRepo.GetAllByYearAsync(queryYear);
+
+            decimal totalImportCost = importData.Sum(r => r.TotalPrice);
+            decimal totalExportRevenue = exportData.Sum(r => r.TotalAmount);
+
+            decimal profit = totalExportRevenue - totalImportCost;
+            decimal profitPercent = totalImportCost > 0 ? (profit / totalImportCost) * 100 : 0;
+
+            return new ProfitByYearDto
+            {
+                Year = queryYear,
+                TotalImportCost = totalImportCost,
+                TotalExportRevenue = totalExportRevenue,
+                ProfitAmount = profit,
+                ProfitPercentage = profitPercent
+            };
+        }
+
+        public async Task<ExportDashboardResponseDto> GetExportDashboardByUserWarehouseAsync(Guid userId, DateTime? fromDate, DateTime? toDate)
+        {
+            var vietnamNow = GetVietnamTime();
+            var startDate = fromDate ?? new DateTime(vietnamNow.Year, vietnamNow.Month, 1);
+            var endDate = toDate ?? vietnamNow.Date;
+
+            // ✅ Lấy toàn bộ phiếu xuất từ kho thuộc user này
+            var userExports = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+
+            // ✅ Lọc theo khoảng thời gian
+            var filteredExports = userExports
+                .Where(e => e.DocumentDate.Date >= startDate && e.DocumentDate.Date <= endDate)
+                .ToList();
+
+            var groupedByDate = filteredExports
+                .GroupBy(e => e.DocumentDate.Date)
+                .Select(g => new DailyExportSummaryDto
+                {
+                    Date = g.Key,
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    TotalExports = g.Count(),
+                    TotalQuantity = g.Sum(x => x.TotalQuantity),
+                    TotalAmount = g.Sum(x => x.TotalAmount)
+                })
+                .OrderBy(d => d.Date)
+                .ToList();
+
+            return new ExportDashboardResponseDto
+            {
+                DailySummaries = groupedByDate,
+                TotalExports = filteredExports.Count,
+                TotalQuantity = filteredExports.Sum(x => x.TotalQuantity),
+                TotalAmount = filteredExports.Sum(x => x.TotalAmount)
+            };
+        }
+
+        public async Task<List<TopExportedProductDto>> GetTopExportedProductsAsync(Guid userId, int top)
+        {
+            var receipts = await _exportReceiptRepo.GetAllByUserIdAsync(userId);
+
+            // Flatten all details
+            var allDetails = receipts
+                .SelectMany(r => r.ExportWarehouseReceiptDetails)
+                .GroupBy(d => d.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    TotalQuantity = g.Sum(x => x.Quantity)
+                })
+                .OrderByDescending(x => x.TotalQuantity)
+                .Take(top)
+                .ToList();
+
+            var productIds = allDetails.Select(x => x.ProductId).ToList();
+            var products = await _productRepository.GetListByIdsAsync(productIds);
+
+            var result = allDetails.Select(item =>
+            {
+                var product = products.FirstOrDefault(p => p.ProductId == item.ProductId);
+                return new TopExportedProductDto
+                {
+                    ProductId = item.ProductId,
+                    ProductCode = product?.ProductCode ?? $"SP-{item.ProductId}",
+                    ProductName = product?.ProductName ?? "Không rõ",
+                    TotalExportedQuantity = item.TotalQuantity
+                };
+            }).ToList();
+
+            return result;
+        }
+
+        public async Task<List<ProfitByMonthDto>> GetProfitByUserWarehouseAsync(Guid userId, int? year = null, int? month = null)
+        {
+            int queryYear = year ?? DateTime.Now.Year;
+
+            // Lấy warehouseId mà user sở hữu
+            var warehouseIds = (await _userRepository.GetWarehousesByUserIdAsync(userId))
+                                .Select(w => w.WarehouseId)
+                                .ToList();
+
+            if (!warehouseIds.Any())
+                return new List<ProfitByMonthDto>();
+
+            // Lấy phiếu nhập và xuất thuộc các kho này
+            var allImports = (await _receiptRepo.GetAllByYearAsync(queryYear))
+                                .Where(r => warehouseIds.Contains(r.WarehouseId))
+                                .ToList();
+
+            var allExports = (await _exportReceiptRepo.GetAllByYearAsync(queryYear))
+                                .Where(r => warehouseIds.Contains(r.WarehouseId))
+                                .ToList();
+
+            if (month.HasValue)
+            {
+                var importInMonth = allImports.Where(r => r.DocumentDate.Month == month.Value).ToList();
+                var exportInMonth = allExports.Where(r => r.DocumentDate.Month == month.Value).ToList();
+
+                decimal importCost = importInMonth.Sum(r => r.TotalPrice);
+                decimal exportRevenue = exportInMonth.Sum(r => r.TotalAmount);
+                decimal profit = exportRevenue - importCost;
+                decimal percent = importCost > 0 ? (profit / importCost) * 100 : 0;
+
+                return new List<ProfitByMonthDto>
+        {
+            new ProfitByMonthDto
+            {
+                Year = queryYear,
+                Month = month.Value,
+                TotalImportCost = importCost,
+                TotalExportRevenue = exportRevenue,
+                ProfitAmount = profit,
+                ProfitPercentage = percent
+            }
+        };
+            }
+            else
+            {
+                var result = new List<ProfitByMonthDto>();
+                for (int m = 1; m <= 12; m++)
+                {
+                    var importCost = allImports.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalPrice);
+                    var exportRevenue = allExports.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalAmount);
+                    var profit = exportRevenue - importCost;
+                    var percent = importCost > 0 ? (profit / importCost) * 100 : 0;
+
+                    result.Add(new ProfitByMonthDto
+                    {
+                        Year = queryYear,
+                        Month = m,
+                        TotalImportCost = importCost,
+                        TotalExportRevenue = exportRevenue,
+                        ProfitAmount = profit,
+                        ProfitPercentage = percent
+                    });
+                }
+
+                return result;
+            }
+        }
+
+
+
+        public async Task CancelRequestExportAsync(long warehouseRequestExportId, Guid? userId, string reason)
+        {
+            var warehouseRequestExport = await _exportReceiptRepo.GetExportWarehouseReceiptByIdAsync(warehouseRequestExportId);
             // 1. Lấy RequestExport
-            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(requestExportId)
+            var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(warehouseRequestExport.RequestExportId)
                 ?? throw new Exception("Không tìm thấy đơn xuất kho.");
 
             // 2. Lấy Order liên quan
@@ -674,13 +967,20 @@ namespace Services.Service
 
             // 4. Set status = "Canceled"
             requestExport.Status = "Canceled";
+            requestExport.Reason = reason; // Lưu lý do hủy
             order.Status = "Canceled";
+            order.Reason = reason; // Lưu lý do hủy
             requestProduct.RequestStatus = "Canceled";
+            warehouseRequestExport.Status = "Canceled";
+            warehouseRequestExport.Reason = reason; // Lưu lý do hủy
+
 
             // 5. Update
             await _requestExportRepository.UpdateExportAsync(requestExport);
             await _orderRepo.UpdateOrderAsync(order);
             await _requestProductRepository.UpdateRequestAsync(requestProduct);
+            await _exportReceiptRepo.UpdateReceiptAsync(warehouseRequestExport);
+            await _exportReceiptRepo.SaveChangesAsync();
 
             var agencyId = requestProduct.AgencyId;
             // 3. Lấy AgencyAccount (hoặc bảng đại lý) từ AgencyId
@@ -701,23 +1001,66 @@ namespace Services.Service
                 order.OrderCode,
                 order.FinalPrice
             );
+
+            var salesUserId = order?.RequestProduct?.AgencyAccount?.ManagedByEmployee?.User?.UserId;
+
+            if (salesUserId != null)
+            {
+                var agencyName = order?.RequestProduct?.AgencyAccount?.AgencyName;
+                var notifyMessage = $"❌ Phiếu xuất cho đơn hàng {order.OrderCode} của {agencyName} đã bị huỷ. Vui lòng liên hệ sales để biết thêm chi tiết.";
+
+                // Gửi SignalR đến đại lý
+                await _hub.Clients.User(salesUserId.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "huyguiSales",
+                    message = notifyMessage,
+                    payload = requestExport.RequestExportId
+                });
+
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                // Ghi vào bảng thông báo
+                var notification = new Notification
+                {
+                    UserId = salesUserId.Value,
+                    Title = "Phiếu xuất kho đơn hàng bị hủy",
+                    Message = notifyMessage,
+                    Url = $"/sales/export", // Cập nhật URL nếu cần
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                
+            }
+
+            if (agencyUserId != Guid.Empty)
+            {
+                string agencyMessage = $"❌ Phiếu xuất cho đơn hàng {order.OrderCode} của bạn đã bị huỷ. Vui lòng liên hệ sales để biết thêm chi tiết.";
+
+                await _hub.Clients.User(agencyUserId.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    title = "huyguiAgency",
+                    message = agencyMessage,
+                    payload = requestExport.RequestExportId
+                });
+
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+
+                var agencyNotification = new Notification
+                {
+                    UserId = agencyUserId,
+                    Title = "Phiếu xuất kho đơn hàng bị hủy",
+                    Message = agencyMessage,
+                    Url = $"/agency/orders",
+                    CreatedAt = vietnamNow
+                };
+
+                await _notificationRepository.AddAsync(agencyNotification);
+            }
+            await _notificationRepository.SaveChangesAsync();
         }
-
-
-        private static IContainer CellStyle(IContainer container)
-        {
-            return container
-                .PaddingVertical(5)
-                .PaddingHorizontal(2)
-                .BorderBottom(1)
-                .BorderColor(Colors.Grey.Lighten2);
-        }
-
-        public async Task<List<object>> GetMonthlyExportStatsAllAsync()
-        {
-            return await _exportReceiptRepo.GetMonthlyExportStatsAllAsync();
-        }
-
 
     }
 

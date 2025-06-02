@@ -513,9 +513,37 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(x => x.AgencyId == agencyId);
         }
 
+        public async Task<List<User>> GetUsersWithEmployeeAsync()
+        {
+            return await _context.Users
+                .Include(u => u.Employee)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountRegisterAccountsByStatusAsync(string status)
+        {
+            return await _context.RegisterAccounts
+                .Where(r => r.AccountRegisterStatus == status)
+                .CountAsync();
+        }
+
+        public async Task<int> CountTotalRegisterAccountsAsync()
+        {
+            return await _context.RegisterAccounts.CountAsync();
+        }
+
+        public async Task<List<Warehouse>> GetWarehousesByUserIdAsync(Guid userId)
+        {
+            return await _context.Warehouses
+                .Where(w => w.UserId == userId)
+                .ToListAsync();
+        }
+
+
+
     }
 
-    
+
 
 
     public static class PasswordHelper
