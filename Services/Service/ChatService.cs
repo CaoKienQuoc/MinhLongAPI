@@ -287,6 +287,12 @@ namespace Services.Service
         }
 
 
+        public async Task<int> CountUnreadMessagesAsync(Guid userId)
+        {
+            return await _msgRepo.CountUnreadMessagesAsync(userId);
+        }
+
+
         public Task<ChatMessage> SaveMessageAsync(ChatMessage message) =>
             _msgRepo.AddAsync(message);
     }

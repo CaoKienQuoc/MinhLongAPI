@@ -45,6 +45,25 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<int> CountUnreadMessagesAsync(Guid userId)
+        {
+            // Lấy danh sách các ChatRoomId mà user là thành viên
+            var joinedRoomIds = await _context.ChatRoomMembers
+                .Where(m => m.UserId == userId)
+                .Select(m => m.ChatRoomId)
+                .ToListAsync();
 
+            // Lấy các SenderId duy nhất có tin nhắn chưa đọc gửi cho user
+            var distinctSenders = await _context.ChatMessages
+                .Where(m => m.ChatRoomId.HasValue &&
+                            joinedRoomIds.Contains(m.ChatRoomId.Value) &&
+                            m.SenderId != userId &&
+                            m.IsRead == false)
+                .Select(m => m.SenderId)
+                .Distinct()
+                .CountAsync();
+
+            return distinctSenders;
+        }
     }
 }
