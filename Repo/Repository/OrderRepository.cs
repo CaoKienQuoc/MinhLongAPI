@@ -20,12 +20,19 @@ namespace Repo.Repository
             _context = context;
         }
 
-        /*public async Task<IEnumerable<Order>> GetAllOrdersAsync()
+        public async Task<List<RequestExport>> GetExportsManagedByEmployeeAsync(long employeeId)
         {
-            return await _context.Orders.
-                Include(o => o.OrderDetails).
-                ToListAsync();
-        }*/
+            return await _context.RequestExports
+                .Include(re => re.RequestExportDetails)
+                    .ThenInclude(red => red.Product)
+                .Include(re => re.Order)
+                    .ThenInclude(o => o.RequestProduct)
+                        .ThenInclude(rp => rp.AgencyAccount)
+                            .ThenInclude(aa => aa.ManagedByEmployee)
+                .Where(re => re.Order.RequestProduct.AgencyAccount.ManagedByEmployeeId == employeeId)
+                .ToListAsync();
+        }
+
 
         public async Task<decimal> GetAgencyDiscountAsync(long agencyId)
         {
@@ -204,7 +211,7 @@ namespace Repo.Repository
                     .ThenInclude(rp => rp.AgencyAccount)
                         .ThenInclude(aa => aa.ManagedByEmployee)
                 .Where(o => o.RequestProduct.AgencyAccount.ManagedByEmployee.User.UserId == salesUserId
-                            && (o.Status == "Paid" || o.Status == "WaitingDelivery"))
+                            && (o.Status == "Paid" || o.Status == "WaitingDelivery" || o.Status == "Exported"))
                 .CountAsync();
         }
 

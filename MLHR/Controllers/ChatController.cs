@@ -63,6 +63,20 @@ namespace MLHR.Controllers
             return Ok(rooms);
         }
 
+        [HttpGet("chat/unread-count")]
+        public async Task<IActionResult> GetUnreadMessageCount()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            if (userIdClaim == null)
+                return Unauthorized("UserId is missing in token");
+
+            Guid userId = Guid.Parse(userIdClaim.Value);
+
+            var count = await _chatService.CountUnreadMessagesAsync(userId);
+            return Ok(new { UnreadCount = count });
+        }
+
+
 
         // GET /api/chat/rooms/{roomId}
         [HttpGet("rooms/{roomId:guid}")]

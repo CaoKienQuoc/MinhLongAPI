@@ -21,5 +21,7 @@ namespace Services.IService
 
         Task<bool> IsUserInRoomAsync(Guid roomId, Guid userId);
         Task MarkMessagesAsReadAsync(Guid chatRoomId, Guid userId);
+
+        Task<int> CountUnreadMessagesAsync(Guid userId);
     }
 }

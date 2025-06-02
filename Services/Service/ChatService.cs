@@ -34,45 +34,7 @@ namespace Services.Service
             return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
         }
 
-        /*public async Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
-        {
-            // 1) Kiểm tra room đã tồn tại chưa (ví dụ cặp 2 thành viên)
-            //    Giả sử bạn chỉ hỗ trợ 1-1 chat, bạn có thể tìm room có đúng 2 members đó
-            var existing = await _roomRepo.FindByMembersAsync(memberIds);
-            if (existing != null)
-                return existing;
-
-            // 2) Nếu chưa có, tạo mới
-            var room = new ChatRoom { RoomName = roomName };
-            var creatorId = memberIds.First();
-            room.Members = memberIds.Select(uid => new ChatRoomMember
-            {
-                UserId = uid,
-                ChatRoom = room,
-                Role = uid == creatorId ? "Admin" : "Member",
-                JoinedAt = DateTime.UtcNow
-            }).ToList();
-
-            *//*return await _roomRepo.AddAsync(room);*//*
-
-            // 3. Lưu phòng vào database
-            var createdRoom = await _roomRepo.AddAsync(room);
-
-            // 4. Gửi tin nhắn chào mừng từ hệ thống
-            var welcomeMessage = new ChatMessage
-            {
-                ChatRoomId = createdRoom.ChatRoomId,
-                SenderId = new Guid("00000000-0000-0000-0000-000000000001"), // ID của hệ thống
-                MessageText = "Cảm ơn bạn đã lựa chọn mua sắm ở Minh Long, nếu có thắc mắc cần giải đáp gì hãy nhắn tin cho chúng tôi, đội ngũ nhân viên sẽ giúp đỡ bạn!",
-                Timestamp = DateTime.UtcNow
-            };
-
-            await _msgRepo.AddAsync(welcomeMessage);
-
-            return createdRoom;
-
-        }*/
-
+        
         public async Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
         {
             var existing = await _roomRepo.FindByMembersAsync(memberIds);
@@ -116,7 +78,7 @@ namespace Services.Service
 
             foreach (var memberId in memberIds)
             {
-                await _hub.Clients.User(memberId.ToString()).SendAsync("ReceiveMessage", payload);
+                await _hub.Clients.User(memberId.ToString()).SendAsync("ReceiveMessageChatRoom", payload);
             }
 
             // Gửi Notification cho creator (nếu muốn giữ logic thông báo ngoài luồng SignalR)
@@ -198,13 +160,14 @@ namespace Services.Service
                                ?? m.User.AgencyAccount?.AgencyName
                                ?? m.User.Username
                     }).ToList(),
-
+                    hasUnreadMessages = lastMessage.IsRead,
                     LastMessage = lastMessage?.MessageText ?? "Chưa có tin nhắn nào",
                     LastTimestamp = lastMessage?.Timestamp ?? DateTime.MinValue,
                     LastUserId = (Guid)(lastMessage?.SenderId ?? Guid.Empty),
                     LastUserName = lastMessage?.Sender?.Employee?.FullName
                                    ?? lastMessage?.Sender?.AgencyAccount?.AgencyName
-                                   ?? lastMessage?.Sender?.Username
+                                   
+                                   
                 };
             })
             .OrderByDescending(r => r.LastTimestamp) // Ưu tiên phòng có hoạt động gần nhất
@@ -284,6 +247,17 @@ namespace Services.Service
             }
 
             await _msgRepo.SaveChangesAsync();
+
+            await _hub
+            .Clients
+            .User(userId.ToString())
+            .SendAsync("MessagesRead", new { ChatRoomId = chatRoomId });
+        }
+
+
+        public async Task<int> CountUnreadMessagesAsync(Guid userId)
+        {
+            return await _msgRepo.CountUnreadMessagesAsync(userId);
         }
 
 
