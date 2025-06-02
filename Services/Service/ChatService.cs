@@ -116,7 +116,7 @@ namespace Services.Service
 
             foreach (var memberId in memberIds)
             {
-                await _hub.Clients.User(memberId.ToString()).SendAsync("ReceiveMessage", payload);
+                await _hub.Clients.User(memberId.ToString()).SendAsync("ReceiveMessageChatRoom", payload);
             }
 
             // Gửi Notification cho creator (nếu muốn giữ logic thông báo ngoài luồng SignalR)
