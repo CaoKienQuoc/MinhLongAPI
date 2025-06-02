@@ -161,7 +161,17 @@ namespace MLHR.Controllers
 
         [HttpGet("dashboard/order-status-count")]
         public async Task<IActionResult> GetOrderStatusCounts()
-     => Ok(await _orderService.GetOrderStatusCountsAsync());
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            if (userIdClaim == null)
+                return Unauthorized("Missing UserId in token");
+
+            Guid userId = Guid.Parse(userIdClaim.Value);
+
+            var result = await _orderService.GetOrderStatusCountsAsync(userId);
+            return Ok(result);
+        }
+      
 
         [HttpGet("dashboard/daily-revenue")]
         public async Task<IActionResult> GetDailyRevenue()

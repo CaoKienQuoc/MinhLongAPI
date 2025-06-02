@@ -204,7 +204,7 @@ namespace Services.Service
                     LastUserId = (Guid)(lastMessage?.SenderId ?? Guid.Empty),
                     LastUserName = lastMessage?.Sender?.Employee?.FullName
                                    ?? lastMessage?.Sender?.AgencyAccount?.AgencyName
-                                   ?? lastMessage?.Sender?.Username
+                                   
                 };
             })
             .OrderByDescending(r => r.LastTimestamp) // Ưu tiên phòng có hoạt động gần nhất

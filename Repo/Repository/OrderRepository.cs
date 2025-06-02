@@ -20,12 +20,19 @@ namespace Repo.Repository
             _context = context;
         }
 
-        /*public async Task<IEnumerable<Order>> GetAllOrdersAsync()
+        public async Task<List<RequestExport>> GetExportsManagedByEmployeeAsync(long employeeId)
         {
-            return await _context.Orders.
-                Include(o => o.OrderDetails).
-                ToListAsync();
-        }*/
+            return await _context.RequestExports
+                .Include(re => re.RequestExportDetails)
+                    .ThenInclude(red => red.Product)
+                .Include(re => re.Order)
+                    .ThenInclude(o => o.RequestProduct)
+                        .ThenInclude(rp => rp.AgencyAccount)
+                            .ThenInclude(aa => aa.ManagedByEmployee)
+                .Where(re => re.Order.RequestProduct.AgencyAccount.ManagedByEmployeeId == employeeId)
+                .ToListAsync();
+        }
+
 
         public async Task<decimal> GetAgencyDiscountAsync(long agencyId)
         {

@@ -13,7 +13,7 @@ namespace Repo.IRepository
     public interface IOrderRepository
     {
 
-        //Task<IEnumerable<Order>> GetAllOrdersAsync();
+        Task<List<RequestExport>> GetExportsManagedByEmployeeAsync(long employeeId);
         Task<decimal> GetAgencyDiscountAsync(long agencyId);
         Task<List<Order>> GetAllOrdersAsync();
         Task AddOrderAsync(Order order);

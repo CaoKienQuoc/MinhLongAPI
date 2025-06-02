@@ -32,7 +32,7 @@ namespace Services.IService
         Task<Order> GetOrderByOrderCodeAsync(string orderCode);
 
 
-        Task<List<object>> GetOrderStatusCountsAsync();
+        Task<List<object>> GetOrderStatusCountsAsync(Guid userId);
         Task<List<object>> GetDailyRevenueAsync();
         Task<List<object>> GetTopSellingProductsAsync();
         Task<decimal> GetTotalRevenueAsync();

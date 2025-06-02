@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -449,14 +450,25 @@ namespace Services.Service
         }
 
 
-        public async Task<List<object>> GetOrderStatusCountsAsync()
+        public async Task<List<object>> GetOrderStatusCountsAsync(Guid userId)
         {
-            var orders = await _orderRepository.GetAllOrdersAsync();
-            return orders.GroupBy(o => o.Status)
+            // Truy vấn để lấy employeeId từ UserId
+            var employee = await _userRepository.GetEmployeeByUserIdAsync(userId);
+            if (employee == null)
+                throw new Exception("Employee not found for given UserId");
+
+            long employeeId = employee.EmployeeId;
+
+            // Lấy danh sách RequestExport theo employee quản lý agency
+            var exports = await _orderRepository.GetExportsManagedByEmployeeAsync(employeeId);
+
+            return exports
+                .GroupBy(o => o.Status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .Cast<object>()
                 .ToList();
         }
+
 
         public async Task<List<object>> GetDailyRevenueAsync()
         {
