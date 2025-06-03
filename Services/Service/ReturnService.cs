@@ -411,6 +411,31 @@ namespace Services.Service
                 await _notificationRepository.SaveChangesAsync();
             }
         }
+       
+            public async Task WarehouseRejectReturnRequestAsync(long ReturnWarehouseReceiptId, Guid userId, string rejectReason)
+        {
+            if (!await _employeeRepo.ExistsAsync(userId))
+                throw new UnauthorizedAccessException("Bạn không phải Sale.");
+
+            var requestWarehouse = await _returnRepo.GetReturnWarehouseReceiptWithDetailsAsync(ReturnWarehouseReceiptId);
+
+            var requestReturn = await _returnRepo.GetByIdWithDetailsAsync(requestWarehouse.ReturnRequestId);
+            if (requestWarehouse == null)
+                throw new Exception("Không tìm thấy yêu cầu trả hàng.");
+
+            if (!string.Equals(requestWarehouse.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Yêu cầu đã được xử lý trước đó!");
+
+            requestWarehouse.Status = "Rejected";
+            requestWarehouse.Reason = rejectReason;
+            requestReturn.Status = "Rejected"; // Cập nhật trạng thái yêu cầu trả hàng
+            requestReturn.RejectedAt = DateTime.Now;
+            requestReturn.RejectedBy = userId; // Ghi lại người từ chối
+
+            await _returnRepo.UpdateAsync(requestReturn);
+            await _returnRepo.UpdateReturnWarehouseAsync(requestWarehouse);
+            await _returnRepo.SaveChangesAsync();
+        }
 
         public async Task RejectReturnRequestAsync(Guid returnRequestId, Guid userId, string rejectReason)
         {

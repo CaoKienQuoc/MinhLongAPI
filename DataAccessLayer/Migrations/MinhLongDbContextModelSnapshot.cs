@@ -1634,6 +1634,9 @@ namespace DataAccessLayer.Migrations
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ReceiptCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

@@ -43,6 +43,8 @@ namespace BusinessObject.Models
 
         //public string? Note { get; set; }
         public string Status { get; set; } // Trạng thái phiếu nhập (Pending, Completed, Cancelled)
+
+        public string? Reason { get; set; }       // Lý do từ chối
         public ICollection<ReturnWarehouseReceiptDetail> Details { get; set; }
     }
 

@@ -31,6 +31,7 @@ namespace Repo.IRepository
         Task<string> GenerateWarehouseReturnCodeAsync();
         Task<List<Guid>> GetDetailIdsByReturnRequestIdAsync(Guid returnRequestId);
         Task UpdateAsync(ReturnRequest request);
+        Task UpdateReturnWarehouseAsync(ReturnWarehouseReceipt requestWarehouse);
         Task<ReturnRequest> GetByOrderAndProductAsync(Guid orderId, long productId);
         Task SaveChangesAsync();
         Task AddDetailsAsync(IEnumerable<ReturnRequestDetail> details);
@@ -38,6 +39,8 @@ namespace Repo.IRepository
         Task<ReturnRequest?> GetLatestReturnRequestByOrderIdAsync(Guid orderId);
 
         Task<ReturnRequest> UpdateReturnAsync(ReturnRequest request);
+
+        Task<ReturnWarehouseReceipt> GetReturnWarehouseReceiptWithDetailsAsync(long id);
     }
 
 }

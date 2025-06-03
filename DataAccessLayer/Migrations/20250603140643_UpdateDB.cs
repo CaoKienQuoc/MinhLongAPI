@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class DBMinhLong : Migration
+    public partial class UpdateDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -867,7 +867,8 @@ namespace DataAccessLayer.Migrations
                     TotalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     FinalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    RequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1030,7 +1031,8 @@ namespace DataAccessLayer.Migrations
                     OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Discount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    FinalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    FinalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1261,7 +1263,8 @@ namespace DataAccessLayer.Migrations
                     RequestExportId = table.Column<int>(type: "int", nullable: false),
                     AgencyName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     OrderCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    WarehouseTransferRequestId = table.Column<long>(type: "bigint", nullable: true)
+                    WarehouseTransferRequestId = table.Column<long>(type: "bigint", nullable: true),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1302,6 +1305,7 @@ namespace DataAccessLayer.Migrations
                     WarehouseId = table.Column<long>(type: "bigint", nullable: false),
                     Discount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     FinalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ProductId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
@@ -1425,7 +1429,8 @@ namespace DataAccessLayer.Migrations
                     ApprovedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ReturnRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     WarehouseId = table.Column<long>(type: "bigint", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {

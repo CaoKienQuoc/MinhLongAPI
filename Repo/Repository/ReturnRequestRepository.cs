@@ -52,6 +52,16 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
         }
 
+        public async Task<ReturnWarehouseReceipt> GetReturnWarehouseReceiptWithDetailsAsync(long id)
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Include(rwr => rwr.Details) // Bao gồm ReturnWarehouseReceiptDetail
+                .FirstOrDefaultAsync(rwr => rwr.ReturnWarehouseReceiptId == id);
+        }
+
+
+
+
         public async Task<List<ReturnRequestImage>> AddRangeAsync(List<ReturnRequestImage> images)
         {
             _context.ReturnRequestImages.AddRange(images);
@@ -184,7 +194,12 @@ namespace Repo.Repository
             _context.ReturnRequests.Update(request);
             await Task.CompletedTask;
         }
-
+        
+        public async Task UpdateReturnWarehouseAsync(ReturnWarehouseReceipt requestWarehouse)
+        {
+            _context.ReturnWarehouseReceipts.Update(requestWarehouse);
+            await Task.CompletedTask;
+        }
         public async Task SaveChangesAsync()
         {
             try

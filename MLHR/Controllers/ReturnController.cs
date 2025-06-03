@@ -100,13 +100,13 @@ namespace MLHR.Controllers
             }
         }
 
-        [HttpPost("reject-Return-Request/{returnRequestId}")]
-        public async Task<IActionResult> Reject(Guid returnRequestId, [FromBody] RejectReturnRequestDto dto)
+        [HttpPost("reject-WarehouseReturn-Request/{returnWarehouseReceiptId}")]
+        public async Task<IActionResult> Reject(long ReturnWarehouseReceiptId, [FromBody] WarehouseReject dto)
         {
             try
             {
                 var userId = GetCurrentUserId();
-                await _returnService.RejectReturnRequestAsync(returnRequestId, userId, dto.Reason);
+                await _returnService.WarehouseRejectReturnRequestAsync(ReturnWarehouseReceiptId, userId, dto.Reason);
                 return Ok(new { message = "Từ chối yêu cầu trả hàng thành công." });
             }
             catch (UnauthorizedAccessException ex)
@@ -118,6 +118,8 @@ namespace MLHR.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
 
 
 
