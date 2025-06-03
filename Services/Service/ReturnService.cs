@@ -28,8 +28,11 @@ namespace Services.Service
         private readonly IReturnWarehouseReceiptRepository _returnWarehouseReceiptRepo;
         private readonly IUserRepository _employeeRepo;
         private readonly INotificationRepository _notificationRepository;
-
+        private readonly IEmailService _emailService;
         private readonly IHubContext<NotificationHub> _hub;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IRequestProductRepository _requestProductRepository;
+        private readonly IUserRepository _userRepository;
 
         public ReturnService(
             IReturnRequestRepository returnRepo,
@@ -42,7 +45,11 @@ namespace Services.Service
             IReturnWarehouseReceiptRepository returnWarehouseReceiptRepo,
             IUserRepository employeeRepo,
             IHubContext<NotificationHub> hub,
-            INotificationRepository notificationRepository)
+            INotificationRepository notificationRepository,
+            IEmailService emailService,
+            IOrderRepository orderRepository,
+            IRequestProductRepository requestProductRepository,
+            IUserRepository userRepository)
         {
             _returnRepo = returnRepo;
             _damagedRepo = damagedRepo;
@@ -55,6 +62,10 @@ namespace Services.Service
             _employeeRepo = employeeRepo;
             _hub = hub;
             _notificationRepository = notificationRepository;
+            _emailService = emailService;
+            _orderRepository = orderRepository;
+            _requestProductRepository = requestProductRepository;
+            _userRepository = userRepository;
         }
 
         private string NormalizeString(string input)
@@ -426,6 +437,14 @@ namespace Services.Service
             if (!string.Equals(requestWarehouse.Status, "Pending", StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Yêu cầu đã được xử lý trước đó!");
 
+            // 2. Lấy Order liên quan
+            var order = await _orderRepository.GetOrderByIdAsync(requestReturn.OrderId)
+                ?? throw new Exception("Không tìm thấy đơn đặt hàng liên quan.");
+
+            // 3. Lấy RequestProduct liên quan
+            var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
+                ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
+
             requestWarehouse.Status = "Rejected";
             requestWarehouse.Reason = rejectReason;
             requestReturn.Status = "Rejected"; // Cập nhật trạng thái yêu cầu trả hàng
@@ -435,6 +454,24 @@ namespace Services.Service
             await _returnRepo.UpdateAsync(requestReturn);
             await _returnRepo.UpdateReturnWarehouseAsync(requestWarehouse);
             await _returnRepo.SaveChangesAsync();
+
+            var agencyId = requestProduct.AgencyId;
+            // 3. Lấy AgencyAccount (hoặc bảng đại lý) từ AgencyId
+            var agencyAccount = await _userRepository.GetAgencyAccountByIdAsync(agencyId)
+                ?? throw new Exception("Không tìm thấy tài khoản đại lý.");
+
+            var agencyUserId = agencyAccount.UserId; // Đổi tên biến
+            var customerUser = await _userRepository.GetByIdAsync(agencyUserId)
+                ?? throw new Exception("Không tìm thấy người dùng của đại lý.");
+            // 6. Lấy email và tên
+            var customerEmail = customerUser.Email;
+            var customerName = agencyAccount.AgencyName; // hoặc user.FullName nếu có
+            // ==== ĐẶT LỆNH GỬI EMAIL Ở ĐÂY ====
+            await _emailService.SendReturnOrderCancelNotificationEmailAsync(
+                customerEmail,
+                customerName,
+                requestReturn.ReturnRequestCode
+            );
         }
 
         public async Task RejectReturnRequestAsync(Guid returnRequestId, Guid userId, string rejectReason)
@@ -449,6 +486,14 @@ namespace Services.Service
             if (!string.Equals(request.Status, "Pending", StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Yêu cầu đã được xử lý trước đó!");
 
+            // 2. Lấy Order liên quan
+            var order = await _orderRepository.GetOrderByIdAsync(request.OrderId)
+                ?? throw new Exception("Không tìm thấy đơn đặt hàng liên quan.");
+
+            // 3. Lấy RequestProduct liên quan
+            var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
+                ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
+
             request.Status = "Rejected";
             request.RejectedAt = DateTime.UtcNow;
             request.RejectedBy = userId;
@@ -456,6 +501,24 @@ namespace Services.Service
 
             await _returnRepo.UpdateAsync(request);
             await _returnRepo.SaveChangesAsync();
+
+            var agencyId = requestProduct.AgencyId;
+            // 3. Lấy AgencyAccount (hoặc bảng đại lý) từ AgencyId
+            var agencyAccount = await _userRepository.GetAgencyAccountByIdAsync(agencyId)
+                ?? throw new Exception("Không tìm thấy tài khoản đại lý.");
+
+            var agencyUserId = agencyAccount.UserId; // Đổi tên biến
+            var customerUser = await _userRepository.GetByIdAsync(agencyUserId)
+                ?? throw new Exception("Không tìm thấy người dùng của đại lý.");
+            // 6. Lấy email và tên
+            var customerEmail = customerUser.Email;
+            var customerName = agencyAccount.AgencyName; // hoặc user.FullName nếu có
+            // ==== ĐẶT LỆNH GỬI EMAIL Ở ĐÂY ====
+            await _emailService.SendReturnOrderCancelNotificationEmailAsync(
+                customerEmail,
+                customerName,
+                request.ReturnRequestCode
+            );
         }
 
 
@@ -731,7 +794,7 @@ namespace Services.Service
 
             var result = receipts.Select(r => new ReturnWarehouseReceiptDto
             {
-                ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
+                /*ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
                 ReturnRequestId = r.ReturnRequestId,
                 ReturnRequestCode = r.ReturnRequest?.ReturnRequestCode, // 🔥 dùng ? để tránh lỗi nếu ReturnRequest null
                 ReceiptCode = r.ReceiptCode,
@@ -754,7 +817,39 @@ namespace Services.Service
                         BatchCode = d.Batch.BatchCode,
                         Reason = d.Reason,
                     };
-                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()
+                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>()*/
+
+                ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
+                ReceiptCode = r.ReceiptCode,
+                ReceiptDate = r.ReceiptDate,
+                CreatedAt = r.CreatedAt,
+                CreatedByUserName = r.ReturnRequest.Order.RequestProduct.AgencyAccount.User.Username,
+                ReturnRequestId = r.ReturnRequestId,
+                ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
+                WarehouseId = r.WarehouseId,
+                reason = r.Reason,
+                Status = r.Status,
+                Details = r.Details?.Select(d =>
+                {
+                    // 🔗 Kết nối từ ReturnRequestDetail để lấy hình ảnh
+                    var relatedRequestDetail = r.ReturnRequest.Details
+                        .FirstOrDefault(reqDetail => reqDetail.ProductId == d.ProductId);
+
+                    return new ReturnWarehouseReceiptDetailDto
+                    {
+                        ReturnWarehouseReceiptDetailId = d.ReturnWarehouseReceiptDetailId,
+                        ProductName = d.Product.ProductName,
+                        Quantity = d.Quantity,
+                        BatchId = d.BatchId,
+                        BatchCode = d.Batch.BatchCode,
+                        Reason = d.Reason
+                    };
+                }).ToList() ?? new List<ReturnWarehouseReceiptDetailDto>(),
+                Images = r.ReturnRequest.Images?.Select(img => new ReturnRequestImageDto
+                {
+                    ReturnRequestImageId = img.ReturnRequestImageId,
+                    ImageUrl = img.ImageUrl
+                }).ToList() ?? new List<ReturnRequestImageDto>()
             }).ToList();
 
             return result;
