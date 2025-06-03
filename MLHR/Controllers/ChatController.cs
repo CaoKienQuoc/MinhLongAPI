@@ -2,6 +2,8 @@
 using BusinessObject.DTO.Chat;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using MLHR.Hubs;
 using Services.IService;
 using Services.Service;
 using System.Security.Claims;
@@ -24,24 +26,32 @@ namespace MLHR.Controllers
         }
 
         [HttpPost("rooms")]
-        public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto dto)
+        public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto dto, [FromServices] IHubContext<ChatHub> hub)
         {
             if (dto == null || dto.MemberIds == null || !dto.MemberIds.Any())
                 return BadRequest(new { error = "Bạn Chưa Đăng Nhập!" });
 
             try
             {
-                var room = await _chatService.CreateRoomAsync(dto.RoomName, dto.MemberIds);
+                var (room, welcomePayload, memberIds) = await _chatService.CreateRoomAsync(dto.RoomName, dto.MemberIds);
+
+                if (welcomePayload != null && memberIds != null)
+                {
+                    foreach (var memberId in memberIds)
+                    {
+                        await hub.Clients.User(memberId.ToString()).SendAsync("ReceiveMessageChatRoom", welcomePayload);
+                    }
+                }
+
                 return CreatedAtAction(nameof(GetRoom), new { roomId = room.ChatRoomId }, room);
             }
             catch (Exception ex)
             {
-                // Ghi log stack trace
                 _logger.LogError(ex, "CreateRoom failed for RoomName={RoomName}", dto.RoomName);
-                // Trả về JSON lỗi
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
         private Guid? GetLoggedInUserId()
         {
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);

@@ -34,12 +34,12 @@ namespace Services.Service
             return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
         }
 
-        
-        public async Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
+
+        public async Task<(ChatRoom room, object welcomePayload, IEnumerable<Guid> memberIds)> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds)
         {
             var existing = await _roomRepo.FindByMembersAsync(memberIds);
             if (existing != null)
-                return existing;
+                return (existing, null, memberIds);
 
             var room = new ChatRoom { RoomName = roomName };
             var creatorId = memberIds.First();
@@ -65,7 +65,7 @@ namespace Services.Service
             await _msgRepo.AddAsync(welcomeMessage);
             await _msgRepo.SaveChangesAsync();
 
-            // Gửi SignalR đến tất cả thành viên trong phòng với payload thật
+            // CHỈ chuẩn bị payload gửi về Controller để Controller bắn SignalR
             var payload = new
             {
                 ChatMessageId = welcomeMessage.ChatMessageId,
@@ -76,24 +76,9 @@ namespace Services.Service
                 Images = new List<string>() // nếu sau này có ảnh thì truyền
             };
 
-            foreach (var memberId in memberIds)
-            {
-                await _hub.Clients.User(memberId.ToString()).SendAsync("ReceiveMessageChatRoom", payload);
-            }
-
-            // Gửi Notification cho creator (nếu muốn giữ logic thông báo ngoài luồng SignalR)
-            await _notificationRepository.AddAsync(new Notification
-            {
-                UserId = creatorId,
-                Title = "Tin nhắn mới",
-                Message = "Bạn vừa nhận được tin nhắn mới.",
-                Url = $"/chat/room/{createdRoom.ChatRoomId}",
-                CreatedAt = GetVietnamTime()
-            });
-            await _notificationRepository.SaveChangesAsync();
-
-            return createdRoom;
+            return (createdRoom, payload, memberIds);
         }
+
 
 
 

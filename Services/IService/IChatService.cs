@@ -11,7 +11,7 @@ namespace Services.IService
 {
     public interface IChatService
     {
-        Task<ChatRoom> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds);
+        Task<(ChatRoom room, object welcomePayload, IEnumerable<Guid> memberIds)> CreateRoomAsync(Guid? roomName, IEnumerable<Guid> memberIds);
         Task<IEnumerable<ChatRoomDto>> GetUserRoomsAsync(Guid userId);
         // IChatService.cs
         Task<ChatRoomDto> GetRoomByIdAsync(Guid roomId);
