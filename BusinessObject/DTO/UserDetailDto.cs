@@ -16,6 +16,7 @@ namespace BusinessObject.DTO
 
         public bool Status { get; set; }
         public bool VerifyEmail { get; set; }
+        public string Name { get; set; }
 
         // Nếu là AGENCY
         public string AgencyLevelName { get; set; }

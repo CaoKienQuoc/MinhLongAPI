@@ -148,7 +148,8 @@ namespace Services.Service
                 CreditLimit = null,
                 Position = null,
                 Department = null,
-                Contracts = new List<ContractDto>() // Luôn khởi tạo
+                Contracts = new List<ContractDto>(), // Luôn khởi tạo
+                Name = null
             };
 
             if (user.UserType?.ToUpper() == "AGENCY")
@@ -156,7 +157,7 @@ namespace Services.Service
                 var agency = await _userRepository.GetAgencyAccountByUserIdAsync(userId);
                 if (agency != null)
                 {
-
+                    dto.Name = agency.AgencyName; // ✅ Gán tên Agency
                     dto.AgencyScore = agency.AgencyScore;
                     // Nếu đại lý có cấp độ
                     var level = await _agencyAccountLevelRepository.GetLatestLevelByAgencyIdAsync(agency.AgencyId);
@@ -187,6 +188,7 @@ namespace Services.Service
                 var employee = await _userRepository.GetByEmployeeUserIdAsync(userId);
                 if (employee != null)
                 {
+                    dto.Name = employee.FullName; // ✅ Gán tên nhân viên
                     dto.Position = employee.Position;
                     dto.Department = employee.Department;
                 }

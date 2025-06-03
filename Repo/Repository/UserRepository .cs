@@ -324,11 +324,16 @@ namespace Repo.Repository
 
 
         // ✅ Tìm User theo UserId
-
         public async Task<User> GetUserByIdAsync(Guid userId)
         {
-            return await _context.Users.FindAsync(userId);
+            // Lấy thông tin người dùng từ bảng User, và include dữ liệu từ bảng Employee hoặc Agency
+            var user = await _context.Users
+                .Include(u => u.Employee) // Bao gồm thông tin Employee (nếu có)
+                .Include(u => u.AgencyAccount) // Bao gồm thông tin Agency (nếu có)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+            return user;
         }
+
 
         public async Task<Employee> GetByEmployeeUserIdAsync(Guid userId)
         {
