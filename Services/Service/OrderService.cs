@@ -557,7 +557,7 @@ namespace Services.Service
 
             return payments
                 .Where(p => p.UserId == userId &&
-                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID") &&
+                            (p.Status == "PAID" || p.Status == "PARTIALLY_PAID") &&
                             p.PaymentDate.Date == today)
                 .Sum(p => p.PaymentAmount);
         }
@@ -569,7 +569,7 @@ namespace Services.Service
 
             return payments
                 .Where(p => p.UserId == userId &&
-                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID") &&
+                            (p.Status == "PAID" || p.Status == "PARTIALLY_PAID") &&
                             p.PaymentDate.Month == now.Month &&
                             p.PaymentDate.Year == now.Year)
                 .Sum(p => p.PaymentAmount);
@@ -581,7 +581,7 @@ namespace Services.Service
 
             return payments
                 .Where(p => p.UserId == userId &&
-                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID"))
+                            (p.Status == "PAID" || p.Status == "PARTIALLY_PAID"))
                 .Sum(p => p.PaymentAmount);
         }
 
