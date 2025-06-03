@@ -475,7 +475,7 @@ namespace Services.Service
             var payments = await _paymentHistoryRepository.GetAllAsync();
 
             return payments
-                .Where(p => (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID") &&
+                .Where(p => (p.Status == "PAID" || p.Status == "PARTIALLY_PAID") &&
                             p.PaymentDate >= DateTime.Now.AddDays(-7))
                 .GroupBy(p => p.PaymentDate.Date)
                 .Select(g => new {
@@ -493,7 +493,7 @@ namespace Services.Service
             var orders = await _orderRepository.GetAllOrdersAsync();
 
             return orders
-                .Where(o => o.Status == "Paid" || o.Status == "WaitingDelivery")
+                .Where(o => o.Status == "Paid" || o.Status == "WaitingDelivery" || o.Status == "Exported")
                 .SelectMany(o => o.OrderDetails)
                 .GroupBy(od => new { od.ProductId, od.Product.ProductName })
                 .Select(g => new { g.Key.ProductId, g.Key.ProductName, TotalSold = g.Sum(od => od.Quantity) })
@@ -508,7 +508,7 @@ namespace Services.Service
             var payments = await _paymentHistoryRepository.GetAllAsync();
 
             return payments
-                .Where(p => p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID")
+                .Where(p => p.Status == "PAID" || p.Status == "PARTIALLY_PAID")
                 .Sum(p => p.PaymentAmount);
         }
 
@@ -521,14 +521,14 @@ namespace Services.Service
 
             return orders
                 .Where(o => o.OrderDate.Year == currentYear &&
-                            (o.Status == "Paid" || o.Status == "WaitingDelivery"))
+                            (o.Status == "Paid" || o.Status == "WaitingDelivery" || o.Status == "Exported"))
                 .GroupBy(o => o.OrderDate.Month)
                 .Select(g => new {
                     Month = g.Key,
                     TotalOrders = g.Count(),
                     TotalRevenue = payments
                         .Where(p => g.Select(o => o.OrderId).Contains(p.OrderId) &&
-                                    (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID"))
+                                    (p.Status == "PAID" || p.Status == "PARTIALLY_PAID"))
                         .Sum(p => p.PaymentAmount)
                 })
                 .Cast<object>()
@@ -540,14 +540,14 @@ namespace Services.Service
         {
             var today = DateTime.Today;
             var orders = await _orderRepository.GetAllOrdersAsync();
-            return orders.Count(o => o.OrderDate.Date == today && (o.Status == "Paid" || o.Status == "WaitingDelivery"));
+            return orders.Count(o => o.OrderDate.Date == today && (o.Status == "Paid" || o.Status == "WaitingDelivery" || o.Status == "Exported"));
         }
 
         public async Task<int> GetThisMonthOrderCountAsync()
         {
             var now = DateTime.Now;
             var orders = await _orderRepository.GetAllOrdersAsync();
-            return orders.Count(o => o.OrderDate.Month == now.Month && o.OrderDate.Year == now.Year && (o.Status == "Paid" || o.Status == "WaitingDelivery"));
+            return orders.Count(o => o.OrderDate.Month == now.Month && o.OrderDate.Year == now.Year && (o.Status == "Paid" || o.Status == "WaitingDelivery" || o.Status == "Exported"));
         }
 
         public async Task<decimal> GetTodayRevenueByUserIdAsync(Guid userId)
@@ -557,7 +557,7 @@ namespace Services.Service
 
             return payments
                 .Where(p => p.UserId == userId &&
-                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID") &&
+                            (p.Status == "PAID" || p.Status == "PARTIALLY_PAID") &&
                             p.PaymentDate.Date == today)
                 .Sum(p => p.PaymentAmount);
         }
@@ -569,7 +569,7 @@ namespace Services.Service
 
             return payments
                 .Where(p => p.UserId == userId &&
-                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID") &&
+                            (p.Status == "PAID" || p.Status == "PARTIALLY_PAID") &&
                             p.PaymentDate.Month == now.Month &&
                             p.PaymentDate.Year == now.Year)
                 .Sum(p => p.PaymentAmount);
@@ -581,7 +581,7 @@ namespace Services.Service
 
             return payments
                 .Where(p => p.UserId == userId &&
-                            (p.Status == "FULL_PAID" || p.Status == "PARTIALLY_PAID"))
+                            (p.Status == "PAID" || p.Status == "PARTIALLY_PAID"))
                 .Sum(p => p.PaymentAmount);
         }
 
