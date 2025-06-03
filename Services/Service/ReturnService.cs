@@ -477,7 +477,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                //Note = r.Note,
+                Reason = r.Reason,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -502,7 +502,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                //Note = r.Note,
+                Reason = r.Reason,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -534,7 +534,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.AgencyName,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                //Note = r.Note,
+                Reason = r.Reason,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -570,7 +570,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.AgencyName,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                //Note = r.Note,
+                Reason = r.Reason,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -601,7 +601,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.AgencyName,
                 ReturnRequestCode = r.ReturnRequestCode,
                 Status = r.Status,
-                //Note = r.Note,
+                Reason = r.Reason,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -626,7 +626,7 @@ namespace Services.Service
                 CreatedByUserName = r.Order.RequestProduct.AgencyAccount.User.Username,
                 Status = r.Status,
                 ReturnRequestCode = r.ReturnRequestCode,
-                //Note = r.Note,
+                Reason = r.Reason,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -653,7 +653,7 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
                 WarehouseId = r.WarehouseId,
-                //Note = r.Note,
+                reason = r.Reason,
                 Status = r.Status,
                 Details = r.Details?.Select(d =>
                 {
@@ -694,7 +694,7 @@ namespace Services.Service
                 ReturnRequestId = r.ReturnRequestId,
                 ReturnRequestCode = r.ReturnRequest.ReturnRequestCode,
                 WarehouseId = r.WarehouseId,
-                //Note = r.Note,
+                reason = r.Reason,
                 Status = r.Status,
                 Details = r.Details?.Select(d =>
                 {
@@ -737,7 +737,7 @@ namespace Services.Service
                 ReceiptCode = r.ReceiptCode,
                 ReceiptDate = r.ReceiptDate,
                 WarehouseId = r.WarehouseId,
-                //Note = r.Note,
+                reason = r.Reason,
                 Status = r.Status,
                 Details = r.Details?.Select(d =>
                 {
@@ -775,7 +775,7 @@ namespace Services.Service
                 CreatedByUserName = agencyName,
                 Status = r.Status,
                 ReturnRequestCode = r.ReturnRequestCode,
-                //Note = r.Note,
+                Reason = r.Reason,
                 Details = r.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,
@@ -810,7 +810,7 @@ namespace Services.Service
                 CreatedByUserName = agencyName,
                 Status = request.Status,
                 ReturnRequestCode = request.ReturnRequestCode,
-                //Note = request.Note,
+                Reason = request.Reason,
                 Details = request.Details?.Select(d => new ReturnRequestProdductDetailDto
                 {
                     ReturnRequestDetailId = d.ReturnRequestDetailId,

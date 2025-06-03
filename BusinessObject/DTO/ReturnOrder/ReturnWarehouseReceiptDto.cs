@@ -18,6 +18,7 @@ namespace BusinessObject.DTO.ReturnOrder
         //public string Note { get; set; }
         public string Status { get; set; }
         public string ReturnRequestCode { get; set; }
+        public string? reason { get; set; } // Lý do từ chối (nếu có)
         public List<ReturnWarehouseReceiptDetailDto> Details { get; set; }
 
         public List<ReturnRequestImageDto> Images { get; set; } = new List<ReturnRequestImageDto>();

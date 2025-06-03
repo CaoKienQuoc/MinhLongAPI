@@ -288,6 +288,50 @@ namespace Services.Service
             }
         }
 
+        public async Task<bool> SendReturnOrderCancelNotificationEmailAsync(
+    string toEmail,
+    string customerName,
+    string returnRequestCode)
+        {
+            // 1. Lấy template từ appsettings
+            var template = _configuration["EmailSetting:EmailOrderCancelTemplate"];
 
+            
+
+            // 3. Thay placeholder
+            var body = template
+                .Replace("{CUSTOMER_NAME}", customerName)
+                .Replace("{ORDER_CODE}", returnRequestCode)
+                .Replace("{PROJECT_NAME}", _configuration["Project_MinhLong:PROJECT_NAME"])
+                .Replace("{EMAIL_ADDRESS}", _configuration["Project_MinhLong:EMAIL_ADDRESS"])
+                .Replace("{PHONE_NUMBER}", _configuration["Project_MinhLong:PHONE_NUMBER"]);
+
+            // 4. Tạo email
+            var emailHost = _configuration["EmailSetting:EmailHost"];
+            var userName = _configuration["EmailSetting:EmailUsername"];
+            var password = _configuration["EmailSetting:EmailPassword"];
+
+            var email = new MimeMessage();
+            email.From.Add(MailboxAddress.Parse(emailHost));
+            email.To.Add(MailboxAddress.Parse(toEmail));
+            email.Subject = "Thông báo huỷ đơn xuất kho & hoàn tiền";
+            email.Body = new TextPart(TextFormat.Html) { Text = body };
+
+            // 5. Gửi
+            try
+            {
+                using var smtp = new SmtpClient();
+                await smtp.ConnectAsync(emailHost, 587, SecureSocketOptions.StartTls);
+                await smtp.AuthenticateAsync(userName, password);
+                await smtp.SendAsync(email);
+                await smtp.DisconnectAsync(true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Error Sending OrderCancel Email]: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

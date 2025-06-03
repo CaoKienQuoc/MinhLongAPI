@@ -15,7 +15,7 @@ namespace BusinessObject.DTO.ReturnOrder
         public string ReturnRequestCode { get; set; }
         public string CreatedByUserName { get; set; }
         public string Status { get; set; }
-        //public string? Note { get; set; }
+        public string? Reason { get; set; }
         public List<ReturnRequestProdductDetailDto> Details { get; set; }
 
         public List<ReturnRequestImageDto> Images { get; set; }

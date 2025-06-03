@@ -59,7 +59,7 @@ namespace Services.Service
             {
                 ChatRoomId = createdRoom.ChatRoomId,
                 SenderId = saleId,
-                MessageText = "Cảm ơn bạn đã lựa chọn Minh Long để mua sắm. Hãy liên hệ cho chnếu cần hỗ trợ!",
+                MessageText = "Cảm ơn bạn đã lựa chọn Minh Long để mua sắm. Hãy liên hệ cho chúng tôi nếu cần hỗ trợ!",
                 Timestamp = GetVietnamTime()
             };
             await _msgRepo.AddAsync(welcomeMessage);

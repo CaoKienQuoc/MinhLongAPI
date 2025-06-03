@@ -22,6 +22,7 @@ namespace Services.Service
         private readonly IEmailService _emailService;
         private readonly INotificationRepository _notificationRepository;
         private readonly IHubContext<NotificationHub> _hub;
+        private readonly IInventoryService _inventoryService;
 
         public RequestExportService(IRequestExportRepository requestExportRepository
             , ITemporaryWarehouseExportRepository temporaryWarehouseRepository,
@@ -30,7 +31,8 @@ namespace Services.Service
                 IUserRepository userRepository,
                 IEmailService emailService,
                 IHubContext<NotificationHub> hub,
-            INotificationRepository notificationRepository)
+            INotificationRepository notificationRepository,
+            IInventoryService inventoryService)
         {
             _requestExportRepository = requestExportRepository;
             _temporaryWarehouseRepository = temporaryWarehouseRepository;
@@ -40,6 +42,7 @@ namespace Services.Service
             _emailService = emailService;
             _hub = hub;
             _notificationRepository = notificationRepository;
+            _inventoryService = inventoryService;
         }
 
         public async Task<List<RequestExportDto>> GetAllRequestExportsAsync(string? sortBy = null)
@@ -323,6 +326,8 @@ namespace Services.Service
             order.Status = "Canceled";
             order.Reason = reason; // Lưu lý do hủy
             requestProduct.RequestStatus = "Canceled";
+
+            await _inventoryService.RollbackStockForCancelledOrderAsync(order.OrderId);
 
             // 5. Update
             await _requestExportRepository.UpdateExportAsync(requestExport);
