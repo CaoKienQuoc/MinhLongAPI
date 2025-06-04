@@ -1,6 +1,7 @@
 ﻿using BusinessObject.Models;
 using Microsoft.AspNetCore.SignalR;
 using Services.IService;
+using Services.Service;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
@@ -14,11 +15,13 @@ namespace MLHR.Hubs
 
         private readonly IChatService _chatService;
         private readonly IImageService _imageService;
+        private readonly IHubContext<NotificationHub> _hub;
 
-        public ChatHub(IChatService chatService, IImageService imageService)
+        public ChatHub(IChatService chatService, IImageService imageService, IHubContext<NotificationHub> hub)
         {
             _chatService = chatService;
             _imageService = imageService;
+            _hub = hub;
         }
 
         // Khi client connect lên hub
@@ -122,8 +125,13 @@ namespace MLHR.Hubs
                 await Clients.User(userId).SendAsync("ReceiveMessage", payload);
             }
 
-            /*await Clients.Group(roomId.ToString())
-                         .SendAsync("ReceiveMessage", payload);*/
+            // Gửi notification cho các user nhận:
+            await _hub.Clients.Users(receivers).SendAsync("NewMessage", new
+            {
+                ChatRoomId = roomId,
+                MessagePreview = message,
+                FromUserId = senderId
+            });
         }
 
         public DateTime GetVietnamTime()
