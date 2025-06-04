@@ -145,7 +145,7 @@ namespace Services.Service
                                ?? m.User.AgencyAccount?.AgencyName
                                ?? m.User.Username
                     }).ToList(),
-                    hasUnreadMessages = lastMessage.IsRead,
+                    IsRead = lastMessage.IsRead,
                     LastMessage = lastMessage?.MessageText ?? "Chưa có tin nhắn nào",
                     LastTimestamp = lastMessage?.Timestamp ?? DateTime.MinValue,
                     LastUserId = (Guid)(lastMessage?.SenderId ?? Guid.Empty),

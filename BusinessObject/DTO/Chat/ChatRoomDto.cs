@@ -21,7 +21,7 @@ namespace BusinessObject.DTO.Chat
 
         public Guid LastUserId { get; set; }
         public string LastUserName { get; set; }
-        public bool hasUnreadMessages { get; set; }
+        public bool IsRead { get; set; }
         public List<ChatRoomMemberDto> Members { get; set; } = new List<ChatRoomMemberDto>();
     }
 
