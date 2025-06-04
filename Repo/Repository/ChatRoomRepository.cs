@@ -77,5 +77,11 @@ namespace Repo.Repository
             return null;
         }
 
+        public async Task<ChatRoomMember> GetRoomMemberAsync(Guid roomId, Guid userId)
+        {
+            return await _context.ChatRoomMembers
+                .FirstOrDefaultAsync(x => x.ChatRoomId == roomId && x.UserId == userId);
+        }
+
     }
 }

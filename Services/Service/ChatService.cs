@@ -60,7 +60,8 @@ namespace Services.Service
                 ChatRoomId = createdRoom.ChatRoomId,
                 SenderId = saleId,
                 MessageText = "Cảm ơn bạn đã lựa chọn Minh Long để mua sắm. Hãy liên hệ cho chúng tôi nếu cần hỗ trợ!",
-                Timestamp = GetVietnamTime()
+                Timestamp = GetVietnamTime(),
+                IsRead = true,
             };
             await _msgRepo.AddAsync(welcomeMessage);
             await _msgRepo.SaveChangesAsync();
@@ -82,43 +83,11 @@ namespace Services.Service
 
 
 
-        /*public async Task<IEnumerable<ChatRoomDto>> GetUserRoomsAsync(Guid userId)
+        public async Task<ChatRoomMember> GetRoomMemberAsync(Guid roomId, Guid userId)
         {
-            // Lấy entity và include members + messages
-            var rooms = await _roomRepo.GetForUserAsync(userId);
+            return await _roomRepo.GetRoomMemberAsync(roomId, userId);
+        }
 
-            // Map sang DTO
-            var dtos = rooms.Select(r =>
-            {
-                var lastMessage = r.Messages.OrderByDescending(m => m.Timestamp).FirstOrDefault();
-                return new ChatRoomDto
-                {
-                    ChatRoomId = r.ChatRoomId,
-                    RoomName = r.RoomName,
-                    CreatedAt = r.CreatedAt,
-                    MemberCount = r.Members.Count,
-                    Members = r.Members.Select(m => new ChatRoomMemberDto
-                    {
-                        UserId = m.UserId,
-                        Name = m.User.Employee != null ? m.User.Employee.FullName
-                              : m.User.AgencyAccount != null ? m.User.AgencyAccount.AgencyName
-                              : m.User.Username
-                    }).ToList(),
-                    LastMessage = lastMessage?.MessageText,
-                    LastTimestamp = lastMessage?.Timestamp ?? DateTime.MinValue,
-                    LastUserId =  lastMessage.SenderId,
-                    LastUserName = lastMessage.Sender?.Employee != null
-                                     ? lastMessage.Sender.Employee.FullName
-                                        : lastMessage.Sender?.AgencyAccount != null
-                                        ? lastMessage.Sender.AgencyAccount.AgencyName
-                                        : lastMessage.Sender?.Username
-                };
-            })
-                    .OrderByDescending(r => r.LastTimestamp) // Sắp xếp theo thời gian tin nhắn mới nhất
-                    .ToList();
-
-            return dtos;
-        }*/
 
         public async Task<IEnumerable<ChatRoomDto>> GetUserRoomsAsync(Guid userId)
         {

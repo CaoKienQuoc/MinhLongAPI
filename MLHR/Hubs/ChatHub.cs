@@ -71,6 +71,10 @@ namespace MLHR.Hubs
             if (string.IsNullOrWhiteSpace(message) && (fileUrls == null || !fileUrls.Any()))
                 throw new HubException("Message or at least one image is required.");
 
+            var member = await _chatService.GetRoomMemberAsync(roomId, senderId);
+
+            bool isSenderMemberRole = member != null && member.Role == "Member";
+
             // 1) Lưu tin nhắn xuống DB
             var chatMessage = new ChatMessage
             {
@@ -79,7 +83,7 @@ namespace MLHR.Hubs
                 //ReceiverId = receiverId,
                 MessageText = message,
                 Timestamp = GetVietnamTime(),
-                IsRead = false
+                IsRead = isSenderMemberRole ? true : false // Nếu Role là Member thì set True
             };
             var saved = await _chatService.SaveMessageAsync(chatMessage);
 

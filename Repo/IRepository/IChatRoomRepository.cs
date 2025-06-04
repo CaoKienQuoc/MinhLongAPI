@@ -12,7 +12,7 @@ namespace Repo.IRepository
         Task<ChatRoom> AddAsync(ChatRoom room);
         Task<ChatRoom> GetByIdAsync(Guid roomId);
         Task<List<ChatRoom>> GetForUserAsync(Guid userId);
-
+        Task<ChatRoomMember> GetRoomMemberAsync(Guid roomId, Guid userId);
         Task<ChatRoom> FindByMembersAsync(IEnumerable<Guid> memberIds);
     }
 }

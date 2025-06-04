@@ -23,5 +23,8 @@ namespace Services.IService
         Task MarkMessagesAsReadAsync(Guid chatRoomId, Guid userId);
 
         Task<int> CountUnreadMessagesAsync(Guid userId);
+
+        Task<ChatRoomMember> GetRoomMemberAsync(Guid roomId, Guid userId);
+
     }
 }
