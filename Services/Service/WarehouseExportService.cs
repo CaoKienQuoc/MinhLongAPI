@@ -36,6 +36,7 @@ namespace Services.Service
         private readonly IEmailService _emailService;
         private readonly IWarehouseReceiptRepository _receiptRepo;
         private readonly IInventoryService _inventoryService;
+        private readonly IDamagedStockRepository _damagedRepo;
 
         public WarehouseExportService(
             ITemporaryWarehouseExportRepository tempExportRepo,
@@ -52,7 +53,8 @@ namespace Services.Service
                 IRequestProductRepository requestProductRepository,
                 IEmailService emailService,
                 IWarehouseReceiptRepository receiptRepo,
-                IInventoryService inventoryService)
+                IInventoryService inventoryService,
+                IDamagedStockRepository damagedRepo)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -69,6 +71,7 @@ namespace Services.Service
             _emailService = emailService;
             _receiptRepo = receiptRepo;
             _inventoryService = inventoryService;
+            _damagedRepo = damagedRepo;
         }
 
         public DateTime GetVietnamTime()
@@ -735,12 +738,23 @@ namespace Services.Service
                 // Lấy dữ liệu nhập trong tháng, năm đó
                 var importData = await _receiptRepo.GetAllByYearMonthAsync(queryYear, month.Value);
                 var exportData = await _exportReceiptRepo.GetAllByYearMonthAsync(queryYear, month.Value);
+                var damagedData = (await _damagedRepo.GetAllAsync())
+            .Where(x => x.CreatedAt.Year == queryYear && x.CreatedAt.Month == month.Value)
+            .ToList();
 
                 decimal importCost = importData.Sum(r => r.TotalPrice);
                 decimal exportRevenue = exportData.Sum(r => r.TotalAmount);
+                decimal returnAmount = damagedData
+            .Where(x => x.Status == "Return")
+            .Sum(x => (x.Batch?.SellingPrice ?? 0) * x.Quantity);
 
-                decimal profit = exportRevenue - importCost;
-                decimal profitPercent = importCost > 0 ? (profit / importCost) * 100 : 0;
+                decimal cancelAmount = damagedData
+            .Where(x => x.Status == "ExportCancel")
+            .Sum(x => (x.Batch?.UnitCost ?? 0) * x.Quantity);
+
+                decimal netRevenue = exportRevenue - returnAmount - cancelAmount;
+                decimal profit = netRevenue - importCost;
+                decimal profitPercent = netRevenue > 0 ? (profit / netRevenue) * 100 : 0;
 
                 return new List<ProfitByMonthDto>
         {
@@ -760,6 +774,9 @@ namespace Services.Service
                 // Tính cho toàn bộ năm, theo từng tháng
                 var importData = await _receiptRepo.GetAllByYearAsync(queryYear);
                 var exportData = await _exportReceiptRepo.GetAllByYearAsync(queryYear);
+                var damagedData = (await _damagedRepo.GetAllAsync())
+            .Where(x => x.CreatedAt.Year == queryYear)
+            .ToList();
 
                 var profitStats = new List<ProfitByMonthDto>();
 
@@ -768,8 +785,21 @@ namespace Services.Service
                     decimal importCost = importData.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalPrice);
                     decimal exportRevenue = exportData.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalAmount);
 
-                    decimal profit = exportRevenue - importCost;
-                    decimal profitPercent = importCost > 0 ? (profit / importCost) * 100 : 0;
+                    var damagedInMonth = damagedData
+                .Where(x => x.CreatedAt.Month == m)
+                .ToList();
+
+                    decimal returnAmount = damagedInMonth
+                .Where(x => x.Status == "Return")
+                .Sum(x => (x.Batch?.SellingPrice ?? 0) * x.Quantity);
+
+                    decimal cancelAmount = damagedInMonth
+                        .Where(x => x.Status == "ExportCancel")
+                        .Sum(x => (x.Batch?.UnitCost ?? 0) * x.Quantity);
+
+                    decimal netRevenue = exportRevenue - returnAmount - cancelAmount;
+                    decimal profit = netRevenue - importCost;
+                    decimal profitPercent = netRevenue > 0 ? (profit / netRevenue) * 100 : 0;
 
                     profitStats.Add(new ProfitByMonthDto
                     {
@@ -793,12 +823,23 @@ namespace Services.Service
 
             var importData = await _receiptRepo.GetAllByYearAsync(queryYear);
             var exportData = await _exportReceiptRepo.GetAllByYearAsync(queryYear);
+            var damagedData = (await _damagedRepo.GetAllAsync())
+        .Where(x => x.CreatedAt.Year == queryYear)
+        .ToList();
 
             decimal totalImportCost = importData.Sum(r => r.TotalPrice);
             decimal totalExportRevenue = exportData.Sum(r => r.TotalAmount);
+            decimal returnAmount = damagedData
+        .Where(x => x.Status == "Return")
+        .Sum(x => (x.Batch?.SellingPrice ?? 0) * x.Quantity);
 
-            decimal profit = totalExportRevenue - totalImportCost;
-            decimal profitPercent = totalImportCost > 0 ? (profit / totalImportCost) * 100 : 0;
+            decimal cancelAmount = damagedData
+                .Where(x => x.Status == "ExportCancel")
+                .Sum(x => (x.Batch?.UnitCost ?? 0) * x.Quantity);
+
+            decimal netRevenue = totalExportRevenue - returnAmount - cancelAmount;
+            decimal profit = netRevenue - totalImportCost;
+            decimal profitPercent = netRevenue > 0 ? (profit / netRevenue) * 100 : 0;
 
             return new ProfitByYearDto
             {
@@ -902,16 +943,28 @@ namespace Services.Service
             var allExports = (await _exportReceiptRepo.GetAllByYearAsync(queryYear))
                                 .Where(r => warehouseIds.Contains(r.WarehouseId))
                                 .ToList();
+            var allDamaged = await _damagedRepo.GetAllByWarehousesAsync(warehouseIds, queryYear);
+
 
             if (month.HasValue)
             {
                 var importInMonth = allImports.Where(r => r.DocumentDate.Month == month.Value).ToList();
                 var exportInMonth = allExports.Where(r => r.DocumentDate.Month == month.Value).ToList();
 
+                decimal returnAmount = allDamaged
+                    .Where(x => x.Status == "Return" && x.CreatedAt.Month == month.Value)
+                    .Sum(x => (x.Batch?.SellingPrice ?? 0) * x.Quantity);
+
+                decimal cancelAmount = allDamaged
+                    .Where(x => x.Status == "ExportCancel" && x.CreatedAt.Month == month.Value)
+                    .Sum(x => (x.Batch?.UnitCost ?? 0) * x.Quantity);
+
+
                 decimal importCost = importInMonth.Sum(r => r.TotalPrice);
                 decimal exportRevenue = exportInMonth.Sum(r => r.TotalAmount);
-                decimal profit = exportRevenue - importCost;
-                decimal percent = importCost > 0 ? (profit / importCost) * 100 : 0;
+                decimal netRevenue = exportRevenue - returnAmount - cancelAmount;
+                decimal profit = netRevenue - importCost;
+                decimal percent = netRevenue > 0 ? (profit / netRevenue) * 100 : 0;
 
                 return new List<ProfitByMonthDto>
         {
@@ -933,8 +986,19 @@ namespace Services.Service
                 {
                     var importCost = allImports.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalPrice);
                     var exportRevenue = allExports.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalAmount);
-                    var profit = exportRevenue - importCost;
-                    var percent = importCost > 0 ? (profit / importCost) * 100 : 0;
+                    var damagedInMonth = allDamaged.Where(x => x.CreatedAt.Month == m).ToList();
+
+                    decimal returnAmount = damagedInMonth
+                        .Where(x => x.Status == "Return")
+                        .Sum(x => (x.Batch?.SellingPrice ?? 0) * x.Quantity);
+
+                    decimal cancelAmount = damagedInMonth
+                        .Where(x => x.Status == "ExportCancel")
+                        .Sum(x => (x.Batch?.UnitCost ?? 0) * x.Quantity);
+
+                    decimal netRevenue = exportRevenue - returnAmount - cancelAmount;
+                    decimal profit = netRevenue - importCost;
+                    decimal percent = netRevenue > 0 ? (profit / netRevenue) * 100 : 0;
 
                     result.Add(new ProfitByMonthDto
                     {
@@ -1011,7 +1075,7 @@ namespace Services.Service
             if (salesUserId != null)
             {
                 var agencyName = order?.RequestProduct?.AgencyAccount?.AgencyName;
-                var notifyMessage = $"❌ Phiếu xuất cho đơn hàng {order.OrderCode} của {agencyName} đã bị huỷ. Vui lòng liên hệ sales để biết thêm chi tiết.";
+                var notifyMessage = $"❌ Phiếu xuất cho đơn hàng {order.OrderCode} của {agencyName} đã bị huỷ.";
 
                 // Gửi SignalR đến đại lý
                 await _hub.Clients.User(salesUserId.ToString()).SendAsync("ReceiveNotification", new

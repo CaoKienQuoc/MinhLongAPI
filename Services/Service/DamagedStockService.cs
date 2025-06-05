@@ -263,5 +263,36 @@ namespace Services.Service
         {
             return await _damagedRepo.GetByUserWarehouseAsync(userId);
         }
+
+        public async Task<object> GetTotalByStatusAndDateAsync(DateTime? startDate, DateTime? endDate)
+        {
+            var stocks = await _damagedRepo.GetWithBatchInfoAsync(startDate, endDate);
+
+            var grouped = stocks
+                .Where(s => s.Status == "Return" || s.Status == "ExportCancel")
+                .GroupBy(s => new { s.Status, Month = s.CreatedAt.Month, Year = s.CreatedAt.Year })
+                .Select(g =>
+                {
+                    decimal total = g.Sum(item =>
+                    {
+                        var price = item.Status == "Return"
+                            ? item.Batch?.SellingPrice ?? 0
+                            : item.Batch?.UnitCost ?? 0;
+
+                        return price * item.Quantity;
+                    });
+
+                    return new
+                    {
+                        g.Key.Status,
+                        g.Key.Month,
+                        g.Key.Year,
+                        TotalAmount = Math.Round(total, 2)
+                    };
+                });
+
+            return grouped;
+        }
+
     }
 }

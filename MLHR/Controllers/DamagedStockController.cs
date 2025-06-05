@@ -37,5 +37,20 @@ namespace MLHR.Controllers
                 return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
             }
         }
+
+        [HttpGet("damaged-total")]
+        public async Task<IActionResult> GetDamagedStockTotalAsync([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            try
+            {
+                var result = await _damagedStockService.GetTotalByStatusAndDateAsync(startDate, endDate);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
     }
 }

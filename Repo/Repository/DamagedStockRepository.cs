@@ -78,6 +78,37 @@ namespace Repo.Repository
                 })
                 .ToListAsync();
         }
+
+        public async Task<List<DamagedStock>> GetWithBatchInfoAsync(DateTime? startDate, DateTime? endDate)
+        {
+            var query = _context.DamagedStocks
+                .Include(ds => ds.Batch)
+                .AsQueryable();
+
+            if (startDate.HasValue)
+                query = query.Where(ds => ds.CreatedAt >= startDate.Value);
+
+            if (endDate.HasValue)
+                query = query.Where(ds => ds.CreatedAt <= endDate.Value);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<List<DamagedStock>> GetAllAsync()
+        {
+            return await _context.DamagedStocks
+                .Include(x => x.Batch)
+                .ToListAsync();
+        }
+
+        public async Task<List<DamagedStock>> GetAllByWarehousesAsync(List<long> warehouseIds, int year)
+        {
+            return await _context.DamagedStocks
+                .Include(x => x.Batch)
+                .Where(x => x.CreatedAt.Year == year && warehouseIds.Contains(x.WarehouseId))
+                .ToListAsync();
+        }
+
     }
 
 }

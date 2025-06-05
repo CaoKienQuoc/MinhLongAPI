@@ -18,6 +18,12 @@ namespace Repo.IRepository
         Task SaveChangesAsync();
 
         Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId);
+        Task<List<DamagedStock>> GetWithBatchInfoAsync(DateTime? startDate, DateTime? endDate);
+
+        Task<List<DamagedStock>> GetAllAsync();
+
+        Task<List<DamagedStock>> GetAllByWarehousesAsync(List<long> warehouseIds, int year);
+
     }
 
 }

@@ -15,5 +15,7 @@ namespace Services.IService
         Task ImportToDamagedStockAsync(long receiptId, Guid userId); // bạn đã có
 
         Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId);
+        Task<object> GetTotalByStatusAndDateAsync(DateTime? startDate, DateTime? endDate);
+
     }
 }
