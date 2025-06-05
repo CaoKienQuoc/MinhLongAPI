@@ -112,7 +112,7 @@ namespace Services.Service
                 TaxId = model.TaxId,
                 CreatedBy = userId,
                 CreatedDate = DateTime.Now            };
-            //abcd
+            //abcd11
             // ✅ Tạo product trước
             var createdProduct = await _repository.AddAsync(product); // KHÔNG truyền imageUrls
 
