@@ -822,6 +822,7 @@ namespace Services.Service
                 ReturnWarehouseReceiptId = r.ReturnWarehouseReceiptId,
                 ReceiptCode = r.ReceiptCode,
                 ReceiptDate = r.ReceiptDate,
+                OrderCode = r.ReturnRequest.Order.OrderCode,
                 CreatedAt = r.CreatedAt,
                 CreatedByUserName = r.ReturnRequest.Order.RequestProduct.AgencyAccount.User.Username,
                 ReturnRequestId = r.ReturnRequestId,

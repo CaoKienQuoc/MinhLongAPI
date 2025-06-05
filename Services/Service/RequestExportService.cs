@@ -211,6 +211,7 @@ namespace Services.Service
                 {
                     RequestExportId = re.RequestExportId,
                     OrderId = re.OrderId,
+                    OrderCode = re.Order.OrderCode,
                     AgencyName = re.RequestedByAgency?.AgencyName ?? "Unknown",
                     RequestDate = re.RequestDate,
                     Status = re.Status,
@@ -257,6 +258,7 @@ namespace Services.Service
             {
                 RequestExportId = re.RequestExportId,
                 OrderId = re.OrderId,
+                OrderCode = re.Order.OrderCode,
                 AgencyName = re.RequestedByAgency?.AgencyName ?? "Unknown",
                 RequestDate = re.RequestDate,
                 Status = re.Status,
