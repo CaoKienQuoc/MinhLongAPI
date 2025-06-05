@@ -344,8 +344,8 @@ namespace Services.Service
 
             var createdRegister = await _userRepository.RegisterUserRequestAsync(registerAccount);
 
-            // ✅ Bước 2: Nếu là AGENCY và có ContractFiles => upload và lưu
-            if (request.UserType == "AGENCY")
+            // ✅ Bước 2: Nếu là AGENCY và EMPLOYEE và có ContractFiles => upload và lưu
+            if (request.UserType == "AGENCY" || request.UserType == "EMPLOYEE")
             {
                 if (request.ContractFiles != null && request.ContractFiles.Any())
                 {

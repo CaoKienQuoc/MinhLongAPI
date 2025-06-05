@@ -375,8 +375,10 @@ namespace Services.Service
             requestWarehouse.Status = "Rejected";
             requestWarehouse.Reason = rejectReason;
             requestReturn.Status = "Rejected"; // Cập nhật trạng thái yêu cầu trả hàng
-            requestReturn.RejectedAt = DateTime.Now;
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            requestReturn.RejectedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
             requestReturn.RejectedBy = userId; // Ghi lại người từ chối
+            requestReturn.Reason = rejectReason;
 
             await _returnRepo.UpdateAsync(requestReturn);
             await _returnRepo.UpdateReturnWarehouseAsync(requestWarehouse);
@@ -422,7 +424,8 @@ namespace Services.Service
                 ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
 
             request.Status = "Rejected";
-            request.RejectedAt = DateTime.UtcNow;
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            request.RejectedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
             request.RejectedBy = userId;
             request.Reason = rejectReason;
 

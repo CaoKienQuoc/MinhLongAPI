@@ -139,6 +139,24 @@ namespace Repo.Repository
                         };
 
                         _context.Employees.Add(employee);
+                        await _context.SaveChangesAsync();
+
+                        var registerContracts = await _context.RegisterAccountContract
+                           .Where(rc => rc.RegisterId == registerAccount.RegisterId)
+                           .ToListAsync();
+
+                        foreach (var rc in registerContracts)
+                        {
+                            var contract = new Contract
+                            {
+                                EmployeeId = employee.EmployeeId,
+                                FileName = rc.FileName,
+                                FilePath = rc.FilePath,
+                                FileType = rc.FileType,
+                                CreatedAt = rc.UploadedAt
+                            };
+                            _context.Contract.Add(contract);
+                        }
 
                         if (registerAccount.Department.Equals("WAREHOUSE MANAGER", StringComparison.OrdinalIgnoreCase))
                         {
