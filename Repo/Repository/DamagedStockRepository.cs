@@ -84,6 +84,9 @@ namespace Repo.Repository
             return await _context.DamagedStocks
                 .Include(ds => ds.Warehouse)
                 .Include(ds => ds.Product)
+                .Include(ds => ds.Batch)                           // Include Batch
+                .Include(ds => ds.ReturnRequest)                   // Include ReturnRequest
+                    .ThenInclude(rr => rr.Order)                   // Include Order từ ReturnRequest
                 .Where(ds => ds.Warehouse.UserId == userId)
                 .ToListAsync();
         }

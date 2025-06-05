@@ -156,79 +156,21 @@ namespace Services.Service
 
         public async Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId)
         {
-            // 1. Lấy damagedStocks
             var damagedStocks = await _damagedRepo.GetDamagedStockByUserAsync(userId);
-            if (damagedStocks == null || !damagedStocks.Any())
-                throw new KeyNotFoundException("Không tìm thấy dữ liệu damaged stock cho user này.");
-
-            var batchIds = damagedStocks
-                .Select(ds => ds.BatchId)
-                .Where(id => id.HasValue)
-                .Select(id => id.Value)
-                .Distinct()
-                .ToList();
-
-            var batches = await _batchRepository.GetListBatchesByIdsAsync(batchIds) ?? new List<Batch>();
-
-            if (batches.Any(b => b == null))
-                throw new Exception("Có phần tử batch bị null trong danh sách batches!");
-
-            var batchDict = batches
-                .Where(b => b.BatchId != null && b.BatchCode != null)
-                .ToDictionary(b => b.BatchId, b => b.BatchCode);
-
-
-            // 3. Lấy returnRequestDict
-            var returnRequestIds = damagedStocks
-                .Select(ds => ds.ReturnRequestId)
-                .Where(id => id.HasValue)
-                .Select(id => id.Value)
-                .Distinct()
-                .ToList();
-            var returnRequests = await _returnRepo.GetListByIdsAsync(returnRequestIds);
-            var returnRequestDict = returnRequests.ToDictionary(r => r.ReturnRequestId, r => r);
-
-            // 4. Lấy orderDict
-            var orderIds = returnRequests
-                .Where(r => r.OrderId != null)
-                .Select(r => r.OrderId)
-                .Distinct()
-                .ToList();
-            var orders = await _orderRepo.GetListByIdsAsync(orderIds);
-            var orderDict = orders.ToDictionary(o => o.OrderId, o => o.OrderCode);
-
-            // 5. Map ra DTO
-            return damagedStocks.Select(ds => {
-                // Xử lý batchCode
-                string batchCode = ds.BatchId.HasValue && batchDict.ContainsKey(ds.BatchId.Value)
-                    ? batchDict[ds.BatchId.Value]
-                    : null;
-
-                // Xử lý orderCode
-                string orderCode = null;
-                if (ds.ReturnRequestId.HasValue && returnRequestDict.ContainsKey(ds.ReturnRequestId.Value))
-                {
-                    var returnRequest = returnRequestDict[ds.ReturnRequestId.Value];
-                    if (returnRequest.OrderId != null && orderDict.ContainsKey(returnRequest.OrderId))
-                    {
-                        orderCode = orderDict[returnRequest.OrderId];
-                    }
-                }
-
-                return new GetDamagedStockDto
-                {
-                    DamagedStockId = ds.DamagedStockId,
-                    WarehouseId = ds.WarehouseId,
-                    WarehouseName = ds.Warehouse?.WarehouseName,
-                    ProductId = ds.ProductId,
-                    ProductName = ds.Product?.ProductName,
-                    Quantity = ds.Quantity,
-                    CreatedAt = ds.CreatedAt,
-                    Reason = ds.Reason,
-                    Status = ds.Status,
-                    BatchCode = batchCode,
-                    OrderCode = orderCode
-                };
+            
+            return damagedStocks.Select(ds => new GetDamagedStockDto
+            {
+                DamagedStockId = ds.DamagedStockId,
+                WarehouseId = ds.WarehouseId,
+                WarehouseName = ds.Warehouse?.WarehouseName,
+                ProductId = ds.ProductId,
+                ProductName = ds.Product?.ProductName,
+                Quantity = ds.Quantity,
+                CreatedAt = ds.CreatedAt,
+                Reason = ds.Reason,
+                Status = ds.Status,
+                BatchCode = ds.Batch?.BatchCode,
+                OrderCode = ds.ReturnRequest?.Order?.OrderCode
             });
         }
 

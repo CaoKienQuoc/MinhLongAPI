@@ -23,6 +23,9 @@ namespace Repo.Repository
 
         public async Task<List<Batch>> GetListBatchesByIdsAsync(List<long> batchIds)
         {
+            if (batchIds == null || !batchIds.Any())
+                return new List<Batch>();
+
             return await _context.Batches
                 .Where(b => batchIds.Contains(b.BatchId))
                 .ToListAsync();
