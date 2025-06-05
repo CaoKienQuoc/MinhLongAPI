@@ -39,7 +39,7 @@ namespace Repo.IRepository
         Task<ReturnRequest?> GetLatestReturnRequestByOrderIdAsync(Guid orderId);
 
         Task<ReturnRequest> UpdateReturnAsync(ReturnRequest request);
-
+        Task<List<ReturnRequest>> GetListByIdsAsync(List<Guid> returnRequestIds);
         Task<ReturnWarehouseReceipt> GetReturnWarehouseReceiptWithDetailsAsync(long id);
     }
 

@@ -17,7 +17,8 @@ namespace Repo.IRepository
         Task AddAsync(DamagedStock damagedStock);
         Task SaveChangesAsync();
 
-        Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId);
+        //Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId);
+        Task<List<DamagedStock>> GetDamagedStockByUserAsync(Guid userId);
         Task<List<DamagedStock>> GetWithBatchInfoAsync(DateTime? startDate, DateTime? endDate);
 
         Task<List<DamagedStock>> GetAllAsync();

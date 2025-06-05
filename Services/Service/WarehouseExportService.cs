@@ -37,6 +37,7 @@ namespace Services.Service
         private readonly IWarehouseReceiptRepository _receiptRepo;
         private readonly IInventoryService _inventoryService;
         private readonly IDamagedStockRepository _damagedRepo;
+        private readonly IPaymentHistoryRepository _paymentRepo;
 
         public WarehouseExportService(
             ITemporaryWarehouseExportRepository tempExportRepo,
@@ -54,7 +55,8 @@ namespace Services.Service
                 IEmailService emailService,
                 IWarehouseReceiptRepository receiptRepo,
                 IInventoryService inventoryService,
-                IDamagedStockRepository damagedRepo)
+                IDamagedStockRepository damagedRepo,
+                IPaymentHistoryRepository paymentRepo)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -72,6 +74,7 @@ namespace Services.Service
             _receiptRepo = receiptRepo;
             _inventoryService = inventoryService;
             _damagedRepo = damagedRepo;
+            _paymentRepo = paymentRepo;
         }
 
         public DateTime GetVietnamTime()
@@ -1031,7 +1034,8 @@ namespace Services.Service
             // 3. Lấy RequestProduct liên quan
             var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
                 ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
-
+            var paymentHistory = await _paymentRepo.GetPaymentHistoryByOrderIdAsync(order.OrderId)
+                ?? throw new Exception("Không tìm thấy lịch sử thanh toán.");
             // 4. Set status = "Canceled"
             requestExport.Status = "Canceled";
             requestExport.Reason = reason; // Lưu lý do hủy
@@ -1048,7 +1052,10 @@ namespace Services.Service
             await _orderRepo.UpdateOrderAsync(order);
             await _requestProductRepository.UpdateRequestAsync(requestProduct);
             await _exportReceiptRepo.UpdateReceiptAsync(warehouseRequestExport);
+            await _paymentRepo.SetPaymentHistoryStatusByIdAsync(paymentHistory.PaymentHistoryId, "CANCELLED");
             await _exportReceiptRepo.SaveChangesAsync();
+
+
 
             var agencyId = requestProduct.AgencyId;
             // 3. Lấy AgencyAccount (hoặc bảng đại lý) từ AgencyId
@@ -1067,7 +1074,7 @@ namespace Services.Service
                 customerEmail,
                 customerName,
                 order.OrderCode,
-                order.FinalPrice
+                paymentHistory.PaymentAmount
             );
 
             var salesUserId = order?.RequestProduct?.AgencyAccount?.ManagedByEmployee?.User?.UserId;

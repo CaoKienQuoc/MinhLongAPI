@@ -12,41 +12,6 @@ namespace Services.Service
 {
     public class BackGroundService : BackgroundService
     {
-        /*private readonly IServiceScopeFactory _serviceScopeFactory;
-
-        public BackGroundService(IServiceScopeFactory serviceScopeFactory)
-        {
-            _serviceScopeFactory = serviceScopeFactory;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    using var scope = _serviceScopeFactory.CreateScope();
-                    var batchService = scope.ServiceProvider.GetRequiredService<IBatchService>();
-
-                    // ✅ Tính giờ Việt Nam (UTC+7)
-                    var nowUtc = DateTime.UtcNow;
-                    var nowVietnam = nowUtc.AddHours(7);
-
-                    // ✅ Gọi hàm update expired batches
-                    var updatedCount = await batchService.UpdateExpiredBatchesAsync(nowVietnam);
-                    Console.WriteLine($"[{nowVietnam:yyyy-MM-dd HH:mm:ss}] Updated {updatedCount} expired batches.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[{DateTime.UtcNow.AddHours(7):yyyy-MM-dd HH:mm:ss}] Error updating expired batches: {ex.Message}");
-                }
-
-                // ✅ Đợi 5 phút trước khi kiểm tra lại
-                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
-            }
-        }*/
-
-
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
         public BackGroundService(IServiceScopeFactory serviceScopeFactory)
@@ -97,7 +62,10 @@ namespace Services.Service
                         var orderRepo = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
                         var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-                        var payments = await paymentRepository.GetAllPaymentHistoryAsync();
+                        //var payments = await paymentRepository.GetAllPaymentHistoryAsync();
+                        var payments = (await paymentRepository.GetAllPaymentHistoryAsync())
+                                         .Where(p => p.Status != "CANCELLED")
+                                        .ToList();
                         foreach (var payment in payments)
                         {
                             var dueDate = payment.PaymentDate.AddMonths(3);

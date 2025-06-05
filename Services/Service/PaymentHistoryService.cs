@@ -36,6 +36,11 @@ namespace Services.Service
         {
             var payment = await _repository.GetByIdAsync(id);
 
+            if (payment == null || payment.Status == "CANCELLED")
+            {
+                throw new KeyNotFoundException($"Không tìm thấy lịch sử thanh toán với ID = {id}");
+            }
+
             if (payment == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy lịch sử thanh toán với ID = {id}");
@@ -70,8 +75,8 @@ namespace Services.Service
         public async Task<List<PaymentHistoryDto>> GetAllPaymentHistoriesAsync()
         {
             var histories = await _repository.GetAllAsync();
-
-            return histories.OrderByDescending(re => re.CreatedAt).Select(ph =>
+            
+            return histories.Where(ph => ph.Status != "CANCELLED").OrderByDescending(re => re.CreatedAt).Select(ph =>
             {
                 var dueDate = ph.CreatedAt.AddMonths(3);
                 return new PaymentHistoryDto
@@ -102,7 +107,7 @@ namespace Services.Service
         {
             var payments = await _repository.GetPaymentHistoryByUserIdAsync(userId);
 
-            return payments.Select(ph =>
+            return payments.Where(ph => ph.Status != "CANCELLED").Select(ph =>
             {
                 var dueDate = ph.CreatedAt.AddMonths(3);
                 return new PaymentHistoryDto

@@ -39,6 +39,7 @@ namespace BusinessObject.Models
 
 
         public ICollection<ReturnRequestImage> Images { get; set; }
+        public virtual ICollection<DamagedStock> DamagedStocks { get; set; }
     }
 
 

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Services.IService;
 using SkiaSharp;
+using System.Security.Claims;
 
 namespace MLHR.Controllers
 {
@@ -15,16 +16,32 @@ namespace MLHR.Controllers
     public class BatchController : ControllerBase
     {
         private readonly IBatchService _batchService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public BatchController(IBatchService batchService)
+        public BatchController(IBatchService batchService, IHttpContextAccessor httpContextAccessor)
         {
             _batchService = batchService;
+            _httpContextAccessor = httpContextAccessor;
         }
+        private Guid GetLoggedInUserId()
+        {
+            var claimsIdentity = _httpContextAccessor.HttpContext?.User.Identity as ClaimsIdentity;
+            if (claimsIdentity != null)
+            {
+                var userIdClaim = claimsIdentity.FindFirst("UserId"); // 👉 đổi nếu bạn dùng "sub" hay "id"
+                if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return userId;
+                }
+            }
 
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng đăng nhập.");
+        }
         [HttpPut("update-profit-margin/{batchId}/{profitMarginPercent}")]
         public async Task<IActionResult> UpdateProfitMargin(long batchId, decimal profitMarginPercent)
         {
-            var result = await _batchService.UpdateProfitMarginAsync(batchId, profitMarginPercent);
+            var userId = GetLoggedInUserId();
+            var result = await _batchService.UpdateProfitMarginAsync(batchId, profitMarginPercent, userId);
 
             if (!result.Success)
                 return BadRequest(result.Message);

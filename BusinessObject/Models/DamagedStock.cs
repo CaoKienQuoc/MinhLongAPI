@@ -31,6 +31,10 @@ namespace BusinessObject.Models
         public string Reason { get; set; } // Lý do hủy hàng
 
         public string Status { get; set; } // Trạng thái (Pending, Completed, Cancelled)
+
+        public Guid? ReturnRequestId { get; set; }
+
+        public virtual ReturnRequest ReturnRequest { get; set; }
     }
 
 }

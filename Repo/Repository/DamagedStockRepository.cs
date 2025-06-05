@@ -58,7 +58,7 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId)
+        /*public async Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId)
         {
             return await _context.DamagedStocks
                 .Include(ds => ds.Warehouse)
@@ -77,7 +77,17 @@ namespace Repo.Repository
                     Status = ds.Status
                 })
                 .ToListAsync();
+        }*/
+
+        public async Task<List<DamagedStock>> GetDamagedStockByUserAsync(Guid userId)
+        {
+            return await _context.DamagedStocks
+                .Include(ds => ds.Warehouse)
+                .Include(ds => ds.Product)
+                .Where(ds => ds.Warehouse.UserId == userId)
+                .ToListAsync();
         }
+
 
         public async Task<List<DamagedStock>> GetWithBatchInfoAsync(DateTime? startDate, DateTime? endDate)
         {

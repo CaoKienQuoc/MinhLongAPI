@@ -334,5 +334,12 @@ namespace Repo.Repository
                 .Select(od => (decimal?)od.UnitPrice)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<List<Order>> GetListByIdsAsync(List<Guid> orderIds)
+        {
+            return await _context.Orders
+                .Where(o => orderIds.Contains(o.OrderId))
+                .ToListAsync();
+        }
     }
 }

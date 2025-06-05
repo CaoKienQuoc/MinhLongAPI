@@ -23,6 +23,7 @@ namespace Services.Service
         private readonly INotificationRepository _notificationRepository;
         private readonly IHubContext<NotificationHub> _hub;
         private readonly IInventoryService _inventoryService;
+        private readonly IPaymentHistoryRepository _paymentRepository;
 
         public RequestExportService(IRequestExportRepository requestExportRepository
             , ITemporaryWarehouseExportRepository temporaryWarehouseRepository,
@@ -32,7 +33,8 @@ namespace Services.Service
                 IEmailService emailService,
                 IHubContext<NotificationHub> hub,
             INotificationRepository notificationRepository,
-            IInventoryService inventoryService)
+            IInventoryService inventoryService,
+            IPaymentHistoryRepository paymentRepository)
         {
             _requestExportRepository = requestExportRepository;
             _temporaryWarehouseRepository = temporaryWarehouseRepository;
@@ -43,6 +45,7 @@ namespace Services.Service
             _hub = hub;
             _notificationRepository = notificationRepository;
             _inventoryService = inventoryService;
+            _paymentRepository = paymentRepository;
         }
 
         public async Task<List<RequestExportDto>> GetAllRequestExportsAsync(string? sortBy = null)
@@ -320,6 +323,9 @@ namespace Services.Service
             var requestProduct = await _requestProductRepository.GetRequestProductByRequestIdAsync(order.RequestId)
                 ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
 
+            var paymentHistory = await _paymentRepository.GetPaymentHistoryByOrderIdAsync(order.OrderId)
+                ?? throw new Exception("Không tìm thấy lịch sử thanh toán.");
+
             // 4. Set status = "Canceled"
             requestExport.Status = "Canceled";
             requestExport.Reason = reason; // Lưu lý do hủy
@@ -333,6 +339,7 @@ namespace Services.Service
             await _requestExportRepository.UpdateExportAsync(requestExport);
             await _orderRepository.UpdateOrderAsync(order);
             await _requestProductRepository.UpdateRequestAsync(requestProduct);
+            await _paymentRepository.SetPaymentHistoryStatusByIdAsync(paymentHistory.PaymentHistoryId, "CANCELLED");
             await _requestExportRepository.SaveChangesAsync();
 
             var agencyId = requestProduct.AgencyId;
@@ -352,7 +359,7 @@ namespace Services.Service
                 customerEmail,
                 customerName,
                 order.OrderCode,
-                order.FinalPrice
+                paymentHistory.PaymentAmount
             );
 
             var managerUserId = requestExport?.RequestedByAgency?.User.UserId;

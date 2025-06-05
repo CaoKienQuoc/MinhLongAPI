@@ -97,7 +97,7 @@ namespace Services.Service
             return await _batchRepository.GetBatchesByProductIdAsync(productId);
         }
 
-        public async Task<(bool Success, string Message, object? Data)> UpdateProfitMarginAsync(long batchId, decimal profitMarginPercent)
+        public async Task<(bool Success, string Message, object? Data)> UpdateProfitMarginAsync(long batchId, decimal profitMarginPercent, Guid userId)
         {
             if (profitMarginPercent < 0)
                 return (false, "Profit margin percentage must be greater than or equal to 0.", null);
@@ -151,6 +151,8 @@ namespace Services.Service
             if (product != null)
             {
                 product.Price = batch.SellingPrice;
+                product.UpdatedBy = userId; // Cập nhật người sửa
+                product.UpdatedDate = DateTime.Now; // Cập nhật thời gian sửa
                 await _productRepository.UpdateAsync(product);
             }
             else

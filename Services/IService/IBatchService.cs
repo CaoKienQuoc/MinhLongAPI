@@ -16,7 +16,7 @@ namespace Services.IService
         Task<Batch> UpdateBatchAsync(UpdateBatchDto dto, Guid userId, long batchId);
         Task<IEnumerable<Batch>> GetBatchesByProductIdAsync(long productId);
 
-        Task<(bool Success, string Message, object? Data)> UpdateProfitMarginAsync(long batchId, decimal profitMarginPercent);
+        Task<(bool Success, string Message, object? Data)> UpdateProfitMarginAsync(long batchId, decimal profitMarginPercent, Guid userId);
         Task<ProductInfoByBatchDto?> GetProductInfoByBatchIdAsync(long batchId);
 
         Task<List<BatchDisplayDto>> GetBatchesByWarehouseIdAsync(long warehouseId);

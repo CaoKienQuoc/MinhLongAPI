@@ -1,4 +1,5 @@
 ﻿using BusinessObject.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,6 +46,8 @@ namespace Repo.IRepository
         Task<List<Batch>> GetExpiredSoonBatchesByProductIdAsync(long productId);
 
         Task<Dictionary<long, decimal>> GetHighestSellingPricesByProductIdsAsync(List<long> productIds);
+        Task<List<Batch>> GetListBatchesByIdsAsync(List<long> batchIds);
+
     }
 }
 

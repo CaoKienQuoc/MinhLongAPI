@@ -859,7 +859,11 @@ namespace DataAccessLayer
             modelBuilder.Entity<ChatRoomMember>()
                 .HasIndex(m => new { m.ChatRoomId, m.UserId })
                 .IsUnique();
-
+            modelBuilder.Entity<DamagedStock>()
+                    .HasOne(ds => ds.ReturnRequest)
+                    .WithMany(rr => rr.DamagedStocks)
+                    .HasForeignKey(ds => ds.ReturnRequestId)
+                    .OnDelete(DeleteBehavior.SetNull);
             // ————————————————————————————
             // ChatMessage
             // ————————————————————————————

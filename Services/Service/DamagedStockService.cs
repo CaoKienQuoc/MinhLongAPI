@@ -25,7 +25,7 @@ namespace Services.Service
         private readonly IUserRepository _userRepo;
         private readonly IOrderRepository _orderRepo;
         private readonly INotificationRepository _notificationRepository;
-
+        private readonly IBatchRepository _batchRepository;
         private readonly IHubContext<NotificationHub> _hub;
 
         public DamagedStockService(
@@ -54,113 +54,6 @@ namespace Services.Service
 
         public Task<IEnumerable<DamagedStockDto>> GetByWarehouseIdAsync(long warehouseId)
         => _damagedRepo.GetByWarehouseIdAsync(warehouseId);
-
-        /*public async Task ImportToDamagedStockAsync(long warehouseReceiptId, Guid warehouseUserId)
-        {
-            // 1) Lấy phiếu nhập trả hàng kèm CreatedByUser, ReturnRequest, Warehouse, Details
-            // 1) Lấy phiếu trả hàng cùng chi tiết
-            var receipt = await _returnWarehouseReceiptRepo
-                .GetByIdWithDetailsAsync(warehouseReceiptId);
-
-
-            var user = await _userRepo.GetUserByIdAsync(receipt.CreatedBy)
-                ?? throw new KeyNotFoundException("Không tìm thấy người tạo phiếu.");
-
-            var returnReceipt = await _returnRepo.GetByIdAsync(receipt.ReturnRequestId);
-
-            if (returnReceipt.Status != "Approved")
-                throw new Exception("Phiếu Trả Hàng Chưa Duyệt.");
-
-            if (receipt.Status == "Completed")
-                throw new Exception("Đơn Hàng Đã Được Xử Lý Thành Công Trước Đó!");
-
-            // 5) Lấy warehouseId và kiểm quyền
-            var userWarehouseId = await _warehouseRepo.GetWarehouseIdByUserAsync(warehouseUserId);
-            if (userWarehouseId == 0 || userWarehouseId != receipt.WarehouseId)
-                throw new UnauthorizedAccessException("Bạn không có quyền thao tác kho này.");
-
-            // 6) Map chi tiết thành DamagedStock
-            var now = DateTime.UtcNow;
-            var damagedStocks = receipt.Details
-         .Select(d =>
-         {
-             // Tìm ReturnRequestDetail tương ứng
-             var detail = returnReceipt.Details.FirstOrDefault(rd => rd.ProductId == d.ProductId);
-             if (detail == null)
-                 throw new Exception($"Không tìm thấy chi tiết trả hàng cho sản phẩm {d.ProductId}");
-
-             return new DamagedStock
-             {
-                 ProductId = d.ProductId,
-                 WarehouseId = userWarehouseId,
-                 Quantity = d.Quantity,
-                 BatchId = d.BatchId,
-                 CreatedAt = now,
-                 Reason = detail.Reason ?? "DefectiveGood",  // ✅ Lấy từ ReturnRequestDetail
-                 Status = "Return"
-             };
-         })
-         .ToList();
-            // 6) Lưu vào bảng DamagedStock
-            await _damagedRepo.AddRangeAsync(damagedStocks);
-
-            // 7) Cập nhật trạng thái phiếu nhập trả hàng
-            await _returnWarehouseReceiptRepo.UpdateStatusAsync(warehouseReceiptId, "Imported");
-
-            // 8) Cập nhật trạng thái ReturnRequest thành Completed
-            await _returnRepo.UpdateStatusAsync(receipt.ReturnRequestId, "Completed");
-
-            var request = await _returnRepo.GetByIdWithDetailsAsync(receipt.ReturnRequestId);
-            if (request == null)
-                throw new Exception("Không tìm thấy yêu cầu trả hàng.");
-
-            var order = await _orderRepo.GetOrderByIdAsync(request.OrderId);
-            if (order == null)
-                throw new Exception("Không tìm thấy đơn hàng.");
-
-
-            // 9) Gửi email thông báo tới người tạo phiếu
-            var managerEmail = user.Email;
-            var warehouseName = receipt.Warehouse.WarehouseName;
-            await _emailService.SendDamagedStockNotificationEmailAsync(
-                managerEmail,
-                warehouseName,
-                damagedStocks
-            );
-
-            // 🔔 Gửi thông báo đến đại lý
-            var agencyUserId = order.RequestProduct?.AgencyAccount?.User?.UserId;
-
-            if (agencyUserId != null)
-            {
-                string message = $"📦 Yêu cầu trả hàng cho đơn {order.OrderCode} đã được tiếp nhận và nhập kho.";
-
-                // Gửi SignalR đến đại lý
-                await _hub.Clients.User(agencyUserId.Value.ToString()).SendAsync("ReceiveNotification", new
-                {
-                    title = "ReturnAgency",
-                    message,
-                    payload = receipt.ReturnWarehouseReceiptId
-                });
-
-                // Lưu thông báo vào DB
-                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-                var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
-
-                var notification = new Notification
-                {
-                    UserId = agencyUserId.Value,
-                    Title = "Hoàn tất yêu cầu trả hàng",
-                    Message = message,
-                    Url = $"/agency/return-order",
-                    CreatedAt = vietnamNow
-                };
-
-                await _notificationRepository.AddAsync(notification);
-                await _notificationRepository.SaveChangesAsync();
-            }
-
-        }*/
 
         public async Task ImportToDamagedStockAsync(long warehouseReceiptId, Guid warehouseUserId)
         {
@@ -192,6 +85,7 @@ namespace Services.Service
             foreach (var d in receipt.Details)
             {
                 var detail = returnReceipt.Details.FirstOrDefault(rd => rd.ProductId == d.ProductId);
+                
                 if (detail == null)
                     throw new Exception($"Không tìm thấy chi tiết trả hàng cho sản phẩm {d.ProductId}");
 
@@ -209,7 +103,8 @@ namespace Services.Service
                     BatchId = d.BatchId,
                     CreatedAt = now,
                     Reason = detail.Reason ?? "DefectiveGood",
-                    Status = "Return"
+                    Status = "Return",
+                    ReturnRequestId = receipt.ReturnRequestId
                 });
             }
 
@@ -261,7 +156,80 @@ namespace Services.Service
 
         public async Task<IEnumerable<GetDamagedStockDto>> GetByUserWarehouseAsync(Guid userId)
         {
-            return await _damagedRepo.GetByUserWarehouseAsync(userId);
+            // 1. Lấy damagedStocks
+            var damagedStocks = await _damagedRepo.GetDamagedStockByUserAsync(userId);
+            if (damagedStocks == null || !damagedStocks.Any())
+                throw new KeyNotFoundException("Không tìm thấy dữ liệu damaged stock cho user này.");
+
+            var batchIds = damagedStocks
+                .Select(ds => ds.BatchId)
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .Distinct()
+                .ToList();
+
+            var batches = await _batchRepository.GetListBatchesByIdsAsync(batchIds) ?? new List<Batch>();
+
+            if (batches.Any(b => b == null))
+                throw new Exception("Có phần tử batch bị null trong danh sách batches!");
+
+            var batchDict = batches
+                .Where(b => b.BatchId != null && b.BatchCode != null)
+                .ToDictionary(b => b.BatchId, b => b.BatchCode);
+
+
+            // 3. Lấy returnRequestDict
+            var returnRequestIds = damagedStocks
+                .Select(ds => ds.ReturnRequestId)
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .Distinct()
+                .ToList();
+            var returnRequests = await _returnRepo.GetListByIdsAsync(returnRequestIds);
+            var returnRequestDict = returnRequests.ToDictionary(r => r.ReturnRequestId, r => r);
+
+            // 4. Lấy orderDict
+            var orderIds = returnRequests
+                .Where(r => r.OrderId != null)
+                .Select(r => r.OrderId)
+                .Distinct()
+                .ToList();
+            var orders = await _orderRepo.GetListByIdsAsync(orderIds);
+            var orderDict = orders.ToDictionary(o => o.OrderId, o => o.OrderCode);
+
+            // 5. Map ra DTO
+            return damagedStocks.Select(ds => {
+                // Xử lý batchCode
+                string batchCode = ds.BatchId.HasValue && batchDict.ContainsKey(ds.BatchId.Value)
+                    ? batchDict[ds.BatchId.Value]
+                    : null;
+
+                // Xử lý orderCode
+                string orderCode = null;
+                if (ds.ReturnRequestId.HasValue && returnRequestDict.ContainsKey(ds.ReturnRequestId.Value))
+                {
+                    var returnRequest = returnRequestDict[ds.ReturnRequestId.Value];
+                    if (returnRequest.OrderId != null && orderDict.ContainsKey(returnRequest.OrderId))
+                    {
+                        orderCode = orderDict[returnRequest.OrderId];
+                    }
+                }
+
+                return new GetDamagedStockDto
+                {
+                    DamagedStockId = ds.DamagedStockId,
+                    WarehouseId = ds.WarehouseId,
+                    WarehouseName = ds.Warehouse?.WarehouseName,
+                    ProductId = ds.ProductId,
+                    ProductName = ds.Product?.ProductName,
+                    Quantity = ds.Quantity,
+                    CreatedAt = ds.CreatedAt,
+                    Reason = ds.Reason,
+                    Status = ds.Status,
+                    BatchCode = batchCode,
+                    OrderCode = orderCode
+                };
+            });
         }
 
         public async Task<object> GetTotalByStatusAndDateAsync(DateTime? startDate, DateTime? endDate)

@@ -1076,42 +1076,6 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DamagedStock",
-                columns: table => new
-                {
-                    DamagedStockId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
-                    ProductId = table.Column<long>(type: "bigint", nullable: false),
-                    BatchId = table.Column<long>(type: "bigint", nullable: true),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DamagedStock", x => x.DamagedStockId);
-                    table.ForeignKey(
-                        name: "FK_DamagedStock_Batch_BatchId",
-                        column: x => x.BatchId,
-                        principalTable: "Batch",
-                        principalColumn: "BatchId");
-                    table.ForeignKey(
-                        name: "FK_DamagedStock_Product_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Product",
-                        principalColumn: "ProductId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_DamagedStock_Warehouse_WarehouseId",
-                        column: x => x.WarehouseId,
-                        principalTable: "Warehouse",
-                        principalColumn: "WarehouseId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TemporaryStockExport",
                 columns: table => new
                 {
@@ -1357,6 +1321,49 @@ namespace DataAccessLayer.Migrations
                         principalTable: "RequestExport",
                         principalColumn: "RequestExportId",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DamagedStock",
+                columns: table => new
+                {
+                    DamagedStockId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WarehouseId = table.Column<long>(type: "bigint", nullable: false),
+                    ProductId = table.Column<long>(type: "bigint", nullable: false),
+                    BatchId = table.Column<long>(type: "bigint", nullable: true),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ReturnRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DamagedStock", x => x.DamagedStockId);
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_Batch_BatchId",
+                        column: x => x.BatchId,
+                        principalTable: "Batch",
+                        principalColumn: "BatchId");
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_ReturnRequest_ReturnRequestId",
+                        column: x => x.ReturnRequestId,
+                        principalTable: "ReturnRequest",
+                        principalColumn: "ReturnRequestId",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_DamagedStock_Warehouse_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouse",
+                        principalColumn: "WarehouseId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1718,6 +1725,11 @@ namespace DataAccessLayer.Migrations
                 name: "IX_DamagedStock_ProductId",
                 table: "DamagedStock",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DamagedStock_ReturnRequestId",
+                table: "DamagedStock",
+                column: "ReturnRequestId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DamagedStock_WarehouseId",

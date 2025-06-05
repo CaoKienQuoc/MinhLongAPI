@@ -17,5 +17,7 @@ namespace BusinessObject.DTO
         public DateTime CreatedAt { get; set; }
         public string Reason { get; set; }
         public string Status { get; set; }
+        public string? OrderCode { get; set; }
+        public string? BatchCode { get; set; }
     }
 }

@@ -55,6 +55,6 @@ namespace Repo.IRepository
 
         Task<decimal?> GetUnitPriceAsync(Guid orderId, long productId);
 
-
+        Task<List<Order>> GetListByIdsAsync(List<Guid> orderIds);
     }
 }

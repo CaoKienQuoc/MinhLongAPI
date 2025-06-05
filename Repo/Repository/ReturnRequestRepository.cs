@@ -259,6 +259,12 @@ namespace Repo.Repository
             return request; // ✅ Trả về request sau khi cập nhật
         }
 
+        public async Task<List<ReturnRequest>> GetListByIdsAsync(List<Guid> returnRequestIds)
+        {
+            return await _context.ReturnRequests
+                .Where(r => returnRequestIds.Contains(r.ReturnRequestId))
+                .ToListAsync();
+        }
     }
 
 }

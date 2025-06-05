@@ -320,8 +320,14 @@ namespace Services.Service
                 // B2. Kiểm tra đã có PaymentHistory cho đơn này chưa
                 var existingHistory = await _paymentRepository.GetPaymentHistoryByOrderIdAsync(order.OrderId);
 
+
                 if (existingHistory != null)
                 {
+                    if (existingHistory.Status == "CANCELLED")
+                    {
+                        throw new InvalidOperationException("Đơn hàng này đã bị huỷ, không thể cập nhật thanh toán.");
+                        // Hoặc return StatusPayment nếu muốn custom logic API
+                    }
                     // Cộng dồn tiền thanh toán
                     existingHistory.PaymentAmount += paidAmount;
 
@@ -413,77 +419,6 @@ namespace Services.Service
                 await _paymentRepository.InsertPaymentTransactionAsync(transaction);
                 //order.Status = "Paid";
                 await _paymentRepository.SaveChangesAsync();
-
-                /*// ✅ Nếu thanh toán đủ & đúng hạn => Cộng điểm
-                if (existingHistory.Status == "PAID")
-                {
-                    var reason = "Thanh toán đơn hàng đúng hạn";
-                    var existingScore = await _agencyScoreRepository.GetByAgencyIdAndReasonAsync(agency.AgencyId, reason);
-
-                    if (existingScore != null)
-                    {
-                        // ✅ Cập nhật điểm nếu đã có bản ghi
-                        existingScore.ScoreChange += 5;
-                        existingScore.CreatedDate = transaction.PaymentDate;
-                        await _agencyScoreRepository.UpdateAsync(existingScore);
-                    }
-                    else
-                    {
-                        // ✅ Thêm mới nếu chưa có
-                        var scoreEntry = new AgencyScoreHistory
-                        {
-                            AgencyId = agency.AgencyId,
-                            ScoreChange = 5,
-                            Reason = "Thanh toán đơn hàng đúng hạn",
-                            CreatedDate = transaction.PaymentDate
-                        };
-                        await _agencyScoreRepository.AddScoreAsync(scoreEntry);
-                    }
-
-                    await _agencyScoreRepository.SaveChangesAsync();
-
-
-                    var totalScore = await _agencyScoreRepository.GetTotalScoreByAgencyIdAsync(agency.AgencyId);
-                    var currentLevel = await _agencyLevelRepository.GetCurrentLevelByAgencyIdAsync(agency.AgencyId);
-
-                    if (currentLevel == 3 && totalScore >= 1000)
-                    {
-                        bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 2);
-                        if (!exists)
-                        {
-                            var promotionRequest = new AgencyPromotionRequest
-                            {
-                                AgencyId = agency.AgencyId,
-                                CurrentLevelId = 3,
-                                SuggestedLevelId = 2,
-                                TotalScore = totalScore,
-                                Status = "Pending",
-                                CreatedAt = DateTime.UtcNow
-                            };
-                            await _agencyPromotionRepository.AddAsync(promotionRequest);
-                            await _agencyPromotionRepository.SaveChangesAsync();
-                        }
-                    }
-                    else if (currentLevel == 2 && totalScore >= 5000)
-                    {
-                        bool exists = await _agencyPromotionRepository.HasPendingRequestAsync(agency.AgencyId, 1);
-                        if (!exists)
-                        {
-                            var promotionRequest = new AgencyPromotionRequest
-                            {
-                                AgencyId = agency.AgencyId,
-                                CurrentLevelId = 2,
-                                SuggestedLevelId = 1,
-                                TotalScore = totalScore,
-                                Status = "Pending",
-                                CreatedAt = DateTime.UtcNow
-                            };
-                            await _agencyPromotionRepository.AddAsync(promotionRequest);
-                            await _agencyPromotionRepository.SaveChangesAsync();
-                        }
-                    }
-                }*/
-
 
                 if (existingHistory.Status == "PAID")
                 {

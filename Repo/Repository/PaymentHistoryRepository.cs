@@ -120,6 +120,23 @@ namespace Repo.Repository
                 .Where(p => p.UserId == userId)
                 .SumAsync(p => p.RemainingDebtAmount);
         }
+        public async Task<PaymentHistory> GetPaymentHistoryByOrderIdAsync(Guid orderId)
+        {
+            return await _context.PaymentHistories
+                .Include(ph => ph.PaymentTransactions) // nếu muốn lấy luôn các transaction liên quan
+                .FirstOrDefaultAsync(ph => ph.OrderId == orderId);
+        }
+        public async Task SetPaymentHistoryStatusByIdAsync(Guid paymentHistoryId, string status)
+        {
+            var paymentHistory = await _context.PaymentHistories
+                .FirstOrDefaultAsync(ph => ph.PaymentHistoryId == paymentHistoryId);
+
+            if (paymentHistory != null)
+            {
+                paymentHistory.Status = status;
+                paymentHistory.UpdatedAt = DateTime.Now; // Nếu có trường này
+            }
+        }
 
     }
 }

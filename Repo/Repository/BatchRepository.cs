@@ -21,6 +21,14 @@ namespace Repo.Repository
             _context = context;
         }
 
+        public async Task<List<Batch>> GetListBatchesByIdsAsync(List<long> batchIds)
+        {
+            return await _context.Batches
+                .Where(b => batchIds.Contains(b.BatchId))
+                .ToListAsync();
+        }
+
+
         public async Task<Dictionary<long, decimal>> GetHighestSellingPricesByProductIdsAsync(List<long> productIds)
         {
             return await _context.Batches

@@ -24,7 +24,8 @@ namespace Repo.IRepository
         Task<decimal> GetPaymentAmountByDateAsync(Guid userId, DateTime date);
         Task<decimal> GetPaymentAmountByMonthAsync(Guid userId, int year, int month);
         Task<decimal> GetRemainingDebtByUserIdAsync(Guid userId);
-
+        Task<PaymentHistory> GetPaymentHistoryByOrderIdAsync(Guid orderId);
+        Task SetPaymentHistoryStatusByIdAsync(Guid paymentHistoryId, string status);
     }
 
 }

@@ -456,6 +456,9 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ReturnRequestId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -468,6 +471,8 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("BatchId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("ReturnRequestId");
 
                     b.HasIndex("WarehouseId");
 
@@ -2362,6 +2367,11 @@ namespace DataAccessLayer.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BusinessObject.Models.ReturnRequest", "ReturnRequest")
+                        .WithMany("DamagedStocks")
+                        .HasForeignKey("ReturnRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("BusinessObject.Models.Warehouse", "Warehouse")
                         .WithMany()
                         .HasForeignKey("WarehouseId")
@@ -2371,6 +2381,8 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Batch");
 
                     b.Navigation("Product");
+
+                    b.Navigation("ReturnRequest");
 
                     b.Navigation("Warehouse");
                 });
@@ -3202,6 +3214,8 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("BusinessObject.Models.ReturnRequest", b =>
                 {
+                    b.Navigation("DamagedStocks");
+
                     b.Navigation("Details");
 
                     b.Navigation("Images");
