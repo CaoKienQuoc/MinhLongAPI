@@ -23,7 +23,7 @@ namespace BusinessObject.Models
 
         // ✅ Ngày tạo bản ghi
         [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
 
         // ✅ Người tạo phiếu (userId)
         [Required]
