@@ -211,9 +211,11 @@ namespace MLHR.Controllers
         }
 
 
-        [HttpGet("get-info-user/{userId}")]
-        public async Task<IActionResult> GetById(Guid userId)
+        [HttpGet("get-info-user")]
+        public async Task<IActionResult> GetById()
         {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+
             var userDto = await _userService.GetAgencyUserByIdAsync(userId);
             return Ok(userDto);
         }
