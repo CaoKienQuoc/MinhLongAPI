@@ -62,7 +62,7 @@ namespace Services.Service
             // ✅ Tạo phiếu xuất kho điều phối từ kho phụ
             var exportReceipt = new ExportWarehouseReceipt
             {
-                DocumentNumber = $"PXK-DP-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
+                DocumentNumber = $"PXKDP{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
                 DocumentDate = GetVietnamTime(),
                 ExportDate = GetVietnamTime(),
                 ExportType = "ExportCoordination",

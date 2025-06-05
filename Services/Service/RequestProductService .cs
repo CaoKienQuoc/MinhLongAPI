@@ -1,25 +1,26 @@
-﻿using System;
+﻿using BusinessObject.DTO;
+using BusinessObject.DTO.Order;
+using BusinessObject.DTO.Product;
+using BusinessObject.DTO.RequestExport;
+using BusinessObject.Models;
+using DataAccessLayer;
+using MailKit.Search;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Repo.IRepository;
+using Repo.Repository;
+using Services.Exceptions;
+using Services.IService;
+using SkiaSharp;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BusinessObject.DTO;
-using BusinessObject.Models;
-using DataAccessLayer;
-using Microsoft.EntityFrameworkCore;
-using Repo.IRepository;
-using Services.IService;
-using System.Linq;
-using Repo.Repository;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Services.Exceptions;
-using MailKit.Search;
-using Microsoft.AspNetCore.SignalR;
-using SkiaSharp;
-using System.Diagnostics;
-using BusinessObject.DTO.RequestExport;
-using BusinessObject.DTO.Product;
-using BusinessObject.DTO.Order;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Services.Service
 {
@@ -142,12 +143,12 @@ namespace Services.Service
         // ✅ Phiên bản hoàn chỉnh: xử lý cộng dồn đơn hàng và kho tạm đúng logic
         public async Task CreateRequestAsync(RequestProduct requestProduct, List<RequestProductDetail> requestDetails, Guid userId)
         {
-
+            var random = new Random();
             // ✅ Sử dụng TimeZoneInfo để đảm bảo chính xác
             TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
 
-            string requestCode = await _requestProductRepository.GenerateRequestCodeAsync();
+            string requestCode = $"RQ{DateTime.Now.Ticks}-{random.Next(1000, 9999)}";
 
             if (requestDetails == null || !requestDetails.Any())
                 throw new ArgumentException("Danh sách sản phẩm không được rỗng.");
@@ -259,10 +260,11 @@ namespace Services.Service
 
         public async Task ProcessOrderCreationAsync(Guid requestId)
         {
+            var random = new Random();
             TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
 
-            string requestOrderCode = await _requestProductRepository.GenerateOrderCodeAsync();
+            string requestOrderCode = $"ORD{DateTime.Now.Ticks}-{random.Next(1000, 9999)}";
             var requestProduct = await _requestProductRepository.GetRequestByIdAsync(requestId);
             if (requestProduct == null)
                 throw new Exception("Request not found!");

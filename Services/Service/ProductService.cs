@@ -103,7 +103,7 @@ namespace Services.Service
             var random = new Random();
             var product = new Product
             {
-                ProductCode = $"SP-{DateTime.Now.Ticks}-{random.Next(1000, 9999)}",
+                ProductCode = $"SP{DateTime.Now.Ticks}-{random.Next(1000, 9999)}",
                 ProductName = model.ProductName,
                 Unit = model.Unit,
                 DefaultExpiration = model.DefaultExpiration,

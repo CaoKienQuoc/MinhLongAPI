@@ -99,7 +99,7 @@ namespace Services.Service
             }
             else // ImportProduction
             {
-                string batchCode = $"BA-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
+                string batchCode = $"BA{DateTime.Now.Ticks}-{random.Next(1000, 9999)}";
 
                 var groupedBatches = request.Batches
                         .GroupBy(b => new
@@ -187,11 +187,11 @@ namespace Services.Service
             string documentNumber;
             if (request.ImportType == "ImportCoordination")
             {
-                documentNumber = $"IMP-TF-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
+                documentNumber = $"NDP{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
             }
             else if (request.ImportType == "ImportProduction")
             {
-                documentNumber = $"IMP-NEW-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
+                documentNumber = $"NM{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}";
             }
             else
             {

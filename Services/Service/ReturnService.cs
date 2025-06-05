@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BusinessObject.DTO.Dashboard;
+﻿using BusinessObject.DTO.Dashboard;
 using BusinessObject.DTO.Product;
 using BusinessObject.DTO.ReturnOrder;
 using BusinessObject.Models;
@@ -13,6 +7,13 @@ using Microsoft.AspNetCore.SignalR;
 using Repo.IRepository;
 using Repo.Repository;
 using Services.IService;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Services.Service
 {
@@ -90,82 +91,6 @@ namespace Services.Service
                 .ToLowerInvariant();
         }
 
-        /*public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(
-    Guid orderId,
-    List<(Guid orderDetailId, int quantity, string reason)> itemDetails,
-    Guid userId,
-    List<IFormFile> images)
-        {
-            var order = await _orderRepo.GetOrderByIdAsync(orderId);
-            if (order == null)
-                throw new Exception("Không tìm thấy đơn hàng.");
-
-            if (!string.Equals(order.Status, "Exported", StringComparison.OrdinalIgnoreCase))
-                throw new Exception("Chỉ được phép tạo yêu cầu trả hàng cho đơn hàng đã xuất.");
-
-            var exportReceipt = await _warehouseExportRepo.GetExportSaleByOrderIdAsync(orderId);
-            if (exportReceipt == null)
-                throw new Exception("Không tìm thấy phiếu xuất kho bán tương ứng.");
-
-            // ✅ Kiểm tra nếu ngày xuất quá 30 ngày thì không cho tạo yêu cầu
-            var exportDate = exportReceipt.ExportDate;
-            var nowVN = GetVietnamTime();
-            var daysDiff = (nowVN.Date - exportDate.Date).TotalDays;
-
-            if (daysDiff > 30)
-                throw new Exception("Đơn hàng đã được xuất quá 30 ngày, không thể tạo yêu cầu trả hàng.");
-
-
-            string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
-
-            var returnRequest = new ReturnRequest
-            {
-                OrderId = orderId,
-                CreatedByUserId = userId,
-                Status = "Pending",
-                ReturnRequestCode = returnRequestCode,
-                CreatedAt = GetVietnamTime(),
-                Details = new List<ReturnRequestDetail>()
-            };
-
-            foreach (var (orderDetailId, quantity, reason) in itemDetails)
-            {
-                // Chuẩn hóa reason ngay tại đây
-                var normalizedReason = NormalizeString(reason);
-
-                var orderDetail = await _orderRepo.GetOrderDetailByIdAsync(orderDetailId);
-                if (orderDetail == null) throw new Exception($"Không tìm thấy OrderDetail {orderDetailId}");
-
-                long productId = orderDetail.ProductId;
-
-                int totalReturned = await _returnRepo.GetTotalReturnedQuantityAsync(orderDetailId);
-                int availableQuantity = orderDetail.Quantity - totalReturned;
-
-                if (quantity > availableQuantity)
-                    throw new Exception($"Số lượng trả vượt quá giới hạn cho OrderDetail {orderDetailId}. Có thể trả: {availableQuantity}");
-
-                returnRequest.Details.Add(new ReturnRequestDetail
-                {
-                    OrderDetailId = orderDetailId,
-                    ProductId = productId,
-                    QuantityReturned = quantity,
-                    Reason = normalizedReason
-                });
-            }
-
-            var savedRequest = await _returnRepo.CreateAsync(returnRequest);
-
-
-            // ✅ Upload ảnh cho toàn bộ ReturnRequest (không còn liên quan đến từng detail)
-            if (images != null && images.Count > 0)
-            {
-                var imageModel = new ImageModel { Files = images };
-                var uploadedImages = await _imageService.UploadReturnImagesAsync(imageModel, savedRequest.ReturnRequestId); // << change here
-                //await _returnRepo.AddRangeAsync(uploadedImages);
-            }
-
-            return savedRequest;
-        }*/
 
         public async Task<ReturnRequest> CreateReturnRequestWithImagesAsync(
     Guid orderId,
@@ -173,6 +98,7 @@ namespace Services.Service
     Guid userId,
     List<IFormFile> images)
         {
+            var random = new Random();
             var order = await _orderRepo.GetOrderByIdAsync(orderId);
             if (order == null)
                 throw new Exception("Không tìm thấy đơn hàng.");
@@ -200,7 +126,7 @@ namespace Services.Service
                 existingReturn.Status == "Completed" ||
                 existingReturn.Status == "Rejected")
             {
-                string returnRequestCode = await _returnRepo.GenerateRequestReturnCodeAsync();
+                string returnRequestCode = $"RT{DateTime.Now.Ticks}-{random.Next(1000, 9999)}";
                 returnRequest = new ReturnRequest
                 {
                     OrderId = orderId,
@@ -320,7 +246,8 @@ namespace Services.Service
 
         public async Task ApproveReturnRequestAsync(Guid returnRequestId, Guid userId)
         {
-            string returnWarehouseCode = await _returnRepo.GenerateWarehouseReturnCodeAsync();
+            var random = new Random();
+            string returnWarehouseCode = $"WR{DateTime.Now.Ticks}-{random.Next(1000, 9999)}";
             // —————— 0) Validate user là Sale (Employee) ——————
             if (!await _employeeRepo.ExistsAsync(userId))
                 throw new UnauthorizedAccessException("Bạn không phải Sale.");

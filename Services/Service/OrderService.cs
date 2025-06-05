@@ -13,6 +13,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Services.Service
 {
@@ -214,11 +215,12 @@ namespace Services.Service
 
         public async Task<bool> ProcessPaymentAsync(Guid orderId)
         {
+            var random = new Random();
             try
             {
                 // ✅ Lấy Order từ OrderId
                 var order = await _orderRepository.GetOrderByIdAsync(orderId);
-                string requestExportCode = await _orderRepository.GenerateRequestExportCodeAsync();
+                string requestExportCode = $"RQE{DateTime.Now.Ticks}-{random.Next(1000, 9999)}";
                 if (order == null || order.Status != "WaitPaid")
                     throw new Exception("Order not found or is not in a valid state.");
 

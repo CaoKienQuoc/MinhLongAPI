@@ -143,7 +143,7 @@ namespace Services.Service
 
                 var receipt = new ExportWarehouseReceipt
                 {
-                    DocumentNumber = $"PXK-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
+                    DocumentNumber = $"PXK{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
                     DocumentDate = GetVietnamTime(),
                     ExportDate = GetVietnamTime(),
                     ExportType = "AvailableExport",
@@ -212,7 +212,7 @@ namespace Services.Service
                             Status = "Pending",
                             RequestDate = GetVietnamTime(),
                             Notes = $"Điều Phối Đơn Hàng {order.OrderCode}",
-                            TranferRequestCode = $"PDP-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
+                            TranferRequestCode = $"PDP{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
                             TransferProducts = new List<WarehouseTransferProduct>()
                         };
                         transferRequests.Add(existing);
@@ -229,7 +229,7 @@ namespace Services.Service
 
             var transferReceipt = new ExportWarehouseReceipt
             {
-                DocumentNumber = $"PXK-{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
+                DocumentNumber = $"PXK{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
                 DocumentDate = GetVietnamTime(),
                 ExportDate = GetVietnamTime(),
                 ExportType = "PendingTransfer",
