@@ -35,6 +35,7 @@ namespace Services.Service
         private readonly IRequestProductRepository _requestProductRepository;
         private readonly IEmailService _emailService;
         private readonly IWarehouseReceiptRepository _receiptRepo;
+        private readonly IInventoryService _inventoryService;
 
         public WarehouseExportService(
             ITemporaryWarehouseExportRepository tempExportRepo,
@@ -50,7 +51,8 @@ namespace Services.Service
             IBatchRepository batchRepository,
                 IRequestProductRepository requestProductRepository,
                 IEmailService emailService,
-                IWarehouseReceiptRepository receiptRepo)
+                IWarehouseReceiptRepository receiptRepo,
+                IInventoryService inventoryService)
         {
             _tempExportRepo = tempExportRepo;
             _transferRepo = transferRepo;
@@ -66,6 +68,7 @@ namespace Services.Service
             _requestProductRepository = requestProductRepository;
             _emailService = emailService;
             _receiptRepo = receiptRepo;
+            _inventoryService = inventoryService;
         }
 
         public DateTime GetVietnamTime()
@@ -974,6 +977,7 @@ namespace Services.Service
             warehouseRequestExport.Status = "Canceled";
             warehouseRequestExport.Reason = reason; // Lưu lý do hủy
 
+            await _inventoryService.RollbackStockForCancelledOrderAsync(order.OrderId);
 
             // 5. Update
             await _requestExportRepository.UpdateExportAsync(requestExport);
