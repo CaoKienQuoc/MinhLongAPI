@@ -19,7 +19,7 @@ namespace BusinessObject.Models
         public string ReturnRequestCode { get; set; } // mã yêu cầu trả hàng
 
         [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
 
         [Required]
         public string Status { get; set; } // Pending, Approved, Rejected, Imported

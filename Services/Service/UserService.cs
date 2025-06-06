@@ -41,11 +41,12 @@ namespace Services.Service
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRefreshTokenRepository _refreshTokenRepo;
         private readonly ILogger<UserService> _logger;
+        private readonly IEmailService _emailService;
 
         public UserService(IUserRepository userRepository, JwtService jwtService, IEmailService mailService, 
             IAgencyAccountRepository agencyAccountRepository, IAgencyAccountLevelRepository agencyAccountLevelRepository, 
             IAgencyLevelRepository agencyLevelRepository, IContractService contractService, IContractRepository contractRepository,
-            IHubContext<NotificationHub> hub, INotificationRepository notificationRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor,IRefreshTokenRepository refreshTokenRepository, ILogger<UserService> logger)
+            IHubContext<NotificationHub> hub, INotificationRepository notificationRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor,IRefreshTokenRepository refreshTokenRepository, ILogger<UserService> logger, IEmailService emailService)
         {
             _userRepository = userRepository;
             _jwtService = jwtService;
@@ -61,6 +62,7 @@ namespace Services.Service
             _httpContextAccessor = httpContextAccessor;
             _refreshTokenRepo = refreshTokenRepository;
             _logger = logger;
+            _emailService = emailService;
         }
 
 
@@ -344,8 +346,8 @@ namespace Services.Service
 
             var createdRegister = await _userRepository.RegisterUserRequestAsync(registerAccount);
 
-            // ✅ Bước 2: Nếu là AGENCY và có ContractFiles => upload và lưu
-            if (request.UserType == "AGENCY")
+            // ✅ Bước 2: Nếu là AGENCY và EMPLOYEE và có ContractFiles => upload và lưu
+            if (request.UserType == "AGENCY" || request.UserType == "EMPLOYEE")
             {
                 if (request.ContractFiles != null && request.ContractFiles.Any())
                 {
@@ -952,8 +954,20 @@ namespace Services.Service
                 await _userRepository.UpdateRegisterAsync(registerUser);
                 await _userRepository.SaveAsync();
             }
+
+            // Xác định tên hiển thị dựa theo UserType
+            string displayName = registerUser.UserType == "EMPLOYEE"
+                ? registerUser.FullName
+                : registerUser.AgencyName;
+
+            await _emailService.SendAccountCancelNotificationEmailAsync(
+                registerUser.Email,
+                displayName
+            );
+
             return true;
         }
+
 
         public async Task<(bool IsSuccess, string Message)> UnActiveUser(Guid userId)
         {

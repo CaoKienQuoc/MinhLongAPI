@@ -121,6 +121,11 @@ namespace Services.Service
             ReturnRequest returnRequest;
             bool isNewRequest = false;
 
+            //them code chỗ này
+            var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+
+
             if (existingReturn == null ||
                 existingReturn.Status == "Approved" ||
                 existingReturn.Status == "Completed" ||
@@ -133,7 +138,7 @@ namespace Services.Service
                     CreatedByUserId = userId,
                     Status = "Pending",
                     ReturnRequestCode = returnRequestCode,
-                    CreatedAt = GetVietnamTime(),
+                    CreatedAt = now,
                     Details = new List<ReturnRequestDetail>()
                 };
                 isNewRequest = true;
@@ -276,17 +281,21 @@ namespace Services.Service
             // ✅ Cập nhật trạng thái yêu cầu trả hàng
             request.Status = "Approved";
 
+            var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+
+
             // ✅ Tạo phiếu nhập kho hủy
             var receipt = new ReturnWarehouseReceipt
             {
                 ReturnRequestId = request.ReturnRequestId,
                 ReceiptCode = returnWarehouseCode,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = now,
                 CreatedBy = request.CreatedByUserId,
                 ApprovedBy = userId,
                 WarehouseId = warehouseId,
                 //Note = request.Note,
-                ReceiptDate = DateTime.UtcNow,
+                ReceiptDate = now,
                 Status = "Pending"
             };
 
@@ -375,8 +384,10 @@ namespace Services.Service
             requestWarehouse.Status = "Rejected";
             requestWarehouse.Reason = rejectReason;
             requestReturn.Status = "Rejected"; // Cập nhật trạng thái yêu cầu trả hàng
-            requestReturn.RejectedAt = DateTime.Now;
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            requestReturn.RejectedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
             requestReturn.RejectedBy = userId; // Ghi lại người từ chối
+            requestReturn.Reason = rejectReason;
 
             await _returnRepo.UpdateAsync(requestReturn);
             await _returnRepo.UpdateReturnWarehouseAsync(requestWarehouse);
@@ -423,7 +434,8 @@ namespace Services.Service
                 ?? throw new Exception("Không tìm thấy yêu cầu sản phẩm liên quan.");
 
             request.Status = "Rejected";
-            request.RejectedAt = DateTime.UtcNow;
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            request.RejectedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
             request.RejectedBy = userId;
             request.Reason = rejectReason;
 

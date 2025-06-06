@@ -716,7 +716,7 @@ namespace Services.Service
                     Year = g.Key.Year,
                     TotalExports = g.Count(),
                     TotalQuantity = g.Sum(x => x.TotalQuantity),
-                    TotalAmount = g.Sum(x => x.TotalAmount)
+                    TotalAmount = g.Sum(x => x.FinalPrice)
                 })
                 .OrderBy(d => d.Date)
                 .ToList();
@@ -726,7 +726,7 @@ namespace Services.Service
                 DailySummaries = groupedByDate,
                 TotalExports = filteredExports.Count,
                 TotalQuantity = filteredExports.Sum(x => x.TotalQuantity),
-                TotalAmount = filteredExports.Sum(x => x.TotalAmount)
+                TotalAmount = filteredExports.Sum(x => x.FinalPrice)
             };
         }
 
@@ -746,7 +746,7 @@ namespace Services.Service
             .ToList();
 
                 decimal importCost = importData.Sum(r => r.TotalPrice);
-                decimal exportRevenue = exportData.Sum(r => r.TotalAmount);
+                decimal exportRevenue = exportData.Sum(r => r.FinalPrice);
                 decimal returnAmount = damagedData
             .Where(x => x.Status == "Return")
             .Sum(x => (x.Batch?.SellingPrice ?? 0) * x.Quantity);
@@ -786,7 +786,7 @@ namespace Services.Service
                 for (int m = 1; m <= 12; m++)
                 {
                     decimal importCost = importData.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalPrice);
-                    decimal exportRevenue = exportData.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalAmount);
+                    decimal exportRevenue = exportData.Where(r => r.DocumentDate.Month == m).Sum(r => r.FinalPrice);
 
                     var damagedInMonth = damagedData
                 .Where(x => x.CreatedAt.Month == m)
@@ -831,7 +831,7 @@ namespace Services.Service
         .ToList();
 
             decimal totalImportCost = importData.Sum(r => r.TotalPrice);
-            decimal totalExportRevenue = exportData.Sum(r => r.TotalAmount);
+            decimal totalExportRevenue = exportData.Sum(r => r.FinalPrice);
             decimal returnAmount = damagedData
         .Where(x => x.Status == "Return")
         .Sum(x => (x.Batch?.SellingPrice ?? 0) * x.Quantity);
@@ -877,7 +877,7 @@ namespace Services.Service
                     Year = g.Key.Year,
                     TotalExports = g.Count(),
                     TotalQuantity = g.Sum(x => x.TotalQuantity),
-                    TotalAmount = g.Sum(x => x.TotalAmount)
+                    TotalAmount = g.Sum(x => x.FinalPrice)
                 })
                 .OrderBy(d => d.Date)
                 .ToList();
@@ -887,7 +887,7 @@ namespace Services.Service
                 DailySummaries = groupedByDate,
                 TotalExports = filteredExports.Count,
                 TotalQuantity = filteredExports.Sum(x => x.TotalQuantity),
-                TotalAmount = filteredExports.Sum(x => x.TotalAmount)
+                TotalAmount = filteredExports.Sum(x => x.FinalPrice)
             };
         }
 
@@ -964,7 +964,7 @@ namespace Services.Service
 
 
                 decimal importCost = importInMonth.Sum(r => r.TotalPrice);
-                decimal exportRevenue = exportInMonth.Sum(r => r.TotalAmount);
+                decimal exportRevenue = exportInMonth.Sum(r => r.FinalPrice);
                 decimal netRevenue = exportRevenue - returnAmount - cancelAmount;
                 decimal profit = netRevenue - importCost;
                 decimal percent = netRevenue > 0 ? (profit / netRevenue) * 100 : 0;
@@ -988,7 +988,7 @@ namespace Services.Service
                 for (int m = 1; m <= 12; m++)
                 {
                     var importCost = allImports.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalPrice);
-                    var exportRevenue = allExports.Where(r => r.DocumentDate.Month == m).Sum(r => r.TotalAmount);
+                    var exportRevenue = allExports.Where(r => r.DocumentDate.Month == m).Sum(r => r.FinalPrice);
                     var damagedInMonth = allDamaged.Where(x => x.CreatedAt.Month == m).ToList();
 
                     decimal returnAmount = damagedInMonth

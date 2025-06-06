@@ -13,10 +13,13 @@ namespace BusinessObject.Models
         [Key]
         public long ContractId { get; set; }
 
-        [Required]
-        public long AgencyId { get; set; }
+        public long? AgencyId { get; set; }
         [ForeignKey("AgencyId")]
         public AgencyAccount AgencyAccount { get; set; }
+
+        public long? EmployeeId { get; set; }  // optional
+        [ForeignKey("EmployeeId")]
+        public Employee? Employee { get; set; }
 
         public string? FileName { get; set; }    // nullable
 

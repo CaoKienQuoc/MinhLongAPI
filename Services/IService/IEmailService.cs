@@ -17,6 +17,6 @@ namespace Services.IService
         Task<bool> SendDamagedStockNotificationEmailAsync(string toEmail,string warehouseName, decimal? totalAmount, IEnumerable<DamagedStock> items);
         Task<bool> SendOrderCancelNotificationEmailAsync(string toEmail,string customerName,string orderCode,decimal? refundAmount);
         Task<bool> SendReturnOrderCancelNotificationEmailAsync(string toEmail, string customerName, string returnRequestCode, string reason);
-
+        Task<bool> SendAccountCancelNotificationEmailAsync(string toEmail, string customerName);
     }
 }
