@@ -291,10 +291,11 @@ namespace Services.Service
         public async Task<bool> SendReturnOrderCancelNotificationEmailAsync(
     string toEmail,
     string customerName,
-    string returnRequestCode)
+    string returnRequestCode,
+    string reason)
         {
             // 1. Lấy template từ appsettings
-            var template = _configuration["EmailSetting:EmailOrderCancelTemplate"];
+            var template = _configuration["EmailSetting:EmailCanceledReturn"];
 
             
 
@@ -302,6 +303,7 @@ namespace Services.Service
             var body = template
                 .Replace("{CUSTOMER_NAME}", customerName)
                 .Replace("{ORDER_CODE}", returnRequestCode)
+                .Replace("{REASON}", reason) // Thay thế lý do huỷ đơn
                 .Replace("{PROJECT_NAME}", _configuration["Project_MinhLong:PROJECT_NAME"])
                 .Replace("{EMAIL_ADDRESS}", _configuration["Project_MinhLong:EMAIL_ADDRESS"])
                 .Replace("{PHONE_NUMBER}", _configuration["Project_MinhLong:PHONE_NUMBER"]);

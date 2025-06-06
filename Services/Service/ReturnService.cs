@@ -397,7 +397,8 @@ namespace Services.Service
             await _emailService.SendReturnOrderCancelNotificationEmailAsync(
                 customerEmail,
                 customerName,
-                requestReturn.ReturnRequestCode
+                requestReturn.ReturnRequestCode,
+                rejectReason
             );
         }
 
@@ -444,7 +445,8 @@ namespace Services.Service
             await _emailService.SendReturnOrderCancelNotificationEmailAsync(
                 customerEmail,
                 customerName,
-                request.ReturnRequestCode
+                request.ReturnRequestCode,
+                rejectReason
             );
         }
 
