@@ -202,6 +202,7 @@ namespace Services.Service
             var batches = await _batchRepository.GetBatchesByWarehouseIdAsync(warehouseId);
 
             return batches
+                .Where(b => b.Status != "CANCELED")
                 .OrderByDescending(b => b.BatchId) // 🛠️ Sort theo BatchId giảm dần
                 .Select(b => new BatchDisplayDto
                 {

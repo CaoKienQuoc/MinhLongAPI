@@ -183,7 +183,7 @@ namespace Services.Service
                         OrderDetailId = orderDetailId,
                         ProductId = productId,
                         QuantityReturned = quantity,
-                        Reason = normalizedReason
+                        Reason = reason
                     });
                 }
             }
