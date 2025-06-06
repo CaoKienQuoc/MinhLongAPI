@@ -260,10 +260,11 @@ namespace Services.Service
             await _warehouseProductRepo.SaveChangesAsync();
 
             // 3. Xoá các bản ghi trong bảng tạm theo OrderId
-            await _tempExportRepo.DeleteByOrderIdAsync(orderId);
+            //await _tempExportRepo.DeleteByOrderIdAsync(orderId);
+            await _tempExportRepo.SetIsRevertedTrueAsync(orderId);
+
             await _tempExportRepo.SaveChangesAsync();
 
-           
         }
 
     }
