@@ -105,7 +105,7 @@ namespace Services.Service
                 throw new InvalidOperationException("Không tìm thấy kho xuất tạm nào.");
 
             // ✅ Lấy giá bán cao nhất (SellingPrice) theo ProductId từ BatchRepository
-            var productIds = tempStockExports.Select(t => t.ProductId).Distinct().ToList();
+            //var productIds = tempStockExports.Select(t => t.ProductId).Distinct().ToList();
             //var batchPrices = await _batchRepository.GetHighestSellingPricesByProductIdsAsync(productIds);
 
             var exportDetails = new List<ExportWarehouseReceiptDetail>();
@@ -175,7 +175,7 @@ namespace Services.Service
                 .OrderByDescending(g => g.Sum(x => x.Quantity))
                 .First().Key;
 
-            foreach (var item in tempStockExports)
+            /*foreach (var item in tempStockExports)
             {
                 if (item.WarehouseId == mainWarehouseId)
                 {
@@ -199,6 +199,58 @@ namespace Services.Service
                     });
                 }
                 else
+                {
+                    var existing = transferRequests.FirstOrDefault(r => r.SourceWarehouseId == item.WarehouseId);
+                    if (existing == null)
+                    {
+                        existing = new WarehouseTransferRequest
+                        {
+                            SourceWarehouseId = item.WarehouseId,
+                            DestinationWarehouseId = mainWarehouseId,
+                            RequestExportId = requestExportId,
+                            WarehouseProductId = item.WarehouseProductId,
+                            Status = "Pending",
+                            RequestDate = GetVietnamTime(),
+                            Notes = $"Điều Phối Đơn Hàng {order.OrderCode}",
+                            TranferRequestCode = $"PDP{GetVietnamTime().Ticks}-{random.Next(1000, 9999)}",
+                            TransferProducts = new List<WarehouseTransferProduct>()
+                        };
+                        transferRequests.Add(existing);
+                    }
+
+                    existing.TransferProducts.Add(new WarehouseTransferProduct
+                    {
+                        ProductId = item.ProductId,
+                        Quantity = (int)item.Quantity,
+                        BatchId = item.BatchId
+                    });
+                }
+            }*/
+
+
+            foreach (var item in tempStockExports)
+            {
+                var products = await _productRepository.GetListByIdsAsync(new List<long> { item.ProductId });
+                var product = products.FirstOrDefault()
+                    ?? throw new InvalidOperationException($"Không tìm thấy sản phẩm với ID: {item.ProductId}");
+
+                var unitPrice = product.Price ?? 0;
+                int actualQuantity = (item.WarehouseId == mainWarehouseId) ? (int)item.Quantity : 0;
+
+                exportDetails.Add(new ExportWarehouseReceiptDetail
+                {
+                    ProductId = item.ProductId,
+                    ProductName = product?.ProductName ?? "Unknown",
+                    BatchNumber = item.BatchNumber,
+                    Quantity = actualQuantity,
+                    UnitPrice = unitPrice,
+                    TotalProductAmount = unitPrice * actualQuantity,
+                    ExpiryDate = item.ExpiryDate,
+                    WarehouseProductId = item.WarehouseProductId,
+                    BatchId = item.BatchId
+                });
+
+                if (item.WarehouseId != mainWarehouseId)
                 {
                     var existing = transferRequests.FirstOrDefault(r => r.SourceWarehouseId == item.WarehouseId);
                     if (existing == null)
@@ -431,6 +483,7 @@ namespace Services.Service
                         {
                             WarehouseProductId = detail.WarehouseProductId,
                             ProductId = detail.ProductId,
+                            productCode = detail.Product?.ProductCode ?? "",
                             ProductName = detail.Product?.ProductName ?? "",
                             BatchNumber = detail.BatchNumber,
                             Quantity = detail.Quantity,

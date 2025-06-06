@@ -49,7 +49,7 @@ namespace Services.Service
             // 1. Lấy batch
             var batch = await _batchRepository.GetByIdAsync(batchId)
                         ?? throw new KeyNotFoundException($"Batch {batchId} not found");
-
+            
             // 2. ProductId nếu client gửi
             if (dto.ProductId.HasValue)
             {
@@ -64,13 +64,24 @@ namespace Services.Service
                 batch.Quantity = dto.Quantity.Value;
             }
 
-            // 4. UnitCost nếu client gửi
-            if (dto.UnitCost.HasValue)
+            // 4. ProfitMarginPercent nếu client gửi
+            if (dto.ProfitMarginPercent.HasValue)
             {
-                if (batch.Status != "CALCULATING_PRICE")
-                    throw new InvalidOperationException(
-                        $"Cannot update UnitCost when status = {batch.Status}");
-                batch.UnitCost = dto.UnitCost.Value;
+                batch.ProfitMarginPercent = dto.ProfitMarginPercent.Value;
+                var product = await _productRepository.GetByIdAsync(batch.ProductId);
+                // Tính lại SellingPrice = UnitCost * (1 + ProfitMarginPercent/100)
+                // (Giả sử percent là số % lợi nhuận, ví dụ 10% thì nhập là 10)
+                if (batch.UnitCost > 0)
+                {
+                    batch.SellingPrice = batch.UnitCost * (1 + batch.ProfitMarginPercent / 100);
+                    if (product != null)
+                    {
+                        product.Price = batch.SellingPrice;
+                        product.UpdatedBy = userId; // Cập nhật người sửa
+                        product.UpdatedDate = DateTime.Now; // Cập nhật thời gian sửa
+                        await _productRepository.UpdateAsync(product);
+                    }
+                }
             }
 
             // 5. DateOfManufacture nếu client gửi

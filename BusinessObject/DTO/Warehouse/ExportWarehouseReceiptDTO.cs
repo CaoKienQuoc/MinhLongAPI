@@ -45,5 +45,6 @@ namespace BusinessObject.DTO.Warehouse
         public decimal UnitPrice { get; set; }
         public decimal TotalProductAmount { get; set; }
         public DateTime ExpiryDate { get; set; }
+        public string productCode { get; set; }
     }
 }
