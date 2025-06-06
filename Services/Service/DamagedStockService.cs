@@ -78,7 +78,9 @@ namespace Services.Service
             if (order == null)
                 throw new Exception("Không tìm thấy đơn hàng.");
 
-            var now = DateTime.UtcNow;
+            var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+
             var damagedStocks = new List<DamagedStock>();
             decimal totalAmount = 0;
 

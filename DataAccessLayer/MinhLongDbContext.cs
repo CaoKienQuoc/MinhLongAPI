@@ -817,6 +817,12 @@ namespace DataAccessLayer
                 .HasForeignKey(c => c.AgencyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Employee>()
+                .HasMany(e => e.Contracts)
+                .WithOne(c => c.Employee)
+                .HasForeignKey(c => c.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.User)
                 .WithMany(u => u.Notifications)

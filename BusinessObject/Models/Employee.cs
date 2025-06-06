@@ -27,6 +27,7 @@ namespace BusinessObject.Models
         public Address Address { get; set; }
 
         public ICollection<AgencyAccount> ManagedAgencies { get; set; }
+        public ICollection<Contract> Contracts { get; set; }
 
     }
 }

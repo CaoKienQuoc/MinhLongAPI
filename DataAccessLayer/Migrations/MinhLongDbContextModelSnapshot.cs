@@ -2357,8 +2357,9 @@ namespace DataAccessLayer.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("BusinessObject.Models.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId");
+                        .WithMany("Contracts")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("AgencyAccount");
 
@@ -3139,6 +3140,8 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("BusinessObject.Models.Employee", b =>
                 {
+                    b.Navigation("Contracts");
+
                     b.Navigation("ManagedAgencies");
                 });
 
