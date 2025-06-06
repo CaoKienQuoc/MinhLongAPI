@@ -248,8 +248,8 @@ namespace Repo.Repository
 
             if (warehouseProduct.All(wp => wp.Quantity == 0))
             {
+                batch.Status = "SOLD_OUT";
                 batch.SoldOut = true;
-                batch.Status = "SOLDOUT";
                 _context.Batches.Update(batch);
                 await _context.SaveChangesAsync();
                 return true;
