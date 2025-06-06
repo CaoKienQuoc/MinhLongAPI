@@ -535,7 +535,7 @@ namespace Services.Service
 
             var warehouseReceipt = new WarehouseReceipt
             {
-                DocumentNumber = $"IMP-TF-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
+                DocumentNumber = $"IMPTF-{DateTime.UtcNow.Ticks}-{random.Next(1000, 9999)}",
                 DocumentDate = DateTime.Now,
                 WarehouseId = request.DestinationWarehouseId,
                 ImportType = "ImportCoordination",
@@ -574,7 +574,7 @@ namespace Services.Service
                     ImportTransactionId = importTransaction.ImportTransactionId,
                     TotalQuantity = dto.Quantity,
                     TotalPrice = dto.TotalAmount,
-                    Note = $"SP #{dto.ProductId} - Batch: {dto.BatchCode}"
+                    Note = $"SP #{dto.ProductId} - Batch: {dto.BatchCode} - BachId: {dto.BatchId}"
                 };
 
                 await _receiptRepo.AddImportTransactionDetailAsync(detail);
@@ -587,9 +587,41 @@ namespace Services.Service
                 dto.BatchId = batchEntity.BatchId;
             }
 
-            await _exportWarehouseService.UpdateExportFromCoordinationImportAsync(request.RequestExportId, batchDtos);
+            // --- BỔ SUNG PHẦN UPDATE CHI TIẾT PHIẾU XUẤT KHO ---
+            var exportReceipt = await _warehouseExportRepository.GetMainExportReceiptByRequestExportIdAsync(request.RequestExportId);
+            if (exportReceipt == null)
+                throw new Exception("Không tìm thấy phiếu xuất kho chính để update detail");
+
+            foreach (var dto in batchDtos)
+            {
+                // Tìm đúng detail theo ProductId + BatchCode
+                var exportDetail = await _warehouseExportRepository.GetDetailAsync(
+                    exportReceipt.ExportWarehouseReceiptId,
+                    dto.ProductId,
+                    dto.BatchCode);
+
+                if (exportDetail != null)
+                {
+                    // Nếu trước đó là 0 thì cập nhật lại đúng số lượng vừa nhập điều phối
+                    exportDetail.Quantity = dto.Quantity;
+                    exportDetail.TotalProductAmount = exportDetail.UnitPrice * exportDetail.Quantity;
+                    await _warehouseExportRepository.UpdateDetailAsync(exportDetail);
+                }
+            }
+
+            // Cập nhật lại tổng số lượng/tổng tiền của ExportWarehouseReceipt nếu cần
+            var updatedDetails = await _warehouseExportRepository.GetDetailsByReceiptIdAsync(exportReceipt.ExportWarehouseReceiptId);
+            exportReceipt.TotalQuantity = updatedDetails.Sum(x => x.Quantity);
+            exportReceipt.TotalAmount = updatedDetails.Sum(x => x.TotalProductAmount);
+            await _warehouseExportRepository.UpdateAsync(exportReceipt);
+            exportReceipt.ExportType = "AvailableExport";
+            await _warehouseExportRepository.SaveChangesAsync();
 
             return true;
+
+            /* await _exportWarehouseService.UpdateExportFromCoordinationImportAsync(request.RequestExportId, batchDtos);
+
+             return true;*/
         }
 
 

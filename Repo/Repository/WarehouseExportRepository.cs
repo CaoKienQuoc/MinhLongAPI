@@ -40,6 +40,27 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<ExportWarehouseReceipt> GetMainExportReceiptByRequestExportIdAsync(long requestExportId)
+        {
+            return await _context.ExportWarehouseReceipts
+                .Include(r => r.ExportWarehouseReceiptDetails)
+                .Where(r => r.RequestExportId == requestExportId
+                    && r.ExportType != "ExportCoordination")
+                .OrderByDescending(r => r.DocumentDate) // lấy phiếu mới nhất nếu có nhiều phiếu
+                .FirstOrDefaultAsync();
+        }
+
+
+        public async Task<ExportWarehouseReceiptDetail> GetDetailAsync(long exportWarehouseReceiptId, long productId, string batchNumber)
+        {
+            return await _context.ExportWarehouseReceiptDetail
+                .FirstOrDefaultAsync(d =>
+                    d.ExportWarehouseReceiptId == exportWarehouseReceiptId
+                    && d.ProductId == productId
+                    && d.BatchNumber == batchNumber);
+        }
+
+
         public async Task<ExportWarehouseReceipt?> GetByIdAsync(long receiptId)
         {
             return await _context.ExportWarehouseReceipts

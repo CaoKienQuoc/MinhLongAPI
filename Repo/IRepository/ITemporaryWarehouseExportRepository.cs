@@ -36,5 +36,7 @@ namespace Repo.IRepository
         Task<List<(WarehouseProduct, Batch)>> GetWarehouseProductsAndBatchesByOrderIdAsync(Guid orderId);
 
         Task UpdateRangeAsync(IEnumerable<TemporaryStockExport> tempExports);
+
+        Task SetIsRevertedTrueAsync(Guid orderId);
     }
 }

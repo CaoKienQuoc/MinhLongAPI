@@ -128,6 +128,23 @@ namespace Repo.Repository
             await _context.SaveChangesAsync();
         }
 
+        public async Task SetIsRevertedTrueAsync(Guid orderId)
+        {
+            var exports = await _context.TemporaryStockExports
+                                        .Where(t => t.OrderId == orderId && !t.IsReverted)
+                                        .ToListAsync();
+            if (exports != null && exports.Count > 0)
+            {
+                foreach (var item in exports)
+                {
+                    item.IsReverted = true;
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
+
+
+
     }
 
 }

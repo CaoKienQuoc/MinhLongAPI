@@ -49,7 +49,7 @@ namespace Services.Service
             // 1. Lấy batch
             var batch = await _batchRepository.GetByIdAsync(batchId)
                         ?? throw new KeyNotFoundException($"Batch {batchId} not found");
-
+            
             // 2. ProductId nếu client gửi
             if (dto.ProductId.HasValue)
             {
@@ -210,7 +210,7 @@ namespace Services.Service
                     ProductName = b.Product.ProductName,
                     BatchCode = b.BatchCode,
                     UnitCost = b.UnitCost,
-                    Quantity = b.Quantity,
+                    Quantity = b.ImportTransactionDetail.TotalQuantity,
                     DateOfManufacture = b.DateOfManufacture,
                     ExpiryDate = b.ExpiryDate,
                     TotalAmount = b.TotalAmount,

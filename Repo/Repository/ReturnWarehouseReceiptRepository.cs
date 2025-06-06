@@ -89,6 +89,31 @@ namespace Repo.Repository
             return await _context.ReturnWarehouseReceipts
                 .Where(r => r.WarehouseId == warehouseId)
                 .Include(r => r.Details)
+                    .ThenInclude(d => d.Batch)                  // 👉 Thêm dòng này để luôn có Batch cho từng Detail!
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Product)                // Giữ lại include Product nếu cần
+                .Include(r => r.ReturnRequest)
+                    .ThenInclude(req => req.Details)
+                .Include(r => r.ReturnRequest)
+                    .ThenInclude(r => r.Images)
+                .Include(r => r.ReturnRequest)
+                    .ThenInclude(r => r.Order)
+                        .ThenInclude(r => r.RequestProduct)
+                            .ThenInclude(r => r.AgencyAccount)
+                                .ThenInclude(r => r.User)
+                .OrderByDescending(r => r.ReceiptDate)
+                .Include(r => r.Warehouse)
+                    .ThenInclude(r => r.WarehouseProducts)
+                        .ThenInclude(r => r.Batch)
+                .ToListAsync();
+        }
+
+
+        /*public async Task<IEnumerable<ReturnWarehouseReceipt>> GetByWarehouseIdAsync(long warehouseId)
+        {
+            return await _context.ReturnWarehouseReceipts
+                .Where(r => r.WarehouseId == warehouseId)
+                .Include(r => r.Details)
                     .ThenInclude(d => d.Product) // Include thêm Product cho mỗi Detail
                     .Include(r => r.ReturnRequest)
                     .ThenInclude(req => req.Details)
@@ -104,7 +129,7 @@ namespace Repo.Repository
                 .ThenInclude (r => r.WarehouseProducts)
                 .ThenInclude(r => r.Batch)
                 .ToListAsync();
-        }
+        }*/
 
         public async Task<List<ReturnWarehouseReceipt>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate)
         {

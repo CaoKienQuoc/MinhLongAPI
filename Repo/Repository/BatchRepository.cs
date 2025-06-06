@@ -186,15 +186,26 @@ namespace Repo.Repository
             return batch.ImportTransactionDetail.ImportTransaction.WarehouseId;
         }
 
+        //public async Task<List<Batch>> GetBatchesByWarehouseIdAsync(long warehouseId)
+        //{
+        //    return await _context.Batches
+        //        .Include(b => b.ImportTransactionDetail)
+        //        .Include(b => b.Product)
+        //        .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId)
+        //        .ToListAsync();
+        //}
+
+
         public async Task<List<Batch>> GetBatchesByWarehouseIdAsync(long warehouseId)
         {
             return await _context.Batches
-                    .Include(b => b.ImportTransactionDetail)
-                    .Include(b => b.Product) // ✅ CHỈ THÊM DÒNG NÀY
-                    .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId && !b.SoldOut)
-                    .ToListAsync();
-
+                .Include(b => b.ImportTransactionDetail)
+                    .ThenInclude(d => d.ImportTransaction)
+                .Include(b => b.Product)
+                .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId)
+                .ToListAsync();
         }
+
 
         public IQueryable<Batch> GetQueryable()
         {
@@ -222,7 +233,7 @@ namespace Repo.Repository
         public async Task UpdateBatchAsync(Batch batch)
         {
             _context.Batches.Update(batch);
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
         }
 
         public async Task<bool> UpdateSoldOutStatusAsync(long batchId)
@@ -238,6 +249,7 @@ namespace Repo.Repository
             if (warehouseProduct.All(wp => wp.Quantity == 0))
             {
                 batch.SoldOut = true;
+                batch.Status = "SOLDOUT";
                 _context.Batches.Update(batch);
                 await _context.SaveChangesAsync();
                 return true;
