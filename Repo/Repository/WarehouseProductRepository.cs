@@ -56,7 +56,7 @@ namespace Repo.Repository
             // ✅ Tính thời gian hiện tại theo giờ Việt Nam
             TimeZoneInfo vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             DateTime vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
-            DateTime sixMonthsLater = vnNow.AddMonths(6);
+            DateTime sixMonthsLater = vnNow.AddDays(10);
 
             // ✅ Truy vấn WarehouseProduct có Status = ACTIVE và ExpiryDate > 6 tháng
             return await _context.WarehouseProduct
