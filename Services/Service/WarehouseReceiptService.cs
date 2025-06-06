@@ -614,7 +614,7 @@ namespace Services.Service
             exportReceipt.TotalQuantity = updatedDetails.Sum(x => x.Quantity);
             exportReceipt.TotalAmount = updatedDetails.Sum(x => x.TotalProductAmount);
             await _warehouseExportRepository.UpdateAsync(exportReceipt);
-            exportReceipt.Status = "AvailableExport";
+            exportReceipt.ExportType = "AvailableExport";
             await _warehouseExportRepository.SaveChangesAsync();
 
             return true;
