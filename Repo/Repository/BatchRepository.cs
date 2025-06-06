@@ -189,12 +189,12 @@ namespace Repo.Repository
         public async Task<List<Batch>> GetBatchesByWarehouseIdAsync(long warehouseId)
         {
             return await _context.Batches
-                    .Include(b => b.ImportTransactionDetail)
-                    .Include(b => b.Product) // ✅ CHỈ THÊM DÒNG NÀY
-                    .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId && !b.SoldOut)
-                    .ToListAsync();
-
+                .Include(b => b.ImportTransactionDetail)
+                .Include(b => b.Product)
+                .Where(b => b.ImportTransactionDetail.ImportTransaction.WarehouseId == warehouseId)
+                .ToListAsync();
         }
+
 
         public IQueryable<Batch> GetQueryable()
         {
