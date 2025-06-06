@@ -14,7 +14,7 @@ namespace BusinessObject.DTO.Warehouse
         // Chuyển thành nullable để biết client có gửi hay không
         public int? ProductId { get; set; }
         public int? Quantity { get; set; }
-        public decimal? UnitCost { get; set; }
+        public decimal? ProfitMarginPercent { get; set; } // Phần trăm lợi nhuận
         public DateTime? DateOfManufacture { get; set; }
     }
 
