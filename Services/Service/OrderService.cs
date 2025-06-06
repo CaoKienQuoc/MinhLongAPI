@@ -333,8 +333,7 @@ namespace Services.Service
                     {
                         if (!batch.SoldOut)
                         {
-                            //comment dòng này lại
-                            //batch.SoldOut = true;
+                            batch.SoldOut = true;
                             batch.Status = "SOLDOUT";
                             await _batchRepository.UpdateBatchAsync(batch);
                         }

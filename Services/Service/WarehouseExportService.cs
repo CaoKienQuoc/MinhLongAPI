@@ -39,6 +39,7 @@ namespace Services.Service
         private readonly IDamagedStockRepository _damagedRepo;
         private readonly IPaymentHistoryRepository _paymentRepo;
 
+
         public WarehouseExportService(
             ITemporaryWarehouseExportRepository tempExportRepo,
             IWarehouseTransferRepository transferRepo,
@@ -1076,6 +1077,19 @@ namespace Services.Service
         public async Task CancelRequestExportAsync(long warehouseRequestExportId, Guid? userId, string reason)
         {
             var warehouseRequestExport = await _exportReceiptRepo.GetExportWarehouseReceiptByIdAsync(warehouseRequestExportId);
+
+            //SỬA CODE Ở ĐÂY
+            if (warehouseRequestExport.ExportType == "PendingTransfer")
+            {
+                var transferRequest = await _transferRepo.GetByRequestExportIdAsync(warehouseRequestExport.RequestExportId);
+                if (transferRequest != null)
+                {
+                    transferRequest.Status = "Canceled";
+                    await _transferRepo.UpdateAsync(transferRequest);
+                    await _transferRepo.SaveChangesAsync();
+                }
+            }
+
             // 1. Lấy RequestExport
             var requestExport = await _requestExportRepository.GetRequestExportByIdAsync(warehouseRequestExport.RequestExportId)
                 ?? throw new Exception("Không tìm thấy đơn xuất kho.");
