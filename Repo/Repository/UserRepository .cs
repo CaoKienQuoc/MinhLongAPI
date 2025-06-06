@@ -279,6 +279,8 @@ namespace Repo.Repository
                     .ThenInclude(a => a.Province)
                 .Include(u => u.AgencyAccount)
                     .ThenInclude(a => a.Contracts)
+                    .Include(u => u.Employee)
+                    .ThenInclude(a => a.Contracts)
                 .Include(u => u.Employee)
                     .ThenInclude(a => a.Address)
                     .ThenInclude(a => a.Ward)

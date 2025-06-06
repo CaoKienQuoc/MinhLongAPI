@@ -101,14 +101,24 @@ namespace Services.Service
             :
             $"{u.AgencyAccount?.Address?.Street}, {u.AgencyAccount?.Address?.Ward?.WardName}, {u.AgencyAccount?.Address?.District?.DistrictName}, {u.AgencyAccount?.Address?.Province?.ProvinceName}",
 
-                Contracts = u.AgencyAccount?.Contracts.Select(c => new ContractDto
-                {
-                    ContractId = c.ContractId,
-                    FileName = c.FileName,
-                    FilePath = c.FilePath,
-                    FileType = c.FileType,
-                    CreatedAt = c.CreatedAt
-                }).ToList() ?? new List<ContractDto>()
+                Contracts = u.UserType == "EMPLOYEE"
+            ? (u.Employee?.Contracts?.Select(c => new ContractDto
+            {
+                ContractId = c.ContractId,
+                FileName = c.FileName,
+                FilePath = c.FilePath,
+                FileType = c.FileType,
+                CreatedAt = c.CreatedAt
+            }).ToList() ?? new List<ContractDto>())
+            : (u.AgencyAccount?.Contracts?.Select(c => new ContractDto
+            {
+                ContractId = c.ContractId,
+                FileName = c.FileName,
+                FilePath = c.FilePath,
+                FileType = c.FileType,
+                CreatedAt = c.CreatedAt
+            }).ToList() ?? new List<ContractDto>())
+
             }).ToList();
 
             return new PagedResult<UserDto>
