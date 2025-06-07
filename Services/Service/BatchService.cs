@@ -105,8 +105,12 @@ namespace Services.Service
                 {
                     batch.Status = "ACTIVE";
                 }
-
+                else if (batch.ExpiryDate < vietnamNow)
+                {
+                    batch.Status = "EXPIRED";
+                }
             }
+
 
 
 
