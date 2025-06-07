@@ -177,18 +177,20 @@ namespace Services.Service
         public async Task SendDebtRemindersAsync()
         {
             var payments = await _repository.GetAllPaymentHistoryAsync(); // Đã include User (Email)
+            var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone).Date;
 
             foreach (var payment in payments)
             {
-                var dueDate = payment.PaymentDate.AddMonths(3);
+                var dueDate = payment.DueDate;
                 //var dueDate = new DateTime(2025, 4, 15);
-                var daysLeft = (dueDate - DateTime.UtcNow.Date).TotalDays;
+                var daysLeft = (int)Math.Round((dueDate - vietnamNow).TotalDays);
 
                 if (daysLeft <= 10 && daysLeft >= 0)
                 {
-                    string cacheKey = $"DebtReminder:{payment.OrderId}:{DateTime.UtcNow:yyyy-MM-dd}";
-                    if (!await _cacheService.ExistsAsync(cacheKey))
-                    {
+                  //  string cacheKey = $"DebtReminder:{payment.OrderId}:{DateTime.UtcNow:yyyy-MM-dd}";
+                 //   if (!await _cacheService.ExistsAsync(cacheKey))
+                  //  {
                         // 🔥 Lấy Email từ bảng User
                         var email = payment.User?.Email;
                         if (string.IsNullOrEmpty(email) || payment.UserId == Guid.Empty)
@@ -211,9 +213,9 @@ namespace Services.Service
                                 dueDate
                             );
 
-                            await _cacheService.SetAsync(cacheKey, true, TimeSpan.FromDays(1));
+                    //        await _cacheService.SetAsync(cacheKey, true, TimeSpan.FromDays(1));
                         }
-                    }
+                    //}
                 }
             }
         }
