@@ -44,7 +44,7 @@ namespace Services.Service
             return await _batchRepository.GetAllAsync();
         }
 
-        public async Task<Batch> UpdateBatchAsync(UpdateBatchDto dto, Guid userId, long batchId)
+        /*public async Task<Batch> UpdateBatchAsync(UpdateBatchDto dto, Guid userId, long batchId)
         {
 
             TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
@@ -78,9 +78,9 @@ namespace Services.Service
             {
                 batch.ProfitMarginPercent = dto.ProfitMarginPercent.Value;
                 var product = await _productRepository.GetByIdAsync(batch.ProductId);
-                // Tính lại SellingPrice = UnitCost * (1 + ProfitMarginPercent/100)
-                // (Giả sử percent là số % lợi nhuận, ví dụ 10% thì nhập là 10)
-                if (batch.UnitCost > 0)
+
+                // Chỉ cập nhật giá bán khi ProfitMarginPercent > 0 và UnitCost > 0
+                if (batch.ProfitMarginPercent > 0 && batch.UnitCost > 0)
                 {
                     batch.SellingPrice = batch.UnitCost * (1 + batch.ProfitMarginPercent / 100);
                     if (product != null)
@@ -91,7 +91,9 @@ namespace Services.Service
                         await _productRepository.UpdatePriceAsync(product);
                     }
                 }
+                // Nếu ProfitMarginPercent = 0 thì không cập nhật giá bán
             }
+
 
             // 5. DateOfManufacture nếu client gửi
             if (dto.DateOfManufacture.HasValue)
@@ -110,16 +112,96 @@ namespace Services.Service
                 {
                     batch.Status = "ACTIVE";
                 }
-
+                else if (batch.ExpiryDate < vietnamNow)
+                {
+                    batch.Status = "EXPIRED";
+                }
             }
-
 
 
             // 6. Lưu
             await _batchRepository.SaveChangesAsync();
             await _warehouseProductRepo.SaveChangesAsync();
             return batch;
+        }*/
+
+        public async Task<Batch> UpdateBatchAsync(UpdateBatchDto dto, Guid userId, long batchId)
+        {
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+
+            // 1. Lấy batch
+            var batch = await _batchRepository.GetByIdAsync(batchId)
+                        ?? throw new KeyNotFoundException($"Batch {batchId} not found");
+
+            // 2. ProductId nếu client gửi
+            if (dto.ProductId.HasValue)
+            {
+                if (!await _productRepository.ExistsAsync(dto.ProductId.Value))
+                    throw new ArgumentException($"Product {dto.ProductId.Value} not found");
+                batch.ProductId = dto.ProductId.Value;
+            }
+
+            // 3. Quantity nếu client gửi
+            if (dto.Quantity.HasValue)
+            {
+                batch.Quantity = dto.Quantity.Value;
+            }
+
+            // 4. ProfitMarginPercent nếu client gửi
+            if (dto.ProfitMarginPercent.HasValue)
+            {
+                batch.ProfitMarginPercent = dto.ProfitMarginPercent.Value;
+                var product = await _productRepository.GetByIdAsync(batch.ProductId);
+
+                // Chỉ cập nhật giá bán khi ProfitMarginPercent > 0 và UnitCost > 0
+                if (batch.ProfitMarginPercent > 0 && batch.UnitCost > 0)
+                {
+                    batch.SellingPrice = batch.UnitCost * (1 + batch.ProfitMarginPercent / 100);
+                    if (product != null)
+                    {
+                        product.Price = batch.SellingPrice;
+                        product.UpdatedBy = userId; // Cập nhật người sửa
+                        product.UpdatedDate = DateTime.Now; // Cập nhật thời gian sửa
+                        await _productRepository.UpdatePriceAsync(product);
+                    }
+                }
+                // Nếu ProfitMarginPercent = 0 thì không cập nhật giá bán
+            }
+
+            // 5. DateOfManufacture nếu client gửi
+            if (dto.DateOfManufacture.HasValue)
+            {
+                batch.DateOfManufacture = dto.DateOfManufacture.Value;
+
+                // Lấy DefaultExpiration
+                int? daysNullable = await _productRepository.GetDefaultExpirationAsync(batch.ProductId);
+                int defaultExpiration = daysNullable ?? 720;
+
+                batch.ExpiryDate = batch.DateOfManufacture
+                    .AddDays(defaultExpiration)
+                    .AddDays(1);
+            }
+
+            // 6. Xử lý trạng thái batch (ưu tiên hết hạn lên trước)
+            if (batch.ExpiryDate < vietnamNow)
+            {
+                batch.Status = "EXPIRED";
+            }
+            else if (batch.SellingPrice == 0 && batch.ProfitMarginPercent == 0)
+            {
+                batch.Status = "CALCULATING_PRICE";
+            }
+            else if (batch.ExpiryDate > vietnamNow && batch.SellingPrice > 0 && batch.ProfitMarginPercent > 0)
+            {
+                batch.Status = "ACTIVE";
+            }
+
+            // 7. Lưu
+            await _batchRepository.SaveChangesAsync();
+            return batch;
         }
+
 
         public async Task<IEnumerable<Batch>> GetBatchesByProductIdAsync(long productId)
         {

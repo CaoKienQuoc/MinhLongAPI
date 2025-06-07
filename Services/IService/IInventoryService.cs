@@ -10,6 +10,8 @@ namespace Services.IService
     {
         Task DeductStockByWarehouseProductAsync(Guid orderId, long productId, long requiredQuantity);
         Task RollbackStockForCancelledOrderAsync(Guid orderId);
+
+        Task RollBackMainWarehouseAsync(Guid orderId, long warehouseId);
     }
 
 }

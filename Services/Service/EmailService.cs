@@ -197,7 +197,7 @@ namespace Services.Service
             // 2. Build danh sách item
             var itemListHtml = string.Join("",
                 items.Select(i =>
-                    $"<li>{i.Product.ProductName} – Số lượng: {i.Quantity} (Lô {i.Batch.BatchCode})</li>"));
+                    $"<li>{i.Product.ProductName} – Số lượng: {i.Quantity} (Mã Lô {i.Batch.BatchCode})</li>"));
 
             // 3. Thay placeholder
             var body = template
