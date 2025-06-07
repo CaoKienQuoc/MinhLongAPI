@@ -160,7 +160,7 @@ namespace Services.Service
         {
             var damagedStocks = await _damagedRepo.GetDamagedStockByUserAsync(userId);
             
-            return damagedStocks.Select(ds => new GetDamagedStockDto
+            return damagedStocks.OrderByDescending(ds => ds.DamagedStockId).Select(ds => new GetDamagedStockDto
             {
                 DamagedStockId = ds.DamagedStockId,
                 WarehouseId = ds.WarehouseId,
