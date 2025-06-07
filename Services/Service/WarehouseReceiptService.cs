@@ -617,6 +617,10 @@ namespace Services.Service
             exportReceipt.ExportType = "AvailableExport";
             await _warehouseExportRepository.SaveChangesAsync();
 
+            request.Status = "Completed";
+            await _transferRepo.UpdateAsync(request);
+            await _transferRepo.SaveChangesAsync();
+
             return true;
 
             /* await _exportWarehouseService.UpdateExportFromCoordinationImportAsync(request.RequestExportId, batchDtos);
