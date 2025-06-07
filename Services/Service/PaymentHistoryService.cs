@@ -188,9 +188,9 @@ namespace Services.Service
 
                 if (daysLeft <= 10 && daysLeft >= 0)
                 {
-                  //  string cacheKey = $"DebtReminder:{payment.OrderId}:{DateTime.UtcNow:yyyy-MM-dd}";
-                 //   if (!await _cacheService.ExistsAsync(cacheKey))
-                  //  {
+                    string cacheKey = $"DebtReminder:{payment.OrderId}:{DateTime.UtcNow:yyyy-MM-dd}";
+                    if (!await _cacheService.ExistsAsync(cacheKey))
+                    {
                         // 🔥 Lấy Email từ bảng User
                         var email = payment.User?.Email;
                         if (string.IsNullOrEmpty(email) || payment.UserId == Guid.Empty)
@@ -213,9 +213,9 @@ namespace Services.Service
                                 dueDate
                             );
 
-                    //        await _cacheService.SetAsync(cacheKey, true, TimeSpan.FromDays(1));
+                            await _cacheService.SetAsync(cacheKey, true, TimeSpan.FromDays(1));
                         }
-                    //}
+                    }
                 }
             }
         }
