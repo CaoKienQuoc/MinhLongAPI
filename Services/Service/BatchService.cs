@@ -50,6 +50,9 @@ namespace Services.Service
             TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             DateTime vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
 
+            var warehouseProduct = await _warehouseProductRepo.GetWarehouseProductByBatchIdAsync(batchId)
+                    ?? throw new KeyNotFoundException($"WarehouseProduct not found");
+
             // 1. Lấy batch
             var batch = await _batchRepository.GetByIdAsync(batchId)
                         ?? throw new KeyNotFoundException($"Batch {batchId} not found");
@@ -66,6 +69,8 @@ namespace Services.Service
             if (dto.Quantity.HasValue)
             {
                 batch.Quantity = dto.Quantity.Value;
+                warehouseProduct.Quantity = dto.Quantity.Value;
+
             }
 
             // 4. ProfitMarginPercent nếu client gửi
@@ -112,6 +117,7 @@ namespace Services.Service
 
             // 6. Lưu
             await _batchRepository.SaveChangesAsync();
+            await _warehouseProductRepo.SaveChangesAsync();
             return batch;
         }
 

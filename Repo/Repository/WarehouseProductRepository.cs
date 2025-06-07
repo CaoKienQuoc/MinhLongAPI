@@ -101,5 +101,11 @@ namespace Repo.Repository
                 .Where(wp => wp.BatchId == batchId)
                 .ToListAsync();
         }
+
+        public async Task<WarehouseProduct> GetWarehouseProductByBatchIdAsync(long batchId)
+        {
+            return await _context.WarehouseProduct
+                .FirstOrDefaultAsync(wp => wp.BatchId == batchId);
+        }
     }
 }
