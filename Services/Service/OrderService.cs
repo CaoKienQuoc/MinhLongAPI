@@ -334,7 +334,6 @@ namespace Services.Service
                         if (!batch.SoldOut)
                         {
                             batch.SoldOut = true;
-                            batch.Status = "SOLDOUT";
                             await _batchRepository.UpdateBatchAsync(batch);
                         }
                     }
