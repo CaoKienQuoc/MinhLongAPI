@@ -34,6 +34,7 @@ namespace Repo.IRepository
         // Lấy giá trị DefaultExpiration của product
         // IProductRepository.cs
         Task<int?> GetDefaultExpirationAsync(long productId);
+        Task<Product> UpdatePriceAsync(Product product);
 
 
     }

@@ -114,6 +114,12 @@ namespace Repo.Repository
                 .FirstOrDefaultAsync(x => x.Id == id && x.Status == "Approved");
         }
 
+        public async Task<WarehouseTransferRequest> GetByRequestExportIdAsync(int requestExportId)
+        {
+            return await _context.WarehouseTransferRequests
+                .FirstOrDefaultAsync(x => x.RequestExportId == requestExportId);
+        }
+
 
 
     }

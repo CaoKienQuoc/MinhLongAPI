@@ -46,6 +46,10 @@ namespace Services.Service
 
         public async Task<Batch> UpdateBatchAsync(UpdateBatchDto dto, Guid userId, long batchId)
         {
+
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+
             // 1. Lấy batch
             var batch = await _batchRepository.GetByIdAsync(batchId)
                         ?? throw new KeyNotFoundException($"Batch {batchId} not found");
@@ -79,7 +83,7 @@ namespace Services.Service
                         product.Price = batch.SellingPrice;
                         product.UpdatedBy = userId; // Cập nhật người sửa
                         product.UpdatedDate = DateTime.Now; // Cập nhật thời gian sửa
-                        await _productRepository.UpdateAsync(product);
+                        await _productRepository.UpdatePriceAsync(product);
                     }
                 }
             }
@@ -96,7 +100,15 @@ namespace Services.Service
                 batch.ExpiryDate = batch.DateOfManufacture
                     .AddDays(defaultExpiration)
                     .AddDays(1);
+
+                if (batch.ExpiryDate > vietnamNow)
+                {
+                    batch.Status = "ACTIVE";
+                }
+
             }
+
+
 
             // 6. Lưu
             await _batchRepository.SaveChangesAsync();
@@ -210,7 +222,7 @@ namespace Services.Service
                     ProductName = b.Product.ProductName,
                     BatchCode = b.BatchCode,
                     UnitCost = b.UnitCost,
-                    Quantity = b.Quantity,
+                    Quantity = b.ImportTransactionDetail.TotalQuantity,
                     DateOfManufacture = b.DateOfManufacture,
                     ExpiryDate = b.ExpiryDate,
                     TotalAmount = b.TotalAmount,
