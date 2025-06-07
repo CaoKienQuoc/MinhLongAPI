@@ -103,6 +103,12 @@ namespace Repo.Repository
                 .ToListAsync();
         }
 
+        public async Task<ExportWarehouseReceipt> GetByIdAsync(long warehouseId)
+        {
+            return await _context.ExportWarehouseReceipts
+                        .Include(x => x.ExportWarehouseReceiptDetails) // Tên property chứa list detail
+                        .FirstOrDefaultAsync(w => w.WarehouseId == warehouseId);
+        }
 
     }
 }

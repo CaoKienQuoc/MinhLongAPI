@@ -1098,7 +1098,16 @@ namespace Services.Service
             warehouseRequestExport.Status = "Canceled";
             warehouseRequestExport.Reason = reason; // Lưu lý do hủy
 
-            await _inventoryService.RollbackStockForCancelledOrderAsync(order.OrderId);
+            //await _inventoryService.RollbackStockForCancelledOrderAsync(order.OrderId);
+
+            if (warehouseRequestExport.ExportType == "AvailableExport")
+            {
+                await _inventoryService.RollBackMainWarehouseAsync(order.OrderId, warehouseRequestExport.WarehouseId);
+            }
+            else if (warehouseRequestExport.ExportType == "PendingTransfer")
+            {
+                await _inventoryService.RollbackStockForCancelledOrderAsync(order.OrderId);
+            }
 
             // 5. Update
             await _requestExportRepository.UpdateExportAsync(requestExport);
